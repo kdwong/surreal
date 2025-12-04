@@ -194,3 +194,60 @@ theorem x_eq_x : ∀ (x : Game), eq x x := by
   constructor
   · exact x_le_x x
   · exact x_le_x x
+
+
+structure TriGame where
+  a : Game  -- The first natural number, named 'a'
+  b : Game  -- The second natural number, named 'b'
+  c : Game  -- The third natural number, named 'c'
+
+def T : TriGame → TriGame → Prop :=
+  fun a b => birthday a.1 + birthday a.2 + birthday a.3 < birthday b.1 + birthday b.2 + birthday b.3
+lemma wf_T : WellFounded T :=
+  InvImage.wf (fun s : TriGame => birthday s.1 + birthday s.2 + birthday s.3) wellFounded_lt
+
+theorem Game.le_trans1 : ∀ (x : TriGame) ,
+  (le x.a x.b) ∧ (le x.b x.c) → le x.a x.c := by
+  intro x
+  apply wf_T.induction x
+  intro x IH h_le
+  have a_le_b := h_le.1
+  have b_le_c := h_le.2
+  unfold le
+  constructor
+  · -- Prove `∀ a_l ∈ a.left, ¬(c ≤ a_l)`
+    intro a_l h_a_l h_contra
+    -- Assume `c  ≤ a_l` for contradiction.
+    have h_birthday_sum_lt : T {a := x.b, b := x.c, c := a_l} x := by
+      simp [T]
+      have := birthday_lt_left x.a a_l h_a_l
+      linarith
+    --- Use `b ≤ c` and `c  ≤ a_l` and induction to show `b ≤ a_l`
+    have h_b_le_al : le x.b a_l := by
+      apply IH {a := x.b, b := x.c, c := a_l} h_birthday_sum_lt
+      exact ⟨b_le_c, h_contra⟩
+    -- But `a ≤ b` implies `¬(b ≤ a_l)`
+    unfold le at a_le_b
+    have b_notle_a_l := a_le_b.1 a_l h_a_l
+    contradiction
+  ·-- Prove `∀ c_r ∈ c.right, ¬(c_r ≤ a)`
+    intro c_r h_c_r h_contra
+    -- Assume `c_r ≤ a` for contradiction.
+    have h_birthday_sum_lt : T {a := c_r, b := x.a, c := x.b} x := by
+      simp [T]
+      have := birthday_lt_right x.c c_r h_c_r
+      linarith
+    --- Use `c_r ≤ a` and `a ≤ b` and induction to show `c_r ≤ b`
+    have h_c_r_le_b : c_r.le x.b := by
+      apply IH {a := c_r, b := x.a, c := x.b} h_birthday_sum_lt
+      exact ⟨h_contra, a_le_b⟩
+    unfold le at b_le_c
+    -- But `b ≤ c` implies `¬(c_r ≤ b)`
+    have c_r_nleq_b := b_le_c.2 c_r h_c_r
+    contradiction
+
+theorem Game.le_trans : ∀ x y z : Game , (le x y) ∧ (le y z) → le x z :=
+by
+  intro x y z habc
+  let tri : TriGame := {a := x, b := y, c := z}
+  apply le_trans1 tri habc
