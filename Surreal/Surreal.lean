@@ -119,11 +119,29 @@ theorem xL_x_xR : ∀ (x : Surreal),
 
 
 theorem like_eq : ∀ (x y : Surreal),
-  (∀ x_l ∈ x.left, ∃ y_l ∈ y.left, eq x_l y_l) ∧
-  (∀ y_r ∈ y.right, ∃ x_r ∈ x.right, eq x_r y_r) →
+  (∀ xl ∈ x.left, ∃ yl ∈ y.left, eq xl yl) ∧
+  (∀ yl ∈ y.left, ∃ xl ∈ x.left, eq yl xl) ∧
+  (∀ xr ∈ x.right, ∃ yr ∈ y.right, eq xr yr) ∧
+  (∀ yr ∈ y.right, ∃ xr ∈ x.right, eq yr xr) →
   eq x y := by
-  intro x y h_left
+  intro x y h
   unfold eq
   constructor
-  · sorry
+  · unfold le
+    constructor
+    · intro xl h_xl
+      by_contra h_le
+      have h1 := h.1 xl h_xl
+      rcases h1 with ⟨yl, h_yl, h_eq⟩
+      have y_le_yl := le_trans y xl yl ⟨h_le, h_eq.1⟩
+      have y_nleq_yl := ((xL_x_xR y).1 yl h_yl).2
+      contradiction
+    · intro yr h_yr
+      by_contra h_le
+      have h2 := h.2.2.2 yr h_yr
+      rcases h2 with ⟨xr, h_xr, h_eq⟩
+      have xr_le_x := le_trans xr yr x ⟨h_eq.2, h_le⟩
+      have xr_nleq_x := ((xL_x_xR x).2 xr h_xr).2
+      contradiction
+
   · sorry
