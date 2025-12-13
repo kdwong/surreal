@@ -144,4 +144,19 @@ theorem like_eq : ∀ (x y : Surreal),
       have xr_nleq_x := ((xL_x_xR x).2 xr h_xr).2
       contradiction
 
-  · sorry
+  · unfold le
+    constructor
+    · intro yl h_yl
+      by_contra h_le
+      have h1 := h.2.1 yl h_yl
+      rcases h1 with ⟨xl, h_xl, h_eq⟩
+      have x_le_xl := le_trans x yl xl ⟨h_le, h_eq.1⟩
+      have x_nleq_xl := ((xL_x_xR x).1 xl h_xl).2
+      contradiction
+    · intro xr h_xr
+      by_contra h_le
+      have h2 := h.2.2.1 xr h_xr
+      rcases h2 with ⟨yr, h_yr, h_eq⟩
+      have yr_le_y := le_trans yr xr y ⟨h_eq.2, h_le⟩
+      have yr_nleq_y := ((xL_x_xR y).2 yr h_yr).2
+      contradiction
