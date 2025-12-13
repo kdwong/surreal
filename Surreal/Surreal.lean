@@ -26,6 +26,8 @@ instance : Coe Surreal Game where
 def Surreal.left (s : Surreal) : List Game := s.val.left
 def Surreal.right (s : Surreal) : List Game := s.val.right
 def Surreal.le (s t : Surreal) : Prop := Game.le (s.val) (t.val)
+def Surreal.lt (s t : Surreal) : Prop := Game.lt (s.val) (t.val)
+def Surreal.eq (s t : Surreal) : Prop := Game.eq (s.val) (t.val)
 
 lemma isSurreal_zero : IsSurreal zero := by
   unfold IsSurreal
@@ -114,3 +116,14 @@ theorem xL_x_xR : ∀ (x : Surreal),
       let h_contra := y_r_le_y.2 y_r (by simp [right]; exact h_yr)
       have h : le y_r y_r := by exact x_le_x y_r
       contradiction
+
+
+theorem like_eq : ∀ (x y : Surreal),
+  (∀ x_l ∈ x.left, ∃ y_l ∈ y.left, eq x_l y_l) ∧
+  (∀ y_r ∈ y.right, ∃ x_r ∈ x.right, eq x_r y_r) →
+  eq x y := by
+  intro x y h_left
+  unfold eq
+  constructor
+  · sorry
+  · sorry
