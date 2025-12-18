@@ -25,11 +25,15 @@ LEAN_EXPORT lean_object* l_Game_right___boxed(lean_object*);
 LEAN_EXPORT lean_object* l_List_maximum___at___00Game_birthday_spec__1(lean_object*);
 LEAN_EXPORT lean_object* l_Game_left___boxed(lean_object*);
 LEAN_EXPORT lean_object* l_List_maximum___at___00Game_birthday_spec__1___lam__0___boxed(lean_object*);
+LEAN_EXPORT lean_object* l_le__fuel___lam__1___boxed(lean_object*, lean_object*, lean_object*, lean_object*, lean_object*);
 LEAN_EXPORT lean_object* l___private_Surreal_game_0__List_map__unattach_match__1_splitter(lean_object*, lean_object*, lean_object*, lean_object*, lean_object*);
+uint8_t l_List_all___redArg(lean_object*, lean_object*);
 static lean_object* l_zero_x27___closed__0;
+LEAN_EXPORT lean_object* l_le__fuel___lam__0___boxed(lean_object*, lean_object*, lean_object*, lean_object*);
 LEAN_EXPORT lean_object* l_List_maximum___at___00Game_birthday_spec__1___lam__0(lean_object*);
 LEAN_EXPORT lean_object* l___private_Surreal_game_0__Game_left_match__1_splitter(lean_object*, lean_object*, lean_object*);
 LEAN_EXPORT lean_object* l_half;
+LEAN_EXPORT uint8_t l_le__fuel___lam__0(lean_object*, lean_object*, uint8_t, lean_object*);
 LEAN_EXPORT lean_object* l_Game_left(lean_object*);
 LEAN_EXPORT lean_object* l_List_argmax___at___00List_maximum___at___00Game_birthday_spec__1_spec__1___redArg(lean_object*, lean_object*);
 LEAN_EXPORT lean_object* l_List_mapTR_loop___at___00Game_birthday_spec__0(lean_object*, lean_object*);
@@ -38,20 +42,30 @@ lean_object* l_List_appendTR___redArg(lean_object*, lean_object*);
 LEAN_EXPORT lean_object* l_List_foldl___at___00List_argmax___at___00List_maximum___at___00Game_birthday_spec__1_spec__1_spec__1___redArg(lean_object*, lean_object*, lean_object*);
 static lean_object* l_minus__one___closed__1;
 static lean_object* l_half___closed__0;
+uint8_t lean_nat_dec_eq(lean_object*, lean_object*);
+LEAN_EXPORT lean_object* l_eq__fuel___boxed(lean_object*, lean_object*, lean_object*);
 uint8_t lean_nat_dec_lt(lean_object*, lean_object*);
+LEAN_EXPORT lean_object* l_Game_remove(lean_object*, lean_object*);
 LEAN_EXPORT lean_object* l_one;
+LEAN_EXPORT lean_object* l_Game_remove__right(lean_object*, lean_object*);
 lean_object* l_List_reverse___redArg(lean_object*);
+lean_object* lean_nat_sub(lean_object*, lean_object*);
 static lean_object* l_zero_x27___closed__1;
 LEAN_EXPORT lean_object* l_zero;
+LEAN_EXPORT lean_object* l_Game_remove__left(lean_object*, lean_object*);
 LEAN_EXPORT lean_object* l_Game_birthday(lean_object*);
+LEAN_EXPORT uint8_t l_eq__fuel(lean_object*, lean_object*, lean_object*);
+LEAN_EXPORT lean_object* l_le__fuel___boxed(lean_object*, lean_object*, lean_object*);
 LEAN_EXPORT lean_object* l_minus__one;
 LEAN_EXPORT lean_object* l_Game_ctorIdx(lean_object*);
+LEAN_EXPORT uint8_t l_le__fuel___lam__1(lean_object*, lean_object*, uint8_t, uint8_t, lean_object*);
 LEAN_EXPORT lean_object* l___private_Surreal_game_0__List_map__unattach_match__1_splitter___redArg(lean_object*, lean_object*);
 LEAN_EXPORT lean_object* l_TriGame_ctorIdx___boxed(lean_object*);
 LEAN_EXPORT lean_object* l_Game_ctorIdx___boxed(lean_object*);
 static lean_object* l_zero___closed__0;
 static lean_object* l_minus__one___closed__0;
 lean_object* lean_nat_add(lean_object*, lean_object*);
+LEAN_EXPORT uint8_t l_le__fuel(lean_object*, lean_object*, lean_object*);
 LEAN_EXPORT uint8_t l_List_foldl___at___00List_argmax___at___00List_maximum___at___00Game_birthday_spec__1_spec__1_spec__1___redArg___lam__0(lean_object*, lean_object*, lean_object*);
 LEAN_EXPORT lean_object* l_TriGame_ctorIdx(lean_object*);
 LEAN_EXPORT lean_object* l_Game_ctorIdx(lean_object* x_1) {
@@ -480,6 +494,296 @@ lean_object* x_2;
 x_2 = l_TriGame_ctorIdx(x_1);
 lean_dec_ref(x_1);
 return x_2;
+}
+}
+LEAN_EXPORT uint8_t l_le__fuel___lam__0(lean_object* x_1, lean_object* x_2, uint8_t x_3, lean_object* x_4) {
+_start:
+{
+uint8_t x_5; 
+x_5 = l_le__fuel(x_1, x_4, x_2);
+if (x_5 == 0)
+{
+uint8_t x_6; 
+x_6 = 1;
+return x_6;
+}
+else
+{
+return x_3;
+}
+}
+}
+LEAN_EXPORT uint8_t l_le__fuel___lam__1(lean_object* x_1, lean_object* x_2, uint8_t x_3, uint8_t x_4, lean_object* x_5) {
+_start:
+{
+uint8_t x_6; 
+x_6 = l_le__fuel(x_5, x_1, x_2);
+if (x_6 == 0)
+{
+return x_3;
+}
+else
+{
+return x_4;
+}
+}
+}
+LEAN_EXPORT uint8_t l_le__fuel(lean_object* x_1, lean_object* x_2, lean_object* x_3) {
+_start:
+{
+lean_object* x_4; uint8_t x_5; 
+x_4 = lean_unsigned_to_nat(0u);
+x_5 = lean_nat_dec_eq(x_3, x_4);
+if (x_5 == 1)
+{
+uint8_t x_6; 
+lean_dec_ref(x_2);
+lean_dec_ref(x_1);
+x_6 = 0;
+return x_6;
+}
+else
+{
+lean_object* x_7; lean_object* x_8; lean_object* x_9; lean_object* x_10; lean_object* x_11; uint8_t x_12; 
+x_7 = lean_ctor_get(x_1, 0);
+x_8 = lean_unsigned_to_nat(1u);
+x_9 = lean_nat_sub(x_3, x_8);
+x_10 = lean_box(x_5);
+lean_inc(x_9);
+lean_inc_ref(x_2);
+x_11 = lean_alloc_closure((void*)(l_le__fuel___lam__0___boxed), 4, 3);
+lean_closure_set(x_11, 0, x_2);
+lean_closure_set(x_11, 1, x_9);
+lean_closure_set(x_11, 2, x_10);
+lean_inc(x_7);
+x_12 = l_List_all___redArg(x_7, x_11);
+if (x_12 == 0)
+{
+lean_dec(x_9);
+lean_dec_ref(x_2);
+lean_dec_ref(x_1);
+return x_12;
+}
+else
+{
+lean_object* x_13; lean_object* x_14; lean_object* x_15; lean_object* x_16; uint8_t x_17; 
+x_13 = lean_ctor_get(x_2, 1);
+lean_inc(x_13);
+lean_dec_ref(x_2);
+x_14 = lean_box(x_12);
+x_15 = lean_box(x_5);
+x_16 = lean_alloc_closure((void*)(l_le__fuel___lam__1___boxed), 5, 4);
+lean_closure_set(x_16, 0, x_1);
+lean_closure_set(x_16, 1, x_9);
+lean_closure_set(x_16, 2, x_14);
+lean_closure_set(x_16, 3, x_15);
+x_17 = l_List_all___redArg(x_13, x_16);
+return x_17;
+}
+}
+}
+}
+LEAN_EXPORT lean_object* l_le__fuel___lam__0___boxed(lean_object* x_1, lean_object* x_2, lean_object* x_3, lean_object* x_4) {
+_start:
+{
+uint8_t x_5; uint8_t x_6; lean_object* x_7; 
+x_5 = lean_unbox(x_3);
+x_6 = l_le__fuel___lam__0(x_1, x_2, x_5, x_4);
+lean_dec(x_2);
+x_7 = lean_box(x_6);
+return x_7;
+}
+}
+LEAN_EXPORT lean_object* l_le__fuel___lam__1___boxed(lean_object* x_1, lean_object* x_2, lean_object* x_3, lean_object* x_4, lean_object* x_5) {
+_start:
+{
+uint8_t x_6; uint8_t x_7; uint8_t x_8; lean_object* x_9; 
+x_6 = lean_unbox(x_3);
+x_7 = lean_unbox(x_4);
+x_8 = l_le__fuel___lam__1(x_1, x_2, x_6, x_7, x_5);
+lean_dec(x_2);
+x_9 = lean_box(x_8);
+return x_9;
+}
+}
+LEAN_EXPORT lean_object* l_le__fuel___boxed(lean_object* x_1, lean_object* x_2, lean_object* x_3) {
+_start:
+{
+uint8_t x_4; lean_object* x_5; 
+x_4 = l_le__fuel(x_1, x_2, x_3);
+lean_dec(x_3);
+x_5 = lean_box(x_4);
+return x_5;
+}
+}
+LEAN_EXPORT uint8_t l_eq__fuel(lean_object* x_1, lean_object* x_2, lean_object* x_3) {
+_start:
+{
+uint8_t x_4; 
+lean_inc_ref(x_2);
+lean_inc_ref(x_1);
+x_4 = l_le__fuel(x_1, x_2, x_3);
+if (x_4 == 0)
+{
+lean_dec_ref(x_2);
+lean_dec_ref(x_1);
+return x_4;
+}
+else
+{
+uint8_t x_5; 
+x_5 = l_le__fuel(x_2, x_1, x_3);
+return x_5;
+}
+}
+}
+LEAN_EXPORT lean_object* l_eq__fuel___boxed(lean_object* x_1, lean_object* x_2, lean_object* x_3) {
+_start:
+{
+uint8_t x_4; lean_object* x_5; 
+x_4 = l_eq__fuel(x_1, x_2, x_3);
+lean_dec(x_3);
+x_5 = lean_box(x_4);
+return x_5;
+}
+}
+LEAN_EXPORT lean_object* l_Game_remove(lean_object* x_1, lean_object* x_2) {
+_start:
+{
+if (lean_obj_tag(x_2) == 0)
+{
+lean_dec_ref(x_1);
+return x_2;
+}
+else
+{
+uint8_t x_3; 
+x_3 = !lean_is_exclusive(x_2);
+if (x_3 == 0)
+{
+lean_object* x_4; lean_object* x_5; lean_object* x_6; lean_object* x_7; lean_object* x_8; uint8_t x_9; 
+x_4 = lean_ctor_get(x_2, 0);
+x_5 = lean_ctor_get(x_2, 1);
+lean_inc(x_4);
+x_6 = l_Game_birthday(x_4);
+lean_inc_ref(x_1);
+x_7 = l_Game_birthday(x_1);
+x_8 = lean_nat_add(x_6, x_7);
+lean_dec(x_7);
+lean_dec(x_6);
+lean_inc_ref(x_1);
+lean_inc(x_4);
+x_9 = l_eq__fuel(x_4, x_1, x_8);
+lean_dec(x_8);
+if (x_9 == 0)
+{
+lean_object* x_10; 
+x_10 = l_Game_remove(x_1, x_5);
+lean_ctor_set(x_2, 1, x_10);
+return x_2;
+}
+else
+{
+lean_free_object(x_2);
+lean_dec(x_4);
+x_2 = x_5;
+goto _start;
+}
+}
+else
+{
+lean_object* x_12; lean_object* x_13; lean_object* x_14; lean_object* x_15; lean_object* x_16; uint8_t x_17; 
+x_12 = lean_ctor_get(x_2, 0);
+x_13 = lean_ctor_get(x_2, 1);
+lean_inc(x_13);
+lean_inc(x_12);
+lean_dec(x_2);
+lean_inc(x_12);
+x_14 = l_Game_birthday(x_12);
+lean_inc_ref(x_1);
+x_15 = l_Game_birthday(x_1);
+x_16 = lean_nat_add(x_14, x_15);
+lean_dec(x_15);
+lean_dec(x_14);
+lean_inc_ref(x_1);
+lean_inc(x_12);
+x_17 = l_eq__fuel(x_12, x_1, x_16);
+lean_dec(x_16);
+if (x_17 == 0)
+{
+lean_object* x_18; lean_object* x_19; 
+x_18 = l_Game_remove(x_1, x_13);
+x_19 = lean_alloc_ctor(1, 2, 0);
+lean_ctor_set(x_19, 0, x_12);
+lean_ctor_set(x_19, 1, x_18);
+return x_19;
+}
+else
+{
+lean_dec(x_12);
+x_2 = x_13;
+goto _start;
+}
+}
+}
+}
+}
+LEAN_EXPORT lean_object* l_Game_remove__left(lean_object* x_1, lean_object* x_2) {
+_start:
+{
+uint8_t x_3; 
+x_3 = !lean_is_exclusive(x_2);
+if (x_3 == 0)
+{
+lean_object* x_4; lean_object* x_5; 
+x_4 = lean_ctor_get(x_2, 0);
+x_5 = l_Game_remove(x_1, x_4);
+lean_ctor_set(x_2, 0, x_5);
+return x_2;
+}
+else
+{
+lean_object* x_6; lean_object* x_7; lean_object* x_8; lean_object* x_9; 
+x_6 = lean_ctor_get(x_2, 0);
+x_7 = lean_ctor_get(x_2, 1);
+lean_inc(x_7);
+lean_inc(x_6);
+lean_dec(x_2);
+x_8 = l_Game_remove(x_1, x_6);
+x_9 = lean_alloc_ctor(0, 2, 0);
+lean_ctor_set(x_9, 0, x_8);
+lean_ctor_set(x_9, 1, x_7);
+return x_9;
+}
+}
+}
+LEAN_EXPORT lean_object* l_Game_remove__right(lean_object* x_1, lean_object* x_2) {
+_start:
+{
+uint8_t x_3; 
+x_3 = !lean_is_exclusive(x_2);
+if (x_3 == 0)
+{
+lean_object* x_4; lean_object* x_5; 
+x_4 = lean_ctor_get(x_2, 1);
+x_5 = l_Game_remove(x_1, x_4);
+lean_ctor_set(x_2, 1, x_5);
+return x_2;
+}
+else
+{
+lean_object* x_6; lean_object* x_7; lean_object* x_8; lean_object* x_9; 
+x_6 = lean_ctor_get(x_2, 0);
+x_7 = lean_ctor_get(x_2, 1);
+lean_inc(x_7);
+lean_inc(x_6);
+lean_dec(x_2);
+x_8 = l_Game_remove(x_1, x_7);
+x_9 = lean_alloc_ctor(0, 2, 0);
+lean_ctor_set(x_9, 0, x_6);
+lean_ctor_set(x_9, 1, x_8);
+return x_9;
+}
 }
 }
 lean_object* initialize_Init(uint8_t builtin);
