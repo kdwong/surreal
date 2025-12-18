@@ -41,6 +41,18 @@ def sr_zero : Surreal := ⟨zero, isSurreal_zero⟩
 #check sr_zero.val -- Game
 #check sr_zero.property -- IsSurreal sr_zero
 
+--- the well-definedness of ≤ on games implies the well-definedness of ≤ on surreal numbers
+
+theorem Surreal.le_refl (x : Surreal) : Surreal.le x x := by
+  unfold Surreal.le
+  apply x_le_x x.val
+
+theorem Surreal.le_trans : ∀ x y z : Surreal ,
+  (Surreal.le x y) ∧ (Surreal.le y z) → Surreal.le x z := by
+  unfold Surreal.le
+  intro x y z h_le
+  exact Game.le_trans x.val y.val z.val h_le
+
 def S : Surreal → Surreal → Prop := fun y x => birthday y < birthday x
 lemma wf_S : WellFounded S :=  by
   exact InvImage.wf (fun s : Surreal => birthday s) wellFounded_lt
@@ -139,6 +151,45 @@ theorem totality : ∀ (x y : Surreal), Surreal.le x y ∨ Surreal.le y x := by
       have y_le_yr := ((xL_x_xR y).2 yr h_yr).1
       have x_le_y := le_trans y yr x ⟨y_le_yr, h_le⟩
       exact x_le_y
+
+theorem not_le_iff_lt (x y : Surreal) : x.lt y ↔ ¬(y.le x) := by
+  constructor
+  · -- Goal 1 : lt x y → ¬(le y x)
+    intro h_lt
+    unfold Surreal.lt at h_lt
+    exact h_lt.2
+
+  · -- Goal 2 : ¬(le y x) → lt x y
+    intro h_not_le
+    unfold Surreal.lt
+    constructor
+    · -- Goal 1 : le x y
+      exact (totality y x).resolve_left h_not_le
+    · -- Goal 2 : ¬(le y x)
+      exact h_not_le
+
+theorem Surreal.lt_trans (x y z : Surreal) :
+  x.lt y ∧ y.lt z → x.lt z := by
+  intro h
+  have h_xy := h.1
+  have h_yz := h.2
+  unfold Surreal.lt
+  constructor
+  · -- Goal 1: le x z
+    have h_x_le_y := h_xy.1
+    have h_y_le_z := h_yz.1
+    apply Surreal.le_trans x y z
+    exact ⟨h_x_le_y, h_y_le_z⟩
+
+  · -- Goal 2: ¬(le z x)
+    intro h_contra --assume le z x
+    have h_x_le_y := h_xy.1
+    have h_z_le_y : z.le y := by
+      apply Surreal.le_trans z x y
+      exact ⟨h_contra, h_x_le_y⟩
+    have h_z_not_le_y := h_yz.2
+    contradiction
+
 
 
 theorem left_removal_IsSurreal
