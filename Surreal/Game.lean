@@ -1,8 +1,10 @@
 import Mathlib.Tactic.Linarith
 import Mathlib.Data.List.MinMax
+import Mathlib.Order.Basic
 
 inductive Game where
   | mk : List Game → List Game → Game
+deriving BEq, Repr
 
 open Game
 
@@ -253,28 +255,12 @@ by
   apply le_trans1 tri habc
 
 
-def le_fuel (g h : Game) : Nat → Bool
-  | 0 => false
-  | n + 1 =>
-    (g.left.all (fun g_l => not (le_fuel h g_l n))) &&
-    (h.right.all (fun h_r => not (le_fuel h_r g n)))
+#check [zero, one].erase zero
+#eval [zero, one].erase half
 
-def eq_fuel (g h : Game) (fuel : Nat) : Bool :=
-  le_fuel g h fuel && le_fuel h g fuel
-
-def Game.remove (r : Game) : List Game → List Game
-  | [] => []
-  | t :: ts =>
-    -- We provide enough fuel for the equality check to be conclusive.
-    -- The required fuel is the sum of the birthdays of the two games.
-    if eq_fuel t r (t.birthday + r.birthday)
-    then remove r ts
-    else t :: remove r ts
-
-#check remove zero [zero, one]
 
 def Game.remove_left (l : Game) (g : Game) : Game :=
-  mk (remove l g.left) g.right
+  mk (g.left.erase l) g.right
 
 def Game.remove_right (r : Game) (g : Game) : Game :=
-  mk g.left (remove r g.right)
+  mk g.left (g.right.erase r)
