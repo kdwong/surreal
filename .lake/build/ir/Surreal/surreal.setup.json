@@ -4,10 +4,12 @@
   "relaxedAutoImplicit": false,
   "pp.unicode.fun": true,
   "maxSynthPendingDepth": 3},
- "name": "Surreal.game",
+ "name": "Surreal.surreal",
  "isModule": false,
  "importArts":
- {"Qq.Typ":
+ {"Surreal.game":
+  ["C:\\Users\\wziya\\surreal\\.lake\\build\\lib\\lean\\Surreal\\game.olean"],
+  "Qq.Typ":
   ["C:\\Users\\wziya\\surreal\\.lake\\packages\\Qq\\.lake\\build\\lib\\lean\\Qq\\Typ.olean",
    "C:\\Users\\wziya\\surreal\\.lake\\packages\\Qq\\.lake\\build\\lib\\lean\\Qq\\Typ.ir",
    "C:\\Users\\wziya\\surreal\\.lake\\packages\\Qq\\.lake\\build\\lib\\lean\\Qq\\Typ.olean.server",

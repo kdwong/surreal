@@ -322,3 +322,5 @@ lemma remove_right_dom_remains (g r' r : Game) (hr' : r' ∈ g.right) (h_dom : r
     have h_contra := h_dom.2
     contradiction
   apply remove_right_contains_all_but g r' r hr' h_neq
+
+
