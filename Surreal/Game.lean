@@ -324,3 +324,50 @@ lemma remove_right_dom_remains (g r' r : Game) (hr' : r' ∈ g.right) (h_dom : r
   apply remove_right_contains_all_but g r' r hr' h_neq
 
 
+lemma Game.eq_of_equiv_options (a b : Game)
+    (hL_ab : ∀ aL ∈ a.left, ∃ bL ∈ b.left, aL.eq bL)
+    (hL_ba : ∀ bL ∈ b.left, ∃ aL ∈ a.left, bL.eq aL)
+    (hR_ab : ∀ aR ∈ a.right, ∃ bR ∈ b.right, aR.eq bR)
+    (hR_ba : ∀ bR ∈ b.right, ∃ aR ∈ a.right, bR.eq aR) :
+    a.eq b := by
+  unfold eq
+  constructor
+  · -- Part 1: a ≤ b
+    unfold le
+    constructor
+    · -- ∀ aL ∈ a.left, ¬(b ≤ aL)
+      intro aL haL hb_le_aL
+      obtain ⟨bL, hbL, heq⟩ := hL_ab aL haL
+      -- b ≤ aL and aL ≤ bL (heq.1) → b ≤ bL
+      have b_le_bL : b.le bL := Game.le_trans b aL bL ⟨hb_le_aL, heq.1⟩
+      have h_refl : b.le b := le_refl b
+      unfold le at h_refl
+      exact h_refl.1 bL hbL b_le_bL
+    · -- ∀ bR ∈ b.right, ¬(bR ≤ a)
+      intro bR hbR hbR_le_a
+      obtain ⟨aR, haR, heq⟩ := hR_ba bR hbR
+      -- aR ≤ bR (heq.2) and bR ≤ a → aR ≤ a
+      have aR_le_a : aR.le a := Game.le_trans aR bR a ⟨heq.2, hbR_le_a⟩
+      have h_refl : a.le a := le_refl a
+      unfold le at h_refl
+      exact h_refl.2 aR haR aR_le_a
+
+  · -- Part 2: b ≤ a
+    unfold le
+    constructor
+    · -- ∀ bL ∈ b.left, ¬(a ≤ bL)
+      intro bL hbL ha_le_bL
+      obtain ⟨aL, haL, heq⟩ := hL_ba bL hbL
+      -- a ≤ bL and bL ≤ aL (heq.1) → a ≤ aL
+      have a_le_aL : a.le aL := Game.le_trans a bL aL ⟨ha_le_bL, heq.1⟩
+      have h_refl : a.le a := le_refl a
+      unfold le at h_refl
+      exact h_refl.1 aL haL a_le_aL
+    · -- ∀ aR ∈ a.right, ¬(aR ≤ b)
+      intro aR haR haR_le_b
+      obtain ⟨bR, hbR, heq⟩ := hR_ab aR haR
+      -- bR ≤ aR (heq.2) and aR ≤ b → bR ≤ b
+      have bR_le_b : bR.le b := Game.le_trans bR aR b ⟨heq.2, haR_le_b⟩
+      have h_refl : b.le b := le_refl b
+      unfold le at h_refl
+      exact h_refl.2 bR hbR bR_le_b
