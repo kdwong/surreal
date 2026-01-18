@@ -234,7 +234,6 @@ theorem right_removal_IsSurreal
         unfold IsSurreal at h_surreal
         exact h_surreal.2.2 xr h_xr
 
-
 lemma like_le (x y : Surreal) :
   (∀ xl ∈ x.left, ∃ yl ∈ y.left, xl.le yl) ∧
   (∀ yr ∈ y.right, ∃ xr ∈ x.right, xr.le yr) → x.le y := by
@@ -256,7 +255,6 @@ lemma like_le (x y : Surreal) :
     have xr_le_x := le_trans xr yr x ⟨xr_le_yr, h_le⟩
     have xr_nleq_x := ((xL_x_xR x).2 xr h_xr).2
     contradiction
-
 
 -- The theorem below uses lawfulBEq on Game.eq
 theorem simplicity_left (x : Surreal) (l l' : Game)
@@ -368,3 +366,12 @@ theorem simplicity_right (x : Surreal) (r r' : Game)
         apply h1 at h_yr
         exact h_yr
       · exact le_refl yr
+
+structure BiSurreal where
+  a : Surreal
+  b : Surreal
+
+def U : BiSurreal → BiSurreal → Prop :=
+  fun a b => birthday a.1 + birthday a.2  < birthday b.1 + birthday b.2
+lemma wf_U : WellFounded U :=
+  InvImage.wf (fun s : BiSurreal => Game.birthday s.1 + Game.birthday s.2) wellFounded_lt

@@ -7,6 +7,7 @@ inductive Game where
   | mk : List Game → List Game → Game
 deriving BEq, Repr
 
+--- This is not used in the main theorems we are going to prove. ----
 instance : LawfulBEq Game where
   eq_of_beq := by sorry
   rfl := by sorry
@@ -212,8 +213,15 @@ def T : TriGame → TriGame → Prop :=
 lemma wf_T : WellFounded T :=
   InvImage.wf (fun s : TriGame => birthday s.1 + birthday s.2 + birthday s.3) wellFounded_lt
 
-theorem Game.le_trans1 : ∀ (x : TriGame) ,
-  (le x.a x.b) ∧ (le x.b x.c) → le x.a x.c := by
+structure BiGame where
+  a : Game
+  b : Game
+def B : BiGame → BiGame → Prop :=
+  fun a b => birthday a.1 + birthday a.2 < birthday b.1 + birthday b.2
+lemma wf_B : WellFounded B :=
+  InvImage.wf (fun s : BiGame => (Game.birthday s.1) + (Game.birthday s.2)) wellFounded_lt
+
+theorem Game.le_trans1 : ∀ (x : TriGame), (le x.a x.b) ∧ (le x.b x.c) → le x.a x.c := by
   intro x
   apply wf_T.induction x
   intro x IH h_le
