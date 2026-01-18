@@ -270,7 +270,8 @@ theorem Game.add_comm (a b : Game) : eq (a.add b) (b.add a) := by
 --------------------------------------------
 ------- Adding < numbers gives < sum -------
 --------------------------------------------
-theorem Game.add_lt_le {a b a' b' : Game} : (lt a a') ∧ (le b b') → (add a b).lt (add a' b') := by
+theorem Game.add_lt_le {a b a' b' : Game} :
+  (a.lt a') ∧ (b.le b') → (a.add b).lt (a'.add b') := by
   intro h
   unfold lt at h
   constructor
@@ -279,7 +280,8 @@ theorem Game.add_lt_le {a b a' b' : Game} : (lt a a') ∧ (le b b') → (add a b
     have h_bad : a'.le a := Game.add_reduce a b a' b' ⟨h_contra, h.2⟩
     exact h.1.2 h_bad
 
-theorem Game.add_le_lt {a b a' b' : Game} : (le a a') ∧ (lt b b') → (add a b).lt (add a' b') := by
+theorem Game.add_le_lt {a b a' b' : Game} :
+  (a.le a') ∧ (b.lt b') → (a.add b).lt (a'.add b') := by
   intro h
   unfold lt at h
   constructor
@@ -359,42 +361,7 @@ theorem Game.add_assoc (a b c : Game) : (a.add b).add c = a.add (b.add c) := by
               rw [← IH_z zr (birthday_lt_right _ _ hzr)]
               conv_rhs => enter [1]; rw [Game.add]
 
-lemma Game.add_lt (a b a' b' : Game) :
-  (a.lt a') ∧ (b.le b') → (a.add b).lt (a'.add b') := by
-  intro ⟨h1, h2⟩
-  have LE: (a.add b).le (a'.add b') := by
-   exact Game.add_le_add a b a' b' ⟨h1.1, h2⟩
-  unfold lt
-  constructor
-  · exact Game.add_le_add a b a' b' ⟨h1.1, h2⟩
-  · intro h_contra
-    have h_bad : a'.le a := Game.add_reduce a b a' b' ⟨h_contra, h2⟩
-    exact h1.2 h_bad
 
-lemma Game.add_lt2 (a b a' b' : Game) :
-  (a.le a') ∧ (b.lt b') → (a.add b).lt (a'.add b') := by
-    intro h
-    have rev : (b.add a).lt (b'.add a') := Game.add_lt b a b' a' ⟨h.2, h.1⟩
-    have comm_ab   : (a.add b).eq (b.add a) := Game.add_comm a b
-    have comm_a'b' : (b'.add a').eq (a'.add b') := Game.add_comm b' a'
-    unfold lt
-    constructor
-    · apply Game.le_trans _ (b.add a)
-      constructor
-      · exact comm_ab.1
-      · apply Game.le_trans _ (b'.add a')
-        constructor
-        · exact rev.1
-        · exact comm_a'b'.1
-    · intro h_contra
-      apply rev.2
-      apply Game.le_trans _ (a'.add b')
-      constructor
-      · exact comm_a'b'.1
-      · apply Game.le_trans _ (a.add b)
-        constructor
-        · exact h_contra
-        · exact comm_ab.1
 
 structure BiSurreal where
   a : Surreal
@@ -404,7 +371,6 @@ def U : BiSurreal → BiSurreal → Prop :=
   fun a b => birthday a.1 + birthday a.2  < birthday b.1 + birthday b.2
 lemma wf_U : WellFounded U :=
   InvImage.wf (fun s : BiSurreal => birthday s.1 + birthday s.2) wellFounded_lt
-
 lemma lt_imp_not_le {x y : Game} (h : lt x y) : ¬(le y x) := h.2
 
 theorem add_isSurreal1 (x : BiSurreal) :
@@ -434,7 +400,7 @@ theorem add_isSurreal1 (x : BiSurreal) :
     · -- Now split on where the Right option R comes from: (a_R + b) or (a + b_R)
       rcases hR with ⟨ar, har, rfl⟩ | ⟨br, hbr, rfl⟩
       -- Case 1.1: al + b < ar + b
-      · apply Game.add_lt
+      · apply Game.add_lt_le
         constructor
         · -- al < ar (because a is Surreal)
           have h_al_lt_a : al.lt x.a.val := by
@@ -448,7 +414,7 @@ theorem add_isSurreal1 (x : BiSurreal) :
           exact Game.le_refl b
 
       -- Case 1.2: al + b < a + br
-      · apply Game.add_lt
+      · apply Game.add_lt_le
         constructor
         · -- al < a → al ≤ a
           have h_in : al ∈ x.a.val.left := by rw [ha]; simp [Game.left]; exact hal
@@ -462,7 +428,7 @@ theorem add_isSurreal1 (x : BiSurreal) :
       rcases hR with ⟨ar, har, rfl⟩ | ⟨br, hbr, rfl⟩
 
       -- Case 2.1: a + bl < ar + b
-      · apply Game.add_lt
+      · apply Game.add_lt_le
         constructor
         · -- a < ar
           have h_in : ar ∈ x.a.val.right := by rw [ha]; simp [Game.right]; exact har
@@ -472,7 +438,7 @@ theorem add_isSurreal1 (x : BiSurreal) :
           exact ((xL_x_xR x.b).1 bl h_in).1
 
       -- Case 2.2: a + bl < a + br
-      · apply Game.add_lt2
+      · apply Game.add_le_lt
         constructor
         · -- a ≤ a
           exact Game.le_refl a
@@ -779,7 +745,6 @@ theorem Surreal.add_neg (a : Surreal) : (a.val.add (Game.neg a.val)).eq zero := 
                      (∃ xr ∈ x.right, L = x.add (Game.neg xr)) := by
         obtain ⟨XL, XR, hx_eq⟩ : ∃ L R, x = mk L R := ⟨x.left, x.right, by cases x; rfl⟩
         rw [hx_eq] at hL
-        -- Controlled unfolding
         rw [Game.neg] at hL
         simp only [Game.left, Game.right] at hL
         rw [Game.add] at hL
@@ -802,14 +767,10 @@ theorem Surreal.add_neg (a : Surreal) : (a.val.add (Game.neg a.val)).eq zero := 
         have h_xl_lt_x : xl.lt x := (xL_x_xR a).1 xl hxl
         have h_neg_x_lt_neg_xl : (Game.neg x).lt (Game.neg xl) := by
           rw [neg_lt_neg] at h_xl_lt_x; exact h_xl_lt_x
-
         have IH_xl := IH ⟨xl, xl_surreal⟩ (birthday_lt_left x xl hxl)
         have h_sum_zero : Game.le (xl.add (Game.neg xl)) zero := IH_xl.1
-
-        -- Fix: Use And.intro explicitly
         have h_mono : Game.lt (xl.add (Game.neg x)) (xl.add (Game.neg xl)) :=
           Game.add_le_lt (And.intro (Game.le_refl xl) h_neg_x_lt_neg_xl)
-
         have h_lt_zero : Game.lt (xl.add (Game.neg x)) zero :=
           Game.lt_of_lt_of_le h_mono h_sum_zero
 
@@ -819,15 +780,10 @@ theorem Surreal.add_neg (a : Surreal) : (a.val.add (Game.neg a.val)).eq zero := 
       · unfold IsSurreal at sx
         have xr_surreal : IsSurreal xr := sx.2.2 xr hxr
         have h_x_lt_xr : x.lt xr := (xL_x_xR a).2 xr hxr
-
         have IH_xr := IH ⟨xr, xr_surreal⟩ (birthday_lt_right x xr hxr)
         have h_sum_zero : Game.le (xr.add (Game.neg xr)) zero := IH_xr.1
-
-        -- Fix: Use And.intro explicitly
         have h_mono : Game.lt (x.add (Game.neg xr)) (xr.add (Game.neg xr)) :=
-          Game.add_lt x (Game.neg xr) xr (Game.neg xr)
-          (And.intro h_x_lt_xr (Game.le_refl (Game.neg xr)))
-
+          Game.add_lt_le ⟨h_x_lt_xr, (Game.le_refl (Game.neg xr))⟩
         have h_lt_zero : Game.lt (x.add (Game.neg xr)) zero :=
           Game.lt_of_lt_of_le h_mono h_sum_zero
 
@@ -876,33 +832,22 @@ theorem Surreal.add_neg (a : Surreal) : (a.val.add (Game.neg a.val)).eq zero := 
         have h_x_lt_xr : x.lt xr := (xL_x_xR a).2 xr hxr
         have h_neg_xr_lt_neg_x : (Game.neg xr).lt (Game.neg x) := by
           rw [neg_lt_neg] at h_x_lt_xr; exact h_x_lt_xr
-
         have IH_xr := IH ⟨xr, xr_surreal⟩ (birthday_lt_right x xr hxr)
         have h_zero_le_sum : Game.le zero (xr.add (Game.neg xr)) := IH_xr.2
-
-        -- Fix: Use And.intro explicitly
         have h_mono : Game.lt (xr.add (Game.neg xr)) (xr.add (Game.neg x)) :=
            Game.add_le_lt (And.intro (Game.le_refl xr) h_neg_xr_lt_neg_x)
-
         have h_zero_lt : Game.lt zero (xr.add (Game.neg x)) :=
            Game.lt_of_le_of_lt h_zero_le_sum h_mono
-
         exact lt_imp_not_le h_zero_lt
 
       -- Case 2: R = x + (-xl)
       · unfold IsSurreal at sx
         have xl_surreal : IsSurreal xl := sx.2.1 xl hxl
         have h_xl_lt_x : xl.lt x := (xL_x_xR a).1 xl hxl
-
         have IH_xl := IH ⟨xl, xl_surreal⟩ (birthday_lt_left x xl hxl)
         have h_zero_le_sum : Game.le zero (xl.add (Game.neg xl)) := IH_xl.2
-
-        -- Fix: Use And.intro explicitly
         have h_mono : Game.lt (xl.add (Game.neg xl)) (x.add (Game.neg xl)) :=
-           Game.add_lt xl (Game.neg xl) x (Game.neg xl)
-           (And.intro h_xl_lt_x (Game.le_refl (Game.neg xl)))
-
-
+          Game.add_lt_le ⟨h_xl_lt_x, (Game.le_refl (Game.neg xl))⟩
         have h_zero_lt : Game.lt zero (x.add (Game.neg xl)) :=
            Game.lt_of_le_of_lt h_zero_le_sum h_mono
 
@@ -921,8 +866,6 @@ def Game.mult : Game → Game → Game
   | x, y =>
   match hx : x, hy : y with
   | mk XL XR, mk YL YR =>
-  -- Use attach to get assumption
-  -- Change 1: hxl -> _hxl (add underscore to suppress unused variable warning)
   let L :=
     List.zipWith (fun ⟨xl, _hxl⟩ ⟨yl, _hyl⟩ =>
       ((xl.mult y).add (x.mult yl)).add (xl.mult yl).neg) XL.attach YL.attach ++
@@ -941,7 +884,6 @@ def Game.mult : Game → Game → Game
   -- =================================================
   -- 1. xl * y
   · have hxl_lt : xl.birthday < (mk XL XR).birthday :=
-      -- Updated variable usage: hxl -> _hxl
       birthday_lt_left (mk XL XR) xl (by simpa [Game.left] using _hxl)
     have hmeasure : xl.birthday + y.birthday < (mk XL XR).birthday + y.birthday :=
       add_lt_add_right hxl_lt y.birthday
@@ -949,7 +891,6 @@ def Game.mult : Game → Game → Game
 
   -- 2. x * yl
   · have hyl_lt : yl.birthday < (mk YL YR).birthday :=
-      -- Updated variable usage: hyl -> _hyl
       birthday_lt_left (mk YL YR) yl (by simpa [Game.left] using _hyl)
     have hmeasure : x.birthday + yl.birthday < x.birthday + (mk YL YR).birthday :=
       add_lt_add_left hyl_lt x.birthday
@@ -962,7 +903,6 @@ def Game.mult : Game → Game → Game
       birthday_lt_left (mk YL YR) yl (by simpa [Game.left] using _hyl)
     have hmeasure : xl.birthday + yl.birthday < (mk XL XR).birthday + (mk YL YR).birthday :=
       add_lt_add hxl_lt hyl_lt
-    -- Change 2: Fixed indentation for assumption
     assumption
 
   -- =================================================
