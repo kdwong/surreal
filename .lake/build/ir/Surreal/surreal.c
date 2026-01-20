@@ -13,9 +13,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+LEAN_EXPORT lean_object* l_BiSurreal_ctorIdx___boxed(lean_object*);
 LEAN_EXPORT lean_object* l_Surreal_right___boxed(lean_object*);
 LEAN_EXPORT lean_object* l_instCoeSurrealGame;
 LEAN_EXPORT lean_object* l___private_Surreal_surreal_0__instReprGame_repr_match__1_splitter(lean_object*, lean_object*, lean_object*);
+LEAN_EXPORT lean_object* l_BiSurreal_ctorIdx(lean_object*);
 LEAN_EXPORT lean_object* l_instCoeSurrealGame___lam__0(lean_object*);
 LEAN_EXPORT lean_object* l_Surreal_right(lean_object*);
 LEAN_EXPORT lean_object* l___private_Surreal_surreal_0__instReprGame_repr_match__1_splitter___redArg(lean_object*, lean_object*);
@@ -111,6 +113,23 @@ _start:
 lean_object* x_4; 
 x_4 = l___private_Surreal_surreal_0__instReprGame_repr_match__1_splitter___redArg(x_2, x_3);
 return x_4;
+}
+}
+LEAN_EXPORT lean_object* l_BiSurreal_ctorIdx(lean_object* x_1) {
+_start:
+{
+lean_object* x_2; 
+x_2 = lean_unsigned_to_nat(0u);
+return x_2;
+}
+}
+LEAN_EXPORT lean_object* l_BiSurreal_ctorIdx___boxed(lean_object* x_1) {
+_start:
+{
+lean_object* x_2; 
+x_2 = l_BiSurreal_ctorIdx(x_1);
+lean_dec_ref(x_1);
+return x_2;
 }
 }
 lean_object* initialize_Init(uint8_t builtin);

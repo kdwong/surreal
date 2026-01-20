@@ -35,6 +35,7 @@ LEAN_EXPORT lean_object* l_Game_remove__right___boxed(lean_object*, lean_object*
 LEAN_EXPORT lean_object* l_List_foldl___at___00Std_Format_joinSep___at___00List_repr___at___00instReprGame_repr_spec__0_spec__0_spec__0(lean_object*, lean_object*, lean_object*);
 LEAN_EXPORT lean_object* l_List_repr___at___00instReprGame_repr_spec__0___redArg(lean_object*);
 LEAN_EXPORT lean_object* l_Game_left___boxed(lean_object*);
+LEAN_EXPORT lean_object* l_BiGame_ctorIdx___boxed(lean_object*);
 LEAN_EXPORT lean_object* l_instReprGame_repr___boxed(lean_object*, lean_object*);
 LEAN_EXPORT lean_object* l_Std_Format_joinSep___at___00List_repr___at___00instReprGame_repr_spec__0_spec__0(lean_object*, lean_object*);
 lean_object* lean_string_length(lean_object*);
@@ -86,6 +87,7 @@ LEAN_EXPORT lean_object* l_Game_remove__left(lean_object*, lean_object*);
 size_t lean_usize_sub(size_t, size_t);
 LEAN_EXPORT lean_object* l_Game_birthday(lean_object*);
 static lean_object* l_List_repr___at___00instReprGame_repr_spec__0___redArg___closed__9;
+LEAN_EXPORT lean_object* l_BiGame_ctorIdx(lean_object*);
 LEAN_EXPORT lean_object* l_minus__one;
 LEAN_EXPORT lean_object* l_Game_ctorIdx(lean_object*);
 static lean_object* l_List_repr___at___00instReprGame_repr_spec__0___redArg___closed__1;
@@ -1082,6 +1084,23 @@ _start:
 {
 lean_object* x_2; 
 x_2 = l_TriGame_ctorIdx(x_1);
+lean_dec_ref(x_1);
+return x_2;
+}
+}
+LEAN_EXPORT lean_object* l_BiGame_ctorIdx(lean_object* x_1) {
+_start:
+{
+lean_object* x_2; 
+x_2 = lean_unsigned_to_nat(0u);
+return x_2;
+}
+}
+LEAN_EXPORT lean_object* l_BiGame_ctorIdx___boxed(lean_object* x_1) {
+_start:
+{
+lean_object* x_2; 
+x_2 = l_BiGame_ctorIdx(x_1);
 lean_dec_ref(x_1);
 return x_2;
 }

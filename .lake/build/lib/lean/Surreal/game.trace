@@ -1,28 +1,28 @@
 {"synthetic": false,
  "schemaVersion": "2025-09-10",
  "outputs":
- {"o": ["f1e9049869421b5a.olean"],
-  "i": "bc548c3a37ce26c7.ilean",
-  "c": "e08b1d830de553e3.c"},
+ {"o": ["50dc70ed499f867b.olean"],
+  "i": "f19f84596e916819.ilean",
+  "c": "57720d3cdcc67ddd.c"},
  "log":
  [{"message":
    ".> LEAN_PATH=C:\\Users\\kayue\\Desktop\\Lean_Project\\.lake\\packages\\Cli\\.lake\\build\\lib\\lean;C:\\Users\\kayue\\Desktop\\Lean_Project\\.lake\\packages\\batteries\\.lake\\build\\lib\\lean;C:\\Users\\kayue\\Desktop\\Lean_Project\\.lake\\packages\\Qq\\.lake\\build\\lib\\lean;C:\\Users\\kayue\\Desktop\\Lean_Project\\.lake\\packages\\aesop\\.lake\\build\\lib\\lean;C:\\Users\\kayue\\Desktop\\Lean_Project\\.lake\\packages\\proofwidgets\\.lake\\build\\lib\\lean;C:\\Users\\kayue\\Desktop\\Lean_Project\\.lake\\packages\\importGraph\\.lake\\build\\lib\\lean;C:\\Users\\kayue\\Desktop\\Lean_Project\\.lake\\packages\\LeanSearchClient\\.lake\\build\\lib\\lean;C:\\Users\\kayue\\Desktop\\Lean_Project\\.lake\\packages\\plausible\\.lake\\build\\lib\\lean;C:\\Users\\kayue\\Desktop\\Lean_Project\\.lake\\packages\\mathlib\\.lake\\build\\lib\\lean;C:\\Users\\kayue\\Desktop\\Lean_Project\\.lake\\build\\lib\\lean c:\\Users\\kayue\\.elan\\toolchains\\leanprover--lean4---v4.26.0-rc2\\bin\\lean.exe C:\\Users\\kayue\\Desktop\\Lean_Project\\Surreal\\game.lean -o C:\\Users\\kayue\\Desktop\\Lean_Project\\.lake\\build\\lib\\lean\\Surreal\\game.olean -i C:\\Users\\kayue\\Desktop\\Lean_Project\\.lake\\build\\lib\\lean\\Surreal\\game.ilean -c C:\\Users\\kayue\\Desktop\\Lean_Project\\.lake\\build\\ir\\Surreal\\game.c --setup C:\\Users\\kayue\\Desktop\\Lean_Project\\.lake\\build\\ir\\Surreal\\game.setup.json --json",
    "level": "trace"},
-  {"message": "Surreal/game.lean:10:0: declaration uses 'sorry'",
+  {"message": "Surreal/game.lean:11:0: declaration uses 'sorry'",
    "level": "warning"},
-  {"message": "Surreal/game.lean:36:0: 1", "level": "info"},
-  {"message": "Surreal/game.lean:37:0: 3", "level": "info"},
-  {"message": "Surreal/game.lean:262:0: [Game.mk [] []]", "level": "info"},
+  {"message": "Surreal/game.lean:37:0: 1", "level": "info"},
+  {"message": "Surreal/game.lean:38:0: 3", "level": "info"},
+  {"message": "Surreal/game.lean:320:0: [Game.mk [] []]", "level": "info"},
   {"message":
-   "Surreal/game.lean:263:0: [Game.mk [] [], Game.mk [Game.mk [] []] []]",
+   "Surreal/game.lean:321:0: [Game.mk [] [], Game.mk [Game.mk [] []] []]",
    "level": "info"},
   {"message":
-   "Surreal/game.lean:272:0: Game.mk [Game.mk [] []] [Game.mk [Game.mk [] []] []]",
+   "Surreal/game.lean:330:0: Game.mk [Game.mk [] []] [Game.mk [Game.mk [] []] []]",
    "level": "info"},
-  {"message": "Surreal/game.lean:273:0: Game.mk [Game.mk [] []] []",
+  {"message": "Surreal/game.lean:331:0: Game.mk [Game.mk [] []] []",
    "level": "info"},
   {"message":
-   "Surreal/game.lean:274:0: Game.mk [] [Game.mk [Game.mk [] []] []]",
+   "Surreal/game.lean:332:0: Game.mk [] [Game.mk [Game.mk [] []] []]",
    "level": "info"}],
  "inputs":
  [["Surreal.game:deps",
@@ -49,11 +49,11 @@
   ["Lean 4.26.0, commit 9d4ad1273f6cea397c3066c2c83062a4410d16bf",
    "c1ab21c0a088cff7"],
   ["C:\\Users\\kayue\\Desktop\\Lean_Project\\Surreal\\game.lean",
-   "968856dc22432c9f"],
+   "092bcbd767326301"],
   ["options",
    [["-DmaxSynthPendingDepth=3", "c78e353d34de85d4"],
     ["-Dweak.linter.mathlibStandardSet=true", "8a155799906f2b42"],
     ["-DrelaxedAutoImplicit=false", "74a2b5546b55be80"],
     ["-Dpp.unicode.fun=true", "9b94070140457fab"]]],
   ["Module.leanArgs: #[]", "00000000000006bb"]],
- "depHash": "3f4b38560677a931"}
+ "depHash": "677c13794fd2de7b"}

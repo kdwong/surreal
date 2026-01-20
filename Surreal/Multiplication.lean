@@ -25,9 +25,6 @@ def Game.mul : Game → Game → Game
   Game.mk L R
   termination_by x y => Game.birthday x + Game.birthday y
   decreasing_by
-  -- =================================================
-  -- First zipwith
-  -- =================================================
   -- 1. xl * y
   · have hxl_lt : xl.birthday < (mk XL XR).birthday :=
       birthday_lt_left (mk XL XR) xl (by simpa [Game.left] using _hxl)
@@ -50,10 +47,6 @@ def Game.mul : Game → Game → Game
     have hmeasure : xl.birthday + yl.birthday < (mk XL XR).birthday + (mk YL YR).birthday :=
       add_lt_add hxl_lt hyl_lt
     assumption
-
-  -- =================================================
-  -- Second zipwith
-  -- =================================================
 
   -- 4. xr * y
   · have hxr_lt : xr.birthday < (mk XL XR).birthday :=
@@ -78,10 +71,6 @@ def Game.mul : Game → Game → Game
       add_lt_add hxr_lt hyr_lt
     assumption
 
-  -- =================================================
-  -- Third zipwith
-  -- =================================================
-
   -- 7. xl * y
   · have hxl_lt : xl.birthday < (mk XL XR).birthday :=
       birthday_lt_left (mk XL XR) xl (by simpa [Game.left] using _hxl)
@@ -105,10 +94,6 @@ def Game.mul : Game → Game → Game
       add_lt_add hxl_lt hyr_lt
     assumption
 
-  -- =================================================
-  -- Fourth Zipwith
-  -- =================================================
-
   -- 10. xr * y
   · have hxr_lt : xr.birthday < (mk XL XR).birthday :=
       birthday_lt_right (mk XL XR) xr (by simpa [Game.right] using _hxr)
@@ -131,3 +116,67 @@ def Game.mul : Game → Game → Game
     have hmeasure : xr.birthday + yl.birthday < (mk XL XR).birthday + (mk YL YR).birthday :=
       add_lt_add hxr_lt hyl_lt
     assumption
+
+
+-------------------------------------------
+--------------- a*0 = 0 -------------------
+-------------------------------------------
+theorem Game.mul_zero (a : Game) : Game.mul a zero = zero := by
+  sorry
+
+theorem Game.zero_mul (a : Game) : Game.mul zero a = zero := by
+  sorry  
+
+
+-------------------------------------------
+--------------- a*b = b*a -----------------
+-------------------------------------------
+theorem Game.mul_comm (a b : Game) : Game.mul a b = Game.mul b a := by
+  sorry
+
+
+-------------------------------------------
+------ (a = c and b = d) → a*b = c*d ------
+-------------------------------------------
+theorem Game.mul_equal (a b c d : Game) : 
+(a.eq c) ∧ (b.eq d) → (a.mul b).eq (c.mul d) := by
+  sorry
+
+
+-------------------------------------------
+----- a, b IsSurreal → a*b IsSurreal ------
+-------------------------------------------
+theorem Surreal.mul_isSurreal (a b : Surreal) : IsSurreal (Game.mul a.val b.val) := by
+  sorry
+
+
+def Surreal.mul (a b : Surreal) :
+  Surreal := ⟨(a.val).mul b.val, Surreal.mul_isSurreal a b⟩
+
+-------------------------------------------
+--------------- a*1 = 1 -------------------
+-------------------------------------------
+theorem Game.mul_one (a : Game) : Game.mul a one = a := by
+  sorry
+
+-- Perhaps one can use commutativity of multiplication below to get this?
+theorem Game.one_mul (a : Game) : Game.mul one a = one := by
+  sorry  
+
+
+-------------------------------------------
+----------- (a*b)*c = a*(b*c) -------------
+-------------------------------------------
+
+-- The proof shall be quite involved. May need AI to help.
+theorem Game.mul_assoc (a b c : Game) : Game.mul (Game.mul a b) c = Game.mul a (Game.mul b c) := by
+  sorry
+
+
+-------------------------------------------
+---------- a*(b+c) = a*b + a*c ------------
+-------------------------------------------
+theorem Game.mul_distrib (a b c : Game) : 
+    Game.mul a (Game.add b c) = Game.add (Game.mul a b) (Game.mul a c) := by
+  sorry
+
