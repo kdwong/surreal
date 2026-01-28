@@ -8,21 +8,57 @@ import Surreal.addition
 -------------------------------------------
 ---------- Definition of a*b --------------
 -------------------------------------------
+
+-- define flatten to simplify list
+def flatten {α : Type} : List (List α) → List α
+  | [] => []
+  | (x :: xs) => x ++ flatten xs
+
+
 def Game.mul : Game → Game → Game
   | x, y =>
-  match hx : x, hy : y with
+  match _hx : x, _hy : y with
   | mk XL XR, mk YL YR =>
-  let L :=
-    List.zipWith (fun ⟨xl, _hxl⟩ ⟨yl, _hyl⟩ =>
-      ((xl.mul y).add (x.mul yl)).add (xl.mul yl).neg) XL.attach YL.attach ++
-    List.zipWith (fun ⟨xr, _hxr⟩ ⟨yr, _hyr⟩ =>
-      ((xr.mul y).add (x.mul yr)).add (xr.mul yr).neg) XR.attach YR.attach
-  let R :=
-    List.zipWith (fun ⟨xl, _hxl⟩ ⟨yr, _hyr⟩ =>
-      ((xl.mul y).add (x.mul yr)).add (xl.mul yr).neg) XL.attach YR.attach ++
-    List.zipWith (fun ⟨xr, _hxr⟩ ⟨yl, _hyl⟩ =>
-      ((xr.mul y).add (x.mul yl)).add (xr.mul yl).neg) XR.attach YL.attach
-  Game.mk L R
+    let L :=
+      flatten (XL.attach.map (fun lx =>
+        let xl := lx.val
+        let _hxl := lx.property
+        YL.attach.map (fun ly =>
+          let yl := ly.val
+          let _hyl := ly.property
+          ((xl.mul y).add (x.mul yl)).add (xl.mul yl).neg
+        )
+      )) ++
+      flatten (XR.attach.map (fun rx =>
+        let xr := rx.val
+        let _hxr := rx.property
+        YR.attach.map (fun ry =>
+          let yr := ry.val
+          let _hyr := ry.property
+          ((xr.mul y).add (x.mul yr)).add (xr.mul yr).neg
+        )
+      ))
+
+    let R :=
+      flatten (XL.attach.map (fun lx =>
+        let xl := lx.val
+        let _hxl := lx.property
+        YR.attach.map (fun ry =>
+          let yr := ry.val
+          let _hyr := ry.property
+          ((xl.mul y).add (x.mul yr)).add (xl.mul yr).neg
+        )
+      )) ++
+      flatten (XR.attach.map (fun rx =>
+        let xr := rx.val
+        let _hxr := rx.property
+        YL.attach.map (fun ly =>
+          let yl := ly.val
+          let _hyl := ly.property
+          ((xr.mul y).add (x.mul yl)).add (xr.mul yl).neg
+        )
+      ))
+    Game.mk L R
   termination_by x y => Game.birthday x + Game.birthday y
   decreasing_by
   -- 1. xl * y
@@ -30,14 +66,14 @@ def Game.mul : Game → Game → Game
       birthday_lt_left (mk XL XR) xl (by simpa [Game.left] using _hxl)
     have hmeasure : xl.birthday + y.birthday < (mk XL XR).birthday + y.birthday :=
       add_lt_add_right hxl_lt y.birthday
-    simpa [hy] using hmeasure
+    simpa [_hy] using hmeasure
 
   -- 2. x * yl
   · have hyl_lt : yl.birthday < (mk YL YR).birthday :=
       birthday_lt_left (mk YL YR) yl (by simpa [Game.left] using _hyl)
     have hmeasure : x.birthday + yl.birthday < x.birthday + (mk YL YR).birthday :=
       add_lt_add_left hyl_lt x.birthday
-    simpa [hx] using hmeasure
+    simpa [_hx] using hmeasure
 
   -- 3. xl * yl
   · have hxl_lt : xl.birthday < (mk XL XR).birthday :=
@@ -53,14 +89,14 @@ def Game.mul : Game → Game → Game
       birthday_lt_right (mk XL XR) xr (by simpa [Game.right] using _hxr)
     have hmeasure : xr.birthday + y.birthday < (mk XL XR).birthday + y.birthday :=
       add_lt_add_right hxr_lt y.birthday
-    simpa [hy] using hmeasure
+    simpa [_hy] using hmeasure
 
   -- 5. x * yr
   · have hyr_lt : yr.birthday < (mk YL YR).birthday :=
       birthday_lt_right (mk YL YR) yr (by simpa [Game.right] using _hyr)
     have hmeasure : x.birthday + yr.birthday < x.birthday + (mk YL YR).birthday :=
       add_lt_add_left hyr_lt x.birthday
-    simpa [hx] using hmeasure
+    simpa [_hx] using hmeasure
 
   -- 6. xr * yr
   · have hxr_lt : xr.birthday < (mk XL XR).birthday :=
@@ -76,14 +112,14 @@ def Game.mul : Game → Game → Game
       birthday_lt_left (mk XL XR) xl (by simpa [Game.left] using _hxl)
     have hmeasure : xl.birthday + y.birthday < (mk XL XR).birthday + y.birthday :=
       add_lt_add_right hxl_lt y.birthday
-    simpa [hy] using hmeasure
+    simpa [_hy] using hmeasure
 
   -- 8. x * yr
   · have hyr_lt : yr.birthday < (mk YL YR).birthday :=
       birthday_lt_right (mk YL YR) yr (by simpa [Game.right] using _hyr)
     have hmeasure : x.birthday + yr.birthday < x.birthday + (mk YL YR).birthday :=
       add_lt_add_left hyr_lt x.birthday
-    simpa [hx] using hmeasure
+    simpa [_hx] using hmeasure
 
   -- 9. xl * yr
   · have hxl_lt : xl.birthday < (mk XL XR).birthday :=
@@ -99,14 +135,14 @@ def Game.mul : Game → Game → Game
       birthday_lt_right (mk XL XR) xr (by simpa [Game.right] using _hxr)
     have hmeasure : xr.birthday + y.birthday < (mk XL XR).birthday + y.birthday :=
       add_lt_add_right hxr_lt y.birthday
-    simpa [hy] using hmeasure
+    simpa [_hy] using hmeasure
 
   -- 11. x * yl
   · have hyl_lt : yl.birthday < (mk YL YR).birthday :=
       birthday_lt_left (mk YL YR) yl (by simpa [Game.left] using _hyl)
     have hmeasure : x.birthday + yl.birthday < x.birthday + (mk YL YR).birthday :=
       add_lt_add_left hyl_lt x.birthday
-    simpa [hx] using hmeasure
+    simpa [_hx] using hmeasure
 
   -- 12. xr * yl
   · have hxr_lt : xr.birthday < (mk XL XR).birthday :=
@@ -117,15 +153,46 @@ def Game.mul : Game → Game → Game
       add_lt_add hxr_lt hyl_lt
     assumption
 
-
 -------------------------------------------
 --------------- a*0 = 0 -------------------
 -------------------------------------------
+
+
+
+-- flatten (List.replicate n []) = []
+lemma flatten_replicate_nil {α} (n : Nat) : flatten (List.replicate n ([] : List α)) = [] := by
+  induction n with
+  | zero =>
+    -- replicate 0 [] 是 []
+    simp [List.replicate, flatten]
+  | succ n ih =>
+    -- replicate (n+1) [] 是 [] :: replicate n []
+    -- flatten ([] :: xs) 是 [] ++ flatten xs
+    simp [List.replicate, flatten, ih]
+
 theorem Game.mul_zero (a : Game) : Game.mul a zero = zero := by
-  sorry
+  apply wf_R.induction a
+  intro x IH
+  rw [zero]
+  unfold mul
+  match hx : x with
+  | mk XL XR =>
+    -- simplify to List.replicate
+    simp
+    simp [flatten_replicate_nil]
 
 theorem Game.zero_mul (a : Game) : Game.mul zero a = zero := by
-  sorry  
+    -- well-ordered Induction
+  apply wf_R.induction a
+  intro x IH
+  rw [zero]
+  unfold mul
+  match hx : x with
+  | mk XL XR =>
+    -- simplify to List.replicate
+    simp
+    rfl
+
 
 
 -------------------------------------------
@@ -138,7 +205,7 @@ theorem Game.mul_comm (a b : Game) : Game.mul a b = Game.mul b a := by
 -------------------------------------------
 ------ (a = c and b = d) → a*b = c*d ------
 -------------------------------------------
-theorem Game.mul_equal (a b c d : Game) : 
+theorem Game.mul_equal (a b c d : Game) :
 (a.eq c) ∧ (b.eq d) → (a.mul b).eq (c.mul d) := by
   sorry
 
@@ -156,12 +223,53 @@ def Surreal.mul (a b : Surreal) :
 -------------------------------------------
 --------------- a*1 = 1 -------------------
 -------------------------------------------
+
+theorem Game.neg_zero : zero.neg = zero := by
+  rw [Game.neg]
+  simp [zero]
+  unfold Game.right Game.left
+  simp
+
+-- Related lemma for mul_one
+lemma flatten_map_singleton {α β} (l : List α) (f : α → β) :
+  flatten (l.map (fun x => [f x])) = l.map f := by
+  induction l with
+  | nil => simp [flatten]
+  | cons h t ih => simp [flatten, ih]
+
 theorem Game.mul_one (a : Game) : Game.mul a one = a := by
-  sorry
+  apply wf_R.induction a
+  intro x IH
+  unfold R at IH
+  rw [one]
+  unfold mul
+  match hx : x with
+  | mk XL XR =>
+    -- turn flatten (List.replicate ... []) to [] and use [] ++ L = L
+    simp [flatten_replicate_nil]
+    simp [zero]
+
+    -- put flatten (map [...]) back to map
+    rw [flatten_map_singleton]
+    rw [flatten_map_singleton]
+
+    constructor
+    · rw [map_id_iff,← zero, ← one, ← hx]
+      intro lx lx_
+      simp [Game.mul_zero, Game.add_zero, Game.neg_zero]
+      apply IH
+      exact birthday_lt_left (mk XL XR) lx lx_
+
+    · rw [map_id_iff,← zero, ← one, ← hx]
+      intro rx rx_
+      simp [Game.mul_zero, Game.add_zero, Game.neg_zero]
+      apply IH
+      exact birthday_lt_right (mk XL XR) rx rx_
 
 -- Perhaps one can use commutativity of multiplication below to get this?
-theorem Game.one_mul (a : Game) : Game.mul one a = one := by
-  sorry  
+theorem Game.one_mul (a : Game) : Game.mul one a = a := by
+  rw [Game.mul_comm]
+  rw [Game.mul_one]
 
 
 -------------------------------------------
@@ -176,7 +284,6 @@ theorem Game.mul_assoc (a b c : Game) : Game.mul (Game.mul a b) c = Game.mul a (
 -------------------------------------------
 ---------- a*(b+c) = a*b + a*c ------------
 -------------------------------------------
-theorem Game.mul_distrib (a b c : Game) : 
+theorem Game.mul_distrib (a b c : Game) :
     Game.mul a (Game.add b c) = Game.add (Game.mul a b) (Game.mul a c) := by
   sorry
-
