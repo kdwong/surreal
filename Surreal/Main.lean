@@ -9,15 +9,9 @@ import Mathlib.GroupTheory.SpecificGroups.Cyclic
 import Surreal.game
 import Surreal.surreal
 import Surreal.addition
-import Surreal.multiplication
+import Surreal.mult_comm_dist
+import Surreal.mult_asso
 
-instance : Setoid Game where
-  r a b := Game.eq a b
-  iseqv := {
-    refl  := fun _ => ⟨Game.le_congr, Game.le_congr⟩
-    symm  := fun h => ⟨h.2, h.1⟩
-    trans := fun h1 h2 =>
-    ⟨Game.le_trans ⟨h1.1, h2.1⟩, Game.le_trans ⟨h2.2, h1.2⟩⟩}
 
 def Surreal.Equiv (g h : Surreal) : Prop := le g h ∧ le h g
 
@@ -39,9 +33,8 @@ instance Surreal.setoid : Setoid Surreal where
       · exact le_trans ⟨h_yz.2, h_xy.2⟩;
   }
 
-def SurrealNumber := Quotient Surreal.setoid
 
-theorem Game.le_congr_propext {a₁ a₂ b₁ b₂ : Surreal} :
+theorem Surreal.le_congr_propext {a₁ a₂ b₁ b₂ : Surreal} :
   (a₁ ≈ b₁) → (a₂ ≈ b₂) → (le a₁ a₂ = le b₁ b₂) := by
   intro h_a b_h
   apply propext
@@ -73,12 +66,16 @@ theorem Surreal.add_congr (a₁ a₂ : Surreal) (h₁ : a₁ ≈ a₂) (b₁ b�
   · apply Game.add_le_add
     exact ⟨h₁.2, h₂.2⟩
 
+def SurrealNumber := Quotient Surreal.setoid
+
 def SurrealNumber.add : SurrealNumber → SurrealNumber → SurrealNumber :=
   Quotient.map₂ Surreal.add Surreal.add_congr
 
 instance : Add SurrealNumber where add := SurrealNumber.add
 
 instance : Zero SurrealNumber where zero := ⟦sr_zero⟧
+
+instance : One SurrealNumber where one := ⟦sr_one⟧
 
 instance : Add SurrealNumber where add := SurrealNumber.add
 
@@ -101,7 +98,7 @@ def SurrealNumber.neg : SurrealNumber → SurrealNumber :=
 instance : Neg SurrealNumber where neg := SurrealNumber.neg
 
 noncomputable instance : LinearOrder SurrealNumber where
-  le := Quotient.lift₂ Surreal.le (fun _ _ _ _ => Game.le_congr_propext )
+  le := Quotient.lift₂ Surreal.le (fun _ _ _ _ => Surreal.le_congr_propext)
   le_refl := by
     intro qx
     refine Quotient.inductionOn qx ?_
@@ -202,26 +199,6 @@ example {a b : SurrealNumber} : |a + b| ≤ |a| + |b| := by exact abs_add_le a b
 example {a b c : SurrealNumber} (h : a ≤ b) : a - c ≤ b - c := by apply sub_le_sub_right h
 
 -------------------------------------------
--- Define 1 and prove 1 is surreal
--------------------------------------------
-
-lemma isSurreal_one : IsSurreal one := by
-  unfold IsSurreal
-  constructor
-  · simp [one, Game.left, Game.right]
-  · constructor
-    · intro g hg
-      simp [one, Game.left] at hg
-      rw [hg]
-      exact isSurreal_zero
-    · simp [one, Game.right]
-
-def sr_one : Surreal := ⟨one, isSurreal_one⟩
-
-instance : One SurrealNumber where
-  one := ⟦sr_one⟧
-
--------------------------------------------
 -- Define Mul
 -------------------------------------------
 
@@ -274,18 +251,15 @@ theorem SurrealNumber.zero_mul (a : SurrealNumber) : 0 * a = 0 := by
   apply Quotient.sound
   rename_i a
   change Game.eq (zero.mul a.val) zero
-  have h := Game.zero_mul a.val
-  rw [h]
-  exact Game.eq_congr
+  exact Game.zero_mul a.val
+
 
 theorem SurrealNumber.mul_zero (a : SurrealNumber) : a * 0 = 0 := by
   induction a using Quotient.ind
   apply Quotient.sound
   rename_i a
   change Game.eq (a.val.mul zero) zero
-  have h := Game.mul_zero a.val
-  rw [h]
-  exact Game.eq_congr
+  exact Game.mul_zero a.val
 
 -------------------------------------------
 -- Distribution
@@ -298,8 +272,8 @@ theorem SurrealNumber.left_distrib (a b c : SurrealNumber) : a * (b + c) = a * b
   apply Quotient.sound
   rename_i a b c
   change Game.eq (a.val.mul (b.val.add c.val)) ((a.val.mul b.val).add (a.val.mul c.val))
-  rw [Game.mul_distrib]
-  exact Game.eq_congr
+  exact Game.mul_distrib
+
 
 theorem SurrealNumber.right_distrib (a b c : SurrealNumber) : (a + b) * c = a * c + b * c := by
   calc (a + b) * c = c * (a + b) := SurrealNumber.mul_comm _ _

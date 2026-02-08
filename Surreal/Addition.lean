@@ -247,46 +247,36 @@ lemma Game.big_aux (x : TriGame) :
   -- Fact 1: Monotonicity (a ≤ b → a + c ≤ b + c)
   -- ==========================================================
   { intro hab
-    -- Unfold definition of (a+c) ≤ (b+c)
     rw [Game.le]
     constructor
     -- 1. Handle Left Options of (a+c)
     { intros k hk
       rw [mem_add_left] at hk
       rcases hk with ⟨al, hal, rfl⟩ | ⟨cl, hcl, rfl⟩
-
       -- Case 1.1: k = al + c
       { intro h_contra
-        -- Apply IH (Cancellation) on {b, al, c}.
         have h_meas : birthday b + birthday al + birthday c <
                       birthday a + birthday b + birthday c := by
           apply add_lt_add_right
           rw [Nat.add_comm (birthday b)]
           apply add_lt_add_right
           exact birthday_lt_left hal
-
         have h_cancel := (IH ⟨b, al, c⟩ h_meas).2
         have h_b_le_al : b.le al := h_cancel h_contra
-
         -- Contradiction: a ≤ b and b ≤ al → a ≤ al.
         have hyp : a.le a := Game.le_congr
         rw [Game.le] at hyp
         have not_a_le_al : ¬(a.le al) := hyp.1 al hal
         exact not_a_le_al (Game.le_trans ⟨hab, h_b_le_al⟩) }
-
       -- Case 1.2: k = a + cl
       { intro h_contra
-        -- Apply IH (Monotonicity) on {a, b, cl}.
         have h_meas : birthday a + birthday b + birthday cl <
                       birthday a + birthday b + birthday c := by
           apply add_lt_add_left
           exact birthday_lt_left hcl
-
         have h_mono := (IH ⟨a, b, cl⟩ h_meas).1
         have : (a.add cl).le (b.add cl) := h_mono hab
-
         have h_chain : (b.add c).le (b.add cl) := Game.le_trans ⟨h_contra, this⟩
-
         -- Contradiction: b+cl is a Left option of b+c.
         have h_mem : (b.add cl) ∈ (b.add c).left := mem_add_left.2 (Or.inr ⟨cl, hcl, rfl⟩)
         have href : (b.add c).le (b.add c) := Game.le_congr
@@ -297,39 +287,30 @@ lemma Game.big_aux (x : TriGame) :
     { intros k hk
       rw [mem_add_right] at hk
       rcases hk with ⟨br, hbr, rfl⟩ | ⟨cr, hcr, rfl⟩
-
       -- Case 2.1: k = br + c
       { intro h_contra
-        -- Apply IH (Cancellation) on {br, a, c}
         have h_meas : birthday br + birthday a + birthday c <
                       birthday a + birthday b + birthday c := by
           apply add_lt_add_right
           rw [Nat.add_comm (birthday br)]
           apply add_lt_add_left
           exact birthday_lt_right hbr
-
         have h_cancel := (IH ⟨br, a, c⟩ h_meas).2
         have : br.le a := h_cancel h_contra
-
         -- Contradiction: br ≤ a ≤ b implies br ≤ b.
         have hyp : b.le b := Game.le_congr
         rw [Game.le] at hyp
         have not_br_le_b : ¬(br.le b) := hyp.2 br hbr
         exact not_br_le_b (Game.le_trans ⟨this, hab⟩)}
-
       -- Case 2.2: k = b + cr
       { intro h_contra
-        -- Apply IH (Monotonicity) on {a, b, cr}
         have h_meas : birthday a + birthday b + birthday cr <
                       birthday a + birthday b + birthday c := by
           apply add_lt_add_left
           exact birthday_lt_right hcr
-
         have h_mono := (IH ⟨a, b, cr⟩ h_meas).1
         have : (a.add cr).le (b.add cr) := h_mono hab
-
         have h_chain : (a.add cr).le (a.add c) := Game.le_trans ⟨this, h_contra⟩
-
         -- Contradiction: a+cr is a Right option of a+c.
         have h_mem : (a.add cr) ∈ (a.add c).right := mem_add_right.2 (Or.inr ⟨cr, hcr, rfl⟩)
         have href : (a.add c).le (a.add c) := Game.le_congr
@@ -791,7 +772,6 @@ theorem bigame_neg_le_neg (x : BiGame) : Game.le x.a x.b ↔
       use bR, hbR
 
 
-
 -------------------------------------------
 -------------- a ≤ b ↔ -b ≤ -a ------------
 -------------------------------------------
@@ -808,6 +788,10 @@ theorem Game.neg_congr {a b : Game} : a.eq b ↔ (neg b).eq (neg a) := by
   rw [Game.neg_le_neg]
   nth_rw 2 [Game.neg_le_neg]
 
+
+lemma Game.neg_congr_left {u v : Game} (h : u.eq v) : (Game.neg u).eq (Game.neg v) := by
+  have h' : (Game.neg v).eq (Game.neg u) := (Game.neg_congr).1 h
+  exact Game.eq_refl h'
 
 
 -------------------------------------------

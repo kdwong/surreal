@@ -104,6 +104,7 @@ def Game.lt (g h : Game) : Prop := le g h ∧ ¬(le h g)
 def Game.eq (g h : Game) : Prop :=
   le g h ∧ le h g
 
+
 theorem Game.zero_leq_zero : le zero zero := by
       unfold le
       constructor <;> (intro g h; cases h)
@@ -194,6 +195,9 @@ theorem Game.eq_congr {x : Game} : eq x x := by
   · exact le_congr
   · exact le_congr
 
+lemma Game.eq_of_eq {u v : Game} (h : u = v) : u.eq v := by
+  subst h
+  exact Game.eq_congr
 
 structure TriGame where
   a : Game
