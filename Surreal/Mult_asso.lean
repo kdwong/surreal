@@ -11,17 +11,14 @@ import Surreal.mult_comm_dist
 namespace ConwayStageInduction
 
 
-/-- Pretend this is your surreal type. -/
-
 local notation:70 x " ⊗ " y => Game.mul x y
+local notation:70 x " ⊕ " y => Game.add x y
+local notation:70 x " ∼ " y => Game.eq x y
+local notation:70 x " ≼ " y => Game.le x y
+local notation:70 x " ≺ " y => Game.lt x y
 
 /-- Product-rank ρ(x,y) := birthday x + birthday y. -/
 def rank (x y : Surreal) : Nat := Game.birthday x + Game.birthday y
-
-
-def P : Surreal → Surreal → Surreal → Surreal → Prop
-| x₁, x₂, y₁, y₂ =>
-    ((x₁ ⊗ y₂).add (x₂ ⊗ y₁)).le ((x₁ ⊗ y₁).add (x₂ ⊗ y₂))
 
 /-
 A α: (i) and (ii) for all products with rank < α.
@@ -30,20 +27,16 @@ You can bundle (i) and (ii) however you like; here I just put the
 minimal shape: closure (IsSurreal) + left congruence.
 -/
 def A (α : Nat) : Prop :=
-  (∀ x y, rank x y < α → IsSurreal (Game.mul x y)) ∧
-  (∀ x₁ x₂ y, x₁ = x₂ → rank x₁ y < α → Game.mul x₁ y = Game.mul x₂ y)
+  (∀ x y, rank x y < α → IsSurreal (x ⊗ y)) ∧
+  (∀ x₁ x₂ y, x₁ = x₂ → rank x₁ y < α → (x₁ ⊗ y) = (x₂ ⊗ y))
 
 /-
 B α: (iii) for all quadruples whose 4 products are all below stage α.
 I.e. all of ρ(xᵢ, yⱼ) < α for i,j ∈ {1,2}.
 -/
 def B (α : Nat) : Prop :=
-  ∀ x₁ x₂ y₁ y₂,
-    rank x₁ y₁ < α →
-    rank x₁ y₂ < α →
-    rank x₂ y₁ < α →
-    rank x₂ y₂ < α →
-    P x₁ x₂ y₁ y₂
+  ∀ x₁ x₂ y₁ y₂, rank x₁ y₁ < α → rank x₁ y₂ < α → rank x₂ y₁ < α → rank x₂ y₂ < α →
+    ((x₁ ⊗ y₂).add (x₂ ⊗ y₁)).le ((x₁ ⊗ y₁).add (x₂ ⊗ y₂))
 
 /--
 Main “two-level” induction:
@@ -63,15 +56,12 @@ theorem stage_induction : ∀ α : Nat, A α ∧ B α := by
       · intro x₁ x₂ y₁ y₂ h11 h12 h21 h22
         cases Nat.not_lt_zero _ h11
   | succ α ih =>
-      -- Induction hypothesis gives everything below stage α.
       have hA_prev : A α := ih.1
       have hB_prev : B α := ih.2
-
       /- Step 1: prove A (α+1) using A α and B α. -/
       have hA : A (Nat.succ α) := by
         refine And.intro ?i ?ii
-        · -- (i) for all x y with rank < α+1
-          intro x y hxy
+        · intro x y hxy
           -- Typical structure:
           -- by cases on rank < α or rank = α, use `hA_prev` or the new boundary proof,
           -- and inside the boundary proof invoke `hB_prev` only on strictly smaller ranks.
