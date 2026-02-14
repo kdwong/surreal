@@ -74,7 +74,7 @@ where the last strict inequality comes from $P(x^{L_2},x : y^L,y^R)$.
 
 $$ x^{L_1}y + xy^L - x^{L_1}y^L \leq x^{L_1}y + xy^R - x^{L_1}y^R < x^{L_2}y + xy^R - x^{L_2}y^R $$
 
-by $P(x^{L_1}, x : y^L, y)$ and $P(x^{L_2}, x : y, y^R)$ respectively.
+by $P(x^{L_1}, x : y^L, y)$ and $P(x^{L_2}, x^{L_1} : y, y^R)$ respectively.
 
 Check the other three cases. This concludes (i).
 
@@ -113,6 +113,7 @@ So
 $$
 x_1^Ly + x_1y^L - x_1^Ly^L < x_2y,
 $$
+
 i.e. $L< x_2y$.
 
 The second family of left options (using $x_1^R,y^R$) is analogous.
