@@ -92,27 +92,27 @@ $$
 
 Using $x_1^L< x_2$ and $y^L < y$, apply $P(x_1^L,x_2:y^L,y)$:
 
-\[
+$$
 x_1^Ly + x_2y^L < x_1^Ly^L + x_2y.
-\]
+$$
 
 Rearrange:
 
-\[
+$$
 x_1^Ly + x_2y^L - x_1^Ly^L < x_2y.
-\]
+$$
 
 Now use the induction hypothesis for (ii) on the **simpler** factor $y^L$ (since $y^L$ is an option of $y$):
 
-\[
+$$
 x_2y^L = x_1y^L.
-\]
+$$
 
 So
 
-\[
+$$
 x_1^Ly + x_1y^L - x_1^Ly^L < x_2y,
-\]
+$$
 i.e. $L< x_2y$.
 
 The second family of left options (using $x_1^R,y^R$) is analogous.
@@ -120,25 +120,28 @@ The second family of left options (using $x_1^R,y^R$) is analogous.
 ### **Right options of $x_1y < (x_2y)^R$**
 
 Take a right option of $x_2y$ of the form
-\[
+
+$$
 R:=x_2^Ly + x_2y^R - x_2^Ly^R.
-\]
+$$
+
 Since $x_2^L< x_2=x_1$ and $y< y^R$, apply $P(x_2^L,x_1:y,y^R)$:
 
-\[
+$$
 x_2^Ly^R + x_1y < x_2^Ly + x_1y^R.
-\]
+$$
 
 Rearrange:
-\[
+
+$$
 x_1y < x_2^Ly + x_1y^R - x_2^Ly^R.
-\]
+$$
 
 Then use (ii) (induction) on the simpler factor $y^R$ to get $x_1y^R = x_2y^R$, giving:
 
-\[
+$$
 x_1y < x_2^Ly + x_2y^R - x_2^Ly^R = R.
-\]
+$$
 
 Thus $x_1y\le x_2y$. Finally, swap the roles of $x_1$ and $x_2$. Hence $x_1y=x_2y$.
 
