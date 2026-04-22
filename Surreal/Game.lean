@@ -3,36 +3,51 @@ import Mathlib.Data.List.MinMax
 import Mathlib.Data.List.Basic
 import Mathlib.Order.Basic
 
+/-!
+# Combinatorial games
+
+This file defines short combinatorial games, their birthdays,
+and the basic recursive order/equivalence relations.
+-/
+
 inductive Game where
   | mk : List Game → List Game → Game
 deriving BEq, Repr
 
-open Game
+namespace Game
 
-def Game.left (g : Game) : List Game :=
-  match g with
-  | mk left _ => left
+def left : Game → List Game
+  | mk L _ => L
 
-def Game.right (g : Game) : List Game :=
-  match g with
-  | mk _ right => right
+def right : Game → List Game
+  | mk _ R => R
+
+theorem ext {x y : Game} (hL : x.left = y.left) (hR : x.right = y.right) :
+    x = y := by
+  cases x with
+  | mk XL XR =>
+    cases y with
+    | mk YL YR =>
+      simp [left, right] at hL hR
+      cases hL
+      cases hR
+      rfl
+
+
+/-! ## Basic games -/
 
 def zero : Game := mk [] []
-def minus_one : Game := mk [] [zero]
 def one : Game := mk [zero] []
-def half : Game := mk [zero] [one]
 
-def Game.birthday (g : Game) : Nat :=
-  match g with
+/-! ## Birthday -/
+
+def birthday : Game → Nat
   | mk L R =>
-    let bL := L.map birthday
-    let bR := R.map birthday
-    (bL ++ bR).maximum.getD 0 + 1
+      let bL := L.map birthday
+      let bR := R.map birthday
+      (bL ++ bR).maximum.getD 0 + 1
 
-#eval birthday zero
-#eval birthday half -- 3
-
-lemma list_maximum_is_none_then_is_empty (a : List ℕ) (non : a.maximum = none) : a = [] := by
+lemma maximum_eq_none_iff_eq_nil (a : List ℕ) (non : a.maximum = none) : a = [] := by
   cases a with
   | nil => rfl
   | cons hd tl =>
@@ -41,138 +56,164 @@ lemma list_maximum_is_none_then_is_empty (a : List ℕ) (non : a.maximum = none)
       simp
     contradiction
 
-lemma elt_leq_max (a : List ℕ) (s : ℕ) (h : s ∈ a) : s ≤ a.maximum.getD 0 := by
+lemma le_maximum_getD_of_mem (a : List ℕ) (s : ℕ) (h : s ∈ a) : s ≤ a.maximum.getD 0 := by
     match max : a.maximum with
     | none =>
       have a_empty : a = [] := by
-        apply list_maximum_is_none_then_is_empty a max
+        apply maximum_eq_none_iff_eq_nil a max
       rw [a_empty] at h
       contradiction
     | some m =>
       simp [Option.getD_some]
       exact List.le_of_mem_argmax h max
 
-theorem Game.birthday_lt_left {g l : Game} (h : l ∈ g.left) :
+lemma birthday_lt_of_mem_options {L R : List Game} {x : Game}
+    (h : x ∈ L ++ R) :
+    birthday x < birthday (mk L R) := by
+  simp [birthday]
+  let b := List.map birthday L ++ List.map birthday R
+  change birthday x < b.maximum.getD 0 + 1
+  have h_mem_b : birthday x ∈ b := by
+    dsimp [b]
+    rcases List.mem_append.mp h with hL | hR
+    · exact List.mem_append_left _ (List.mem_map.mpr ⟨x, hL, rfl⟩)
+    · exact List.mem_append_right _ (List.mem_map.mpr ⟨x, hR, rfl⟩)
+  exact Nat.lt_succ_of_le (le_maximum_getD_of_mem b (birthday x) h_mem_b)
+
+theorem birthday_lt_left {g l : Game} (h : l ∈ g.left) :
     birthday l < birthday g := by
   cases g with
   | mk L R =>
-    simp [left] at h
-    simp [birthday]
-    let b := List.map birthday L ++ List.map birthday R
-    change birthday l < b.maximum.getD 0 + 1
-    have h_mem_b : l.birthday ∈ b := by
-      apply List.mem_append_left
-      apply List.mem_map.mpr
-      use l
-    have a : l.birthday ≤ Option.getD b.maximum 0 := by
-      apply elt_leq_max b l.birthday h_mem_b
-    linarith
+      have hL : l ∈ L := by simpa [left] using h
+      exact birthday_lt_of_mem_options
+        (L := L) (R := R) (List.mem_append_left _ hL)
 
-theorem Game.birthday_lt_right {g r : Game} (h : r ∈ g.right) :
+theorem birthday_lt_right {g r : Game} (h : r ∈ g.right) :
     birthday r < birthday g := by
   cases g with
   | mk L R =>
-    simp [right] at h
-    simp [birthday]
-    let b := List.map birthday L ++ List.map birthday R
-    change birthday r < b.maximum.getD 0 + 1
-    have h_mem_b : r.birthday ∈ b := by
-      apply List.mem_append_right
-      apply List.mem_map.mpr
-      use r
-    have aaa : r.birthday ≤ Option.getD b.maximum 0 := by
-      apply elt_leq_max b r.birthday h_mem_b
-    linarith
+      have hR : r ∈ R := by simpa [right] using h
+      exact birthday_lt_of_mem_options
+        (L := L) (R := R) (List.mem_append_right _ hR)
 
-def Game.le (g h : Game) : Prop :=
+
+/-! ## Order relations -/
+
+def le (g h : Game) : Prop :=
     (∀ g_l ∈ g.left, ¬(le h g_l)) ∧ (∀ h_r ∈ h.right, ¬(le h_r g))
-termination_by (birthday g + birthday h)
+termination_by g.birthday + h.birthday
 decreasing_by
-  -- Prove termination for the first recursive call: `le h g_l`
-  · have xl : g_l ∈ g.left := by assumption
-    rw [add_comm h.birthday g_l.birthday]
-    apply add_lt_add_right
-    exact birthday_lt_left xl
-  -- Prove termination for the second recursive call: `le h_r g`
-  · have xr : h_r ∈ h.right := by assumption
-    rw [add_comm h_r.birthday g.birthday]
-    apply add_lt_add_left
-    exact birthday_lt_right xr
+  · linarith [birthday_lt_left ‹_›]
+  · linarith [birthday_lt_right ‹_›]
 
-def Game.lt (g h : Game) : Prop := le g h ∧ ¬(le h g)
+def lt (g h : Game) : Prop := le g h ∧ ¬(le h g)
 
-def Game.eq (g h : Game) : Prop :=
-  le g h ∧ le h g
+def eq (g h : Game) : Prop := le g h ∧ le h g
 
+scoped infix:50 " ≼ " => Game.le
+scoped infix:50 " ≺ " => Game.lt
+scoped infix:50 " ∼ " => Game.eq
 
-theorem Game.zero_leq_zero : le zero zero := by
-      unfold le
-      constructor <;> (intro g h; cases h)
-
-theorem Game.zero_leq_one : le zero one := by
-  unfold le
-  constructor
-  · intro z_l zero_left
-    cases zero_left
-  · intro o_r one_right
-    cases one_right
-
-theorem Game.one_neq_zero : ¬(le one zero) := by
-  intro h_le
-  unfold le at h_le
-  let h_not_le_zero_zero := h_le.1 zero (by simp [one, left])
-  exact h_not_le_zero_zero zero_leq_zero
-
-theorem Game.half_leq_one : le half one := by
-  unfold le
-  constructor
-  · intro h_l half_left
-    simp only [half, left, List.mem_singleton] at half_left
-    subst half_left
-    exact one_neq_zero
-  · intro o_r one_right
-    cases one_right
-
-theorem Game.zero_lt_one : lt zero one := by
-  unfold lt
-  constructor
-  · exact zero_leq_one
-  · intro h_le
-    unfold le at h_le
-    let h_contra := h_le.1 zero (by simp [one, left])
-    exact h_contra zero_leq_zero
-
-def zero' : Game := mk [minus_one] [one]
-
-theorem zero_zero'_eq : eq zero zero' := by
-  unfold eq
-  constructor
-  · -- Prove `zero ≤ zero'`
-    unfold le
-    constructor
-    · intro z_l zero_left
-      cases zero_left
-    · intro z_r zero'_right
-      simp only [zero', right, List.mem_singleton] at zero'_right
-      subst zero'_right
-      exact one_neq_zero
-  · -- Prove `zero' ≤ zero`
-    unfold le
-    constructor
-    · intro z'_l zero'_left
-      simp only [zero', left, List.mem_singleton] at zero'_left
-      subst z'_l
-      intro h_le_zero_neg_one
-      unfold le at h_le_zero_neg_one
-      let h_contra := h_le_zero_neg_one.2 zero (by simp [minus_one, right])
-      exact h_contra zero_leq_zero
-    · intro z_r zero_right
-      cases zero_right
+/-! ## Well-founded auxiliary relations -/
 
 def R : Game → Game → Prop := fun y x => birthday y < birthday x
 lemma wf_R : WellFounded R := InvImage.wf birthday wellFounded_lt
 
-theorem Game.le_congr {x : Game} : le x x := by
+structure BiGame where
+  a : Game
+  b : Game
+def B : BiGame → BiGame → Prop :=
+  fun a b => birthday a.1 + birthday a.2 < birthday b.1 + birthday b.2
+lemma wf_B : WellFounded B :=
+  InvImage.wf (fun s : BiGame => (birthday s.1) + (birthday s.2)) wellFounded_lt
+
+lemma B_of_left_mem_fst {x y xl : Game} (hxl : xl ∈ x.left) :
+    B ⟨xl, y⟩ ⟨x, y⟩ := by
+  simpa [B] using add_lt_add_right (Game.birthday_lt_left hxl) y.birthday
+
+lemma B_of_left_mem_snd {x y yl : Game} (hyl : yl ∈ y.left) :
+    B ⟨x, yl⟩ ⟨x, y⟩ := by
+  simpa [B] using add_lt_add_left (Game.birthday_lt_left hyl) x.birthday
+
+lemma B_of_right_mem_fst {x y xr : Game} (hxr : xr ∈ x.right) :
+    B ⟨xr, y⟩ ⟨x, y⟩ := by
+  simpa [B] using add_lt_add_right (Game.birthday_lt_right hxr) y.birthday
+
+lemma B_of_right_mem_snd {x y yr : Game} (hyr : yr ∈ y.right) :
+    B ⟨x, yr⟩ ⟨x, y⟩ := by
+  simpa [B] using add_lt_add_left (Game.birthday_lt_right hyr) x.birthday
+
+lemma B_of_left_mem_swap {a b aL : Game} (haL : aL ∈ a.left) :
+    B ⟨b, aL⟩ ⟨a, b⟩ := by
+  simpa [B, Nat.add_comm] using
+    (B_of_left_mem_snd (x := b) (y := a) haL)
+
+lemma B_of_right_mem_swap {a b bR : Game} (hbR : bR ∈ b.right) :
+    B ⟨bR, a⟩ ⟨a, b⟩ := by
+  simpa [B, Nat.add_comm] using
+    (B_of_right_mem_fst (x := b) (y := a) hbR)
+
+
+structure TriGame where
+  a : Game
+  b : Game
+  c : Game
+def T : TriGame → TriGame → Prop :=
+  fun a b => birthday a.1 + birthday a.2 + birthday a.3 < birthday b.1 + birthday b.2 + birthday b.3
+lemma wf_T : WellFounded T :=
+  InvImage.wf (fun s : TriGame => birthday s.1 + birthday s.2 + birthday s.3) wellFounded_lt
+
+lemma T_of_left_mem {a b c aL : Game} (haL : aL ∈ a.left) :
+    T ⟨b, c, aL⟩ ⟨a, b, c⟩ := by
+  simp [T]
+  linarith [birthday_lt_left haL]
+
+lemma T_of_right_mem {a b c cR : Game} (hcR : cR ∈ c.right) :
+    T ⟨cR, a, b⟩ ⟨a, b, c⟩ := by
+  simp [T]
+  linarith [birthday_lt_right hcR]
+
+lemma T_of_a_left_mem {a b c al : Game} (hal : al ∈ a.left) :
+    T ⟨b, al, c⟩ ⟨a, b, c⟩ := by
+  have h := T_of_left_mem (a := a) (b := c) (c := b) hal
+  simpa [T, Nat.add_assoc, Nat.add_left_comm, Nat.add_comm] using h
+
+lemma T_of_c_left_mem {a b c cl : Game} (hcl : cl ∈ c.left) :
+    T ⟨a, b, cl⟩ ⟨a, b, c⟩ := by
+  have h := T_of_left_mem (a := c) (b := a) (c := b) hcl
+  simpa [T, Nat.add_assoc, Nat.add_left_comm, Nat.add_comm] using h
+
+lemma T_of_b_right_mem {a b c br : Game} (hbr : br ∈ b.right) :
+    T ⟨br, a, c⟩ ⟨a, b, c⟩ := by
+  have h := T_of_right_mem (a := a) (b := c) (c := b) hbr
+  simpa [T, Nat.add_assoc, Nat.add_left_comm, Nat.add_comm] using h
+
+lemma T_of_c_right_mem {a b c cr : Game} (hcr : cr ∈ c.right) :
+    T ⟨a, b, cr⟩ ⟨a, b, c⟩ := by
+  have h := T_of_right_mem (a := b) (b := a) (c := c) hcr
+  simpa [T, Nat.add_assoc, Nat.add_left_comm, Nat.add_comm] using h
+
+lemma T_of_mem_left₁ {a b c aL : Game} (haL : aL ∈ a.left) :
+    T ⟨aL, b, c⟩ ⟨a, b, c⟩ := by
+  simp [T]
+  linarith [birthday_lt_left haL]
+
+
+/-! ## Basic order inequalities -/
+
+lemma not_ge_left_of_le {a b aL : Game} (hab : a ≼ b) (haL : aL ∈ a.left) :
+    ¬ b ≼ aL := by
+  have hab' := hab
+  unfold le at hab'
+  exact hab'.1 aL haL
+
+lemma not_le_right_of_le {b c cR : Game} (hbc : b ≼ c) (hcR : cR ∈ c.right) :
+    ¬ cR ≼ b := by
+  have hbc' := hbc
+  unfold le at hbc'
+  exact hbc'.2 cR hcR
+
+theorem le_congr {x : Game} : x ≼ x := by
   apply wf_R.induction x
   intro x IH
   unfold le
@@ -189,176 +230,115 @@ theorem Game.le_congr {x : Game} : le x x := by
     have h_le: le r r := IH r (birthday_lt_right hr)
     contradiction
 
-theorem Game.eq_congr {x : Game} : eq x x := by
+theorem eq_congr {x : Game} : x ∼ x := by
   unfold eq
   constructor
   · exact le_congr
   · exact le_congr
 
-lemma Game.eq_of_eq {u v : Game} (h : u = v) : u.eq v := by
+lemma eq_of_eq {u v : Game} (h : u = v) : u ∼ v := by
   subst h
-  exact Game.eq_congr
+  exact eq_congr
 
-structure TriGame where
-  a : Game
-  b : Game
-  c : Game
+theorem le_trans' {x y z : Game} : (x ≼ y) → (y ≼ z) → (x ≼ z) := by
+  intro hxy hyz
+  let P : TriGame → Prop := fun t => (t.a ≼ t.b) → (t.b ≼ t.c) → (t.a ≼ t.c)
+  have hP : ∀ t : TriGame, P t := by
+    intro t
+    refine wf_T.induction (C := P) t ?_
+    rintro ⟨a, b, c⟩ IH hab hbc
+    unfold le
+    constructor
+    · intro aL haL hcaL
+      have hb_le_aL : b ≼ aL := (IH ⟨b, c, aL⟩ (T_of_left_mem haL)) hbc hcaL
+      exact not_ge_left_of_le hab haL hb_le_aL
+    · intro cR hcR hcR_le_a
+      have hcR_le_b : cR ≼ b := (IH ⟨cR, a, b⟩ (T_of_right_mem hcR)) hcR_le_a hab
+      exact not_le_right_of_le hbc hcR hcR_le_b
+  exact (hP ⟨x, y, z⟩) hxy hyz
 
-def T : TriGame → TriGame → Prop :=
-  fun a b => birthday a.1 + birthday a.2 + birthday a.3 < birthday b.1 + birthday b.2 + birthday b.3
-lemma wf_T : WellFounded T :=
-  InvImage.wf (fun s : TriGame => birthday s.1 + birthday s.2 + birthday s.3) wellFounded_lt
+theorem le_trans {x y z : Game} : (x ≼ y) ∧ (y ≼ z) → x ≼ z := by
+  intro ⟨hxy, hyz⟩
+  exact le_trans' hxy hyz
 
-structure BiGame where
-  a : Game
-  b : Game
-def B : BiGame → BiGame → Prop :=
-  fun a b => birthday a.1 + birthday a.2 < birthday b.1 + birthday b.2
-lemma wf_B : WellFounded B :=
-  InvImage.wf (fun s : BiGame => (Game.birthday s.1) + (Game.birthday s.2)) wellFounded_lt
-
-theorem Game.le_trans1 : ∀ (x : TriGame), (le x.a x.b) ∧ (le x.b x.c) → le x.a x.c := by
-  intro x
-  apply wf_T.induction x
-  intro x IH h_le
-  have a_le_b := h_le.1
-  have b_le_c := h_le.2
-  unfold le
-  constructor
-  · -- Prove `∀ a_l ∈ a.left, ¬(c ≤ a_l)`
-    intro a_l h_a_l h_contra
-    -- Assume `c  ≤ a_l` for contradiction.
-    have h_birthday_sum_lt : T {a := x.b, b := x.c, c := a_l} x := by
-      simp [T]
-      have := birthday_lt_left h_a_l
-      linarith
-    --- Use `b ≤ c` and `c  ≤ a_l` and induction to show `b ≤ a_l`
-    have h_b_le_al : le x.b a_l := by
-      apply IH {a := x.b, b := x.c, c := a_l} h_birthday_sum_lt
-      exact ⟨b_le_c, h_contra⟩
-    -- But `a ≤ b` implies `¬(b ≤ a_l)`
-    unfold le at a_le_b
-    have b_notle_a_l := a_le_b.1 a_l h_a_l
-    contradiction
-  ·-- Prove `∀ c_r ∈ c.right, ¬(c_r ≤ a)`
-    intro c_r h_c_r h_contra
-    -- Assume `c_r ≤ a` for contradiction.
-    have h_birthday_sum_lt : T {a := c_r, b := x.a, c := x.b} x := by
-      simp [T]
-      have := birthday_lt_right h_c_r
-      linarith
-    --- Use `c_r ≤ a` and `a ≤ b` and induction to show `c_r ≤ b`
-    have h_c_r_le_b : c_r.le x.b := by
-      apply IH {a := c_r, b := x.a, c := x.b} h_birthday_sum_lt
-      exact ⟨h_contra, a_le_b⟩
-    unfold le at b_le_c
-    -- But `b ≤ c` implies `¬(c_r ≤ b)`
-    have c_r_nleq_b := b_le_c.2 c_r h_c_r
-    contradiction
-
-theorem Game.le_trans {x y z : Game} : (le x y) ∧ (le y z) → le x z :=
-by
-  intro habc
-  let tri : TriGame := {a := x, b := y, c := z}
-  apply le_trans1 tri habc
-
-theorem Game.eq_refl {x y : Game} : (eq x y) → (eq y x):= by
+theorem eq_symm {x y : Game} : (x ∼ y) → (y ∼ x):= by
   intro hxy
-  unfold eq
-  unfold eq at hxy
   exact ⟨hxy.2, hxy.1⟩
 
-theorem Game.eq_trans {x y z : Game} : (eq x y) ∧ (eq y z) → eq x z :=
-by
+theorem eq_trans {x y z : Game} : (x ∼ y) ∧ (y ∼ z) → x ∼ z := by
   intro habc
-  have eq_xy : eq x y := habc.1
-  have eq_yz : eq y z := habc.2
   unfold eq
   constructor
-  · exact le_trans ⟨eq_xy.1,eq_yz.1⟩
-  · exact le_trans ⟨eq_yz.2,eq_xy.2⟩
+  · exact le_trans ⟨habc.1.1,habc.2.1⟩
+  · exact le_trans ⟨habc.2.2,habc.1.2⟩
 
-
-theorem Game.lt_trans {x y z : Game} : x.lt y ∧ y.lt z → x.lt z := by
-  intro h
-  have h_xy := h.1
-  have h_yz := h.2
+theorem lt_trans {x y z : Game} : (x ≺ y) ∧ (y ≺ z) → (x ≺ z) := by
+  intro ⟨h_xy, h_yz⟩
   unfold lt
   constructor
-  · -- Goal 1: le x z
-    have h_x_le_y := h_xy.1
-    have h_y_le_z := h_yz.1
-    apply le_trans
-    exact ⟨h_x_le_y, h_y_le_z⟩
-
-  · -- Goal 2: ¬(le z x)
-    intro h_contra --assume le z x
-    have h_x_le_y := h_xy.1
-    have h_z_le_y : z.le y := by
+  · apply le_trans
+    exact ⟨h_xy.1, h_yz.1⟩
+  · intro h_contra
+    have h_z_le_y : z ≼ y := by
       apply le_trans
-      exact ⟨h_contra, h_x_le_y⟩
+      exact ⟨h_contra, h_xy.1⟩
     have h_z_not_le_y := h_yz.2
     contradiction
 
-theorem Game.lt_of_lt_of_le {x y z : Game} (hxy : lt x y) (hyz : le y z) : lt x z := by
+theorem lt_of_lt_of_le {x y z : Game} (hxy : x ≺ y) (hyz : y ≼ z) : x ≺ z := by
   unfold lt
   constructor
   · exact le_trans ⟨hxy.1, hyz⟩
   · intro h_contra
-    have h_y_le_x : y.le x := by exact le_trans ⟨hyz, h_contra⟩
+    have h_y_le_x : y ≼ x := by exact le_trans ⟨hyz, h_contra⟩
     exact hxy.2 h_y_le_x
 
-theorem Game.lt_of_le_of_lt {x y z : Game} (hxy : le x y) (hyz : lt y z) : lt x z := by
+theorem lt_of_le_of_lt {x y z : Game} (hxy : x ≼ y) (hyz : y ≺ z) : x ≺ z := by
   unfold lt
   constructor
   · exact le_trans ⟨hxy, hyz.1⟩
   · intro h_contra
-    have h_z_le_y : z.le y := by exact le_trans ⟨h_contra, hxy⟩
+    have h_z_le_y : z ≼ y := by exact le_trans ⟨h_contra, hxy⟩
     exact hyz.2 h_z_le_y
 
-theorem Game.eq_of_equiv_options {a b : Game}
-    (hL_ab : ∀ aL ∈ a.left, ∃ bL ∈ b.left, aL.eq bL)
-    (hL_ba : ∀ bL ∈ b.left, ∃ aL ∈ a.left, bL.eq aL)
-    (hR_ab : ∀ aR ∈ a.right, ∃ bR ∈ b.right, aR.eq bR)
-    (hR_ba : ∀ bR ∈ b.right, ∃ aR ∈ a.right, bR.eq aR) :
-    a.eq b := by
+lemma not_le_left {x : Game} (xL : Game) (h : xL ∈ x.left) : ¬(x.le xL) := by
+  intro h_le
+  rw [le] at h_le
+  have h_not_refl := h_le.1 xL h
+  have h_refl : xL.le xL := le_congr
+  contradiction
+
+lemma not_le_right {x : Game} (xR : Game) (h : xR ∈ x.right) : ¬(xR.le x) := by
+  intro h_le
+  rw [le] at h_le
+  have h_not_refl := h_le.2 xR h
+  have h_refl : xR.le xR := le_congr
+  contradiction
+
+/-! ## Equality of games -/
+
+private lemma le_of_equiv_options {a b : Game}
+    (hL : ∀ aL ∈ a.left, ∃ bL ∈ b.left, aL ∼ bL)
+    (hR : ∀ bR ∈ b.right, ∃ aR ∈ a.right, bR ∼ aR) :
+    a ≼ b := by
+  unfold le
+  constructor
+  · intro aL haL hb_le_aL
+    rcases hL aL haL with ⟨bL, hbL, hEq⟩
+    exact not_le_left bL hbL (le_trans ⟨hb_le_aL, hEq.1⟩)
+  · intro bR hbR hbR_le_a
+    rcases hR bR hbR with ⟨aR, haR, hEq⟩
+    exact not_le_right aR haR (le_trans ⟨hEq.2, hbR_le_a⟩)
+
+theorem eq_of_equiv_options {a b : Game}
+    (hL_ab : ∀ aL ∈ a.left, ∃ bL ∈ b.left, aL ∼ bL)
+    (hL_ba : ∀ bL ∈ b.left, ∃ aL ∈ a.left, bL ∼ aL)
+    (hR_ab : ∀ aR ∈ a.right, ∃ bR ∈ b.right, aR ∼ bR)
+    (hR_ba : ∀ bR ∈ b.right, ∃ aR ∈ a.right, bR ∼ aR) :
+    a ∼ b := by
   unfold eq
   constructor
-  · unfold le
-    constructor
-    · -- ∀ aL ∈ a.left, ¬(b ≤ aL)
-      intro aL haL hb_le_aL
-      obtain ⟨bL, hbL, heq⟩ := hL_ab aL haL
-      -- b ≤ aL and aL ≤ bL (heq.1) → b ≤ bL
-      have b_le_bL : b.le bL := Game.le_trans ⟨hb_le_aL, heq.1⟩
-      have h_refl : b.le b := Game.le_congr
-      unfold le at h_refl
-      exact h_refl.1 bL hbL b_le_bL
-    · -- ∀ bR ∈ b.right, ¬(bR ≤ a)
-      intro bR hbR hbR_le_a
-      obtain ⟨aR, haR, heq⟩ := hR_ba bR hbR
-      -- aR ≤ bR (heq.2) and bR ≤ a → aR ≤ a
-      have aR_le_a : aR.le a := Game.le_trans ⟨heq.2, hbR_le_a⟩
-      have h_refl : a.le a := Game.le_congr
-      unfold le at h_refl
-      exact h_refl.2 aR haR aR_le_a
+  · exact le_of_equiv_options hL_ab hR_ba
+  · exact le_of_equiv_options hL_ba hR_ab
 
-  · -- Part 2: b ≤ a
-    unfold le
-    constructor
-    · -- ∀ bL ∈ b.left, ¬(a ≤ bL)
-      intro bL hbL ha_le_bL
-      obtain ⟨aL, haL, heq⟩ := hL_ba bL hbL
-      -- a ≤ bL and bL ≤ aL (heq.1) → a ≤ aL
-      have a_le_aL : a.le aL := Game.le_trans ⟨ha_le_bL, heq.1⟩
-      have h_refl : a.le a := Game.le_congr
-      unfold le at h_refl
-      exact h_refl.1 aL haL a_le_aL
-    · -- ∀ aR ∈ a.right, ¬(aR ≤ b)
-      intro aR haR haR_le_b
-      obtain ⟨bR, hbR, heq⟩ := hR_ab aR haR
-      -- bR ≤ aR (heq.2) and aR ≤ b → bR ≤ b
-      have bR_le_b : bR.le b := Game.le_trans ⟨heq.2, haR_le_b⟩
-      have h_refl : b.le b := Game.le_congr
-      unfold le at h_refl
-      exact h_refl.2 bR hbR bR_le_b
+end Game
