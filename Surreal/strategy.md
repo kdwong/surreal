@@ -24,14 +24,25 @@ So **replacing either factor by an option strictly lowers** $\rho$.
 
 # 2) Re-index both families of statements by the same stage $\alpha$
 
+
+Here are the three statements needed to show that product of surreal number is surreal:
+
+(i) If $x$ and $y$ are numbers, so is $xy$
+
+(ii) If $x_1 = x_2$, then $x_1y = x_2y$
+
+(iii) $P(x_1,x_2:y_1,y_2)$: If $x_1 \leq x_2$, and $y_1 \leq y_2$, then $x_1y_2 + x_2y_1 \leq x_1y_1 + x_2y_2$, the conclusion being strict if both the premises are.
+
+
 Now define two *stage-indexed* assertions, both indexed by the same ordinal $\alpha$:
 
 ### **$A(\alpha)$**  (products up to stage $\alpha$)
 > For all pairs $(x,y)$ with $\rho(x,y)<\alpha$, statements **(i)** and **(ii)** hold for $xy$.
 
+
 ### **$B(\alpha)$**  (all $P$-inequalities up to stage $\alpha$)
 > For all quadruples $(x_1,x_2,y_1,y_2)$ such that
-> $\rho(x_i,y_j)<\alpha$ for all $i,j\in\{1,2\}$, statement **(iii)** (i.e. $P(x_1,x_2:y_1,y_2)$) holds.
+> $\rho(x_i,y_j)<\alpha$ for all $i,j\in\{1,2\}$, statement **(iii)** holds.
 
 This is how you put (i)/(ii) and (iii) on a common induction timeline.
 
@@ -74,7 +85,7 @@ where the last strict inequality comes from $P(x^{L_2},x : y^L,y^R)$.
 
 $$ x^{L_1}y + xy^L - x^{L_1}y^L \leq x^{L_1}y + xy^R - x^{L_1}y^R < x^{L_2}y + xy^R - x^{L_2}y^R $$
 
-by $P(x^{L_1}, x : y^L, y)$ and $P(x^{L_2}, x^{L_1} : y, y^R)$ respectively.
+by $P(x^{L_1}, x : y^L, y^R)$ and $P(x^{L_2}, x^{L_1} : y, y^R)$ respectively.
 
 Check the other three cases. This concludes (i).
 

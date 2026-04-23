@@ -6,7 +6,10 @@ import Surreal.surreal
 
 open scoped Game
 
-/-! ## Definition of x ⊕ y -/
+/-! ## Definition of x ⊕ y
+x ⊕ y is defined as {xl ⊕ y, x ⊕ yl | xr ⊕ y, x ⊕ yr}
+for all xl ∈ x.left, xr ∈ x.right, yl ∈ y.left, yr ∈ y.right.
+-/
 
 def Game.add : Game → Game → Game
   | x, y =>
@@ -70,25 +73,25 @@ r ∈ (x ⊕ y).right ↔ (∃ xr ∈ x.right, (xr ⊕ y) = r) ∨ (∃ yr ∈ y
         rw [Game.add]
         simpa [Game.right, List.mem_append, List.mem_map] using hr
 
-private lemma mem_left_add_of_mem_left {x y xl : Game} (hxl : xl ∈ x.left) :
+lemma mem_add_left₁ {x y xl : Game} (hxl : xl ∈ x.left) :
     (xl ⊕ y) ∈ (x ⊕ y).left := by
-  exact (mem_add_left_iff (x := x) (y := y) (l := (xl ⊕ y))).2 <|
-    Or.inl ⟨xl, hxl, rfl⟩
+  rw [mem_add_left_iff]
+  exact Or.inl ⟨xl, hxl, rfl⟩
 
-private lemma mem_left_add_of_mem_right {x y yl : Game} (hyl : yl ∈ y.left) :
+lemma mem_add_left₂ {x y yl : Game} (hyl : yl ∈ y.left) :
     (x ⊕ yl) ∈ (x ⊕ y).left := by
-  exact (mem_add_left_iff (x := x) (y := y) (l := x ⊕ yl)).2 <|
-    Or.inr ⟨yl, hyl, rfl⟩
+  rw [mem_add_left_iff]
+  exact Or.inr ⟨yl, hyl, rfl⟩
 
-private lemma mem_right_add_of_mem_left {x y xr : Game} (hxr : xr ∈ x.right) :
+lemma mem_add_right₁ {x y xr : Game} (hxr : xr ∈ x.right) :
     (xr ⊕ y) ∈ (x ⊕ y).right := by
-  exact (mem_add_right_iff (x := x) (y := y) (r := xr ⊕ y)).2 <|
-    Or.inl ⟨xr, hxr, rfl⟩
+  rw [mem_add_right_iff]
+  exact Or.inl ⟨xr, hxr, rfl⟩
 
-private lemma mem_right_add_of_mem_right {x y yr : Game} (hyr : yr ∈ y.right) :
-   (x ⊕ yr) ∈ (x ⊕ y).right := by
-  exact (mem_add_right_iff (x := x) (y := y) (r := x ⊕ yr)).2 <|
-    Or.inr ⟨yr, hyr, rfl⟩
+lemma mem_add_right₂ {x y yr : Game} (hyr : yr ∈ y.right) :
+    (x ⊕ yr) ∈ (x ⊕ y).right := by
+  rw [mem_add_right_iff]
+  exact Or.inr ⟨yr, hyr, rfl⟩
 
 
 /-! ## Addition by zero -/
@@ -137,8 +140,8 @@ private lemma left_option_add_comm {x y l : Game}
     (hl : l ∈ (x ⊕ y).left) : ∃ l' ∈ (y ⊕ x).left, Game.eq l l' := by
   rcases (mem_add_left_iff (x := x) (y := y) (l := l)).1 hl with
     ⟨xl, hxl, rfl⟩ | ⟨yl, hyl, rfl⟩
-  · exact ⟨y ⊕ xl, mem_left_add_of_mem_right (x := y) (y := x) hxl, hx xl hxl⟩
-  · exact ⟨yl ⊕ x, mem_left_add_of_mem_left (x := y) (y := x) hyl, hy yl hyl⟩
+  · exact ⟨y ⊕ xl, mem_add_left₂ (x := y) (y := x) hxl, hx xl hxl⟩
+  · exact ⟨yl ⊕ x, mem_add_left₁ (x := y) (y := x) hyl, hy yl hyl⟩
 
 private lemma right_option_add_comm {x y r : Game}
     (hx : ∀ xr, xr ∈ x.right → Game.eq (xr ⊕ y) (y ⊕ xr))
@@ -146,8 +149,8 @@ private lemma right_option_add_comm {x y r : Game}
     (hr : r ∈ (x ⊕ y).right) : ∃ r' ∈ (y ⊕ x).right, Game.eq r r' := by
   rcases (mem_add_right_iff (x := x) (y := y) (r := r)).1 hr with
     ⟨xr, hxr, rfl⟩ | ⟨yr, hyr, rfl⟩
-  · exact ⟨y ⊕ xr, mem_right_add_of_mem_right (x := y) (y := x) hxr, hx xr hxr⟩
-  · exact ⟨yr ⊕ x, mem_right_add_of_mem_left (x := y) (y := x) hyr, hy yr hyr⟩
+  · exact ⟨y ⊕ xr, mem_add_right₂  (x := y) (y := x) hxr, hx xr hxr⟩
+  · exact ⟨yr ⊕ x, mem_add_right₁ (x := y) (y := x) hyr, hy yr hyr⟩
 
 theorem Game.add_comm {a b : Game} : Game.eq (a ⊕ b) (b ⊕ a) := by
   let P : BiGame → Prop := fun z => Game.eq (z.a ⊕ z.b) (z.b ⊕ z.a)
@@ -187,6 +190,7 @@ theorem Game.add_comm {a b : Game} : Game.eq (a ⊕ b) (b ⊕ a) := by
 /-! ##  a ≤ b → (a ⊕ c) ≤ (b ⊕ c)  ↔   (a ⊕ c) ≤  (b ⊕ c) → a ≤ b
 These two statements have to be proved hand-in-hand
 -/
+
 private lemma not_self_le_left {x l : Game} (hl : l ∈ x.left) : ¬ x.le l :=
   Game.not_ge_left_of_le Game.le_congr hl
 
@@ -205,13 +209,13 @@ private theorem Game.add_right_iff (x : TriGame) :
     constructor
     · intro al hal h_b_le_al
       exact(not_self_le_left (x := a ⊕ c) (l := al ⊕ c)
-          (mem_left_add_of_mem_left (x := a) (y := c) hal))
+          (mem_add_left₁ (x := a) (y := c) hal))
         (Game.le_trans ⟨hsum, (IH ⟨b, al, c⟩
             (T_of_a_left_mem (a := a) (b := b) (c := c) hal)).2 h_b_le_al⟩)
     · intro br hbr h_br_le_a
       exact
         (not_right_le_self (x := b ⊕ c) (r := br ⊕ c)
-          (mem_right_add_of_mem_left (x := b) (y := c) hbr))
+          (mem_add_right₁ (x := b) (y := c) hbr))
         (Game.le_trans ⟨(IH ⟨br, a, c⟩
             (T_of_b_right_mem (a := a) (b := b) (c := c) hbr)).2 h_br_le_a, hsum⟩)
   · intro hab
@@ -227,7 +231,7 @@ private theorem Game.add_right_iff (x : TriGame) :
       · intro hcontra
         exact
           (not_self_le_left (x := b ⊕ c) (l := b ⊕ cl)
-            (mem_left_add_of_mem_right (x := b) (y := c) hcl))
+            (mem_add_left₂ (x := b) (y := c) hcl))
           (Game.le_trans ⟨hcontra, (IH ⟨a, b, cl⟩
               (T_of_c_left_mem (a := a) (b := b) (c := c) hcl)).2 hab⟩)
     · intro r hr
@@ -240,7 +244,7 @@ private theorem Game.add_right_iff (x : TriGame) :
       · intro hcontra
         exact
           (not_right_le_self (x := a ⊕ c) (r := a ⊕ cr)
-            (mem_right_add_of_mem_right (x := a) (y := c) hcr))
+            (mem_add_right₂ (x := a) (y := c) hcr))
           (Game.le_trans
             ⟨(IH ⟨a, b, cr⟩ (T_of_c_right_mem (a := a) (b := b) (c := c) hcr)).2 hab, hcontra⟩)
 
@@ -253,6 +257,8 @@ theorem Game.add_le_add_right {a b c : Game} (hab : a.le b) : (a ⊕ c).le (b �
 
 theorem Game.add_right_cancel {a b c : Game} (h : (a ⊕ c).le (b ⊕ c)) : a.le b := by
   exact (Game.add_right_iff ⟨a, b, c⟩).1 h
+
+
 
 /-! ##  Some other inequalities-/
 
@@ -393,6 +399,14 @@ lemma neg_right_def (g : Game) : (Game.neg g).right =
   conv_lhs => rw [Game.neg]
   rfl
 
+/-! ## -0 = 0 -/
+
+theorem Game.neg_zero : zero.neg = zero := by
+  rw [Game.neg]
+  simp [zero]
+  unfold Game.right Game.left
+  simp
+
 /-! ##  a ≤ b ↔  -b ≤ -a -/
 
 private lemma mem_neg_left_iff {x l : Game} :
@@ -443,6 +457,9 @@ theorem bigame_neg_le_neg (x : Game.BiGame) :
     · intro bR hbR h'
       exact h.1 _ (mem_neg_left_iff.mpr ⟨bR, hbR, rfl⟩) ((ih_right hbR).1 h')
 
+
+/-! ## a ≤, =, < b  ↔  -b ≤, =, < -a -/
+
 theorem Game.neg_le_neg {a b : Game} : le a b ↔ le (neg b) (neg a) := by
   let bi : BiGame := {a := a, b := b}
   apply bigame_neg_le_neg bi
@@ -451,6 +468,9 @@ theorem Game.neg_congr {a b : Game} : a.eq b ↔ (neg b).eq (neg a) := by
   unfold eq
   rw [Game.neg_le_neg]
   nth_rw 2 [Game.neg_le_neg]
+
+theorem Game.neg_congr_left {a b : Game} (h : a ∼ b) : Game.neg a ∼ Game.neg b := by
+  exact Game.eq_symm <| (Game.neg_congr).mp h
 
 theorem Game.neg_lt_neg {a b : Game} : lt a b ↔ lt (neg b) (neg a) := by
   unfold lt
@@ -509,6 +529,8 @@ theorem Game.neg_add (x : Game) : ((Game.neg x) ⊕ x).eq Game.zero := by
   · exact Game.add_comm
   · exact Game.add_neg x
 
+
+/-! ## Addition Results for surreal numbers -/
 
 open Surreal
 

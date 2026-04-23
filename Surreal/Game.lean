@@ -153,6 +153,22 @@ lemma B_of_right_mem_swap {a b bR : Game} (hbR : bR ∈ b.right) :
   simpa [B, Nat.add_comm] using
     (B_of_right_mem_fst (x := b) (y := a) hbR)
 
+lemma B_of_left_left {a b aL bL : Game} (haL : aL ∈ a.left) (hbL : bL ∈ b.left) :
+    Game.B ⟨aL, bL⟩ ⟨a, b⟩ := by
+  simpa [Game.B] using add_lt_add (Game.birthday_lt_left haL) (Game.birthday_lt_left hbL)
+
+lemma B_of_left_right {a b aL bR : Game} (haL : aL ∈ a.left) (hbR : bR ∈ b.right) :
+    Game.B ⟨aL, bR⟩ ⟨a, b⟩ := by
+  simpa [Game.B] using add_lt_add (Game.birthday_lt_left haL) (Game.birthday_lt_right hbR)
+
+lemma B_of_right_left {a b aR bL : Game} (haR : aR ∈ a.right) (hbL : bL ∈ b.left) :
+    Game.B ⟨aR, bL⟩ ⟨a, b⟩ := by
+  simpa [Game.B] using add_lt_add (Game.birthday_lt_right haR) (Game.birthday_lt_left hbL)
+
+lemma B_of_right_right {a b aR bR : Game} (haR : aR ∈ a.right) (hbR : bR ∈ b.right) :
+    Game.B ⟨aR, bR⟩ ⟨a, b⟩ := by
+  simpa [Game.B] using add_lt_add (Game.birthday_lt_right haR) (Game.birthday_lt_right hbR)
+
 
 structure TriGame where
   a : Game
@@ -197,6 +213,102 @@ lemma T_of_mem_left₁ {a b c aL : Game} (haL : aL ∈ a.left) :
     T ⟨aL, b, c⟩ ⟨a, b, c⟩ := by
   simp [T]
   linarith [birthday_lt_left haL]
+
+lemma T_left {a a' b c : Game} (ha : birthday a' < birthday a) :
+    T ⟨a', b, c⟩ ⟨a, b, c⟩ := by
+  simp [T]
+  linarith
+
+lemma T_mid {a b b' c : Game} (hb : birthday b' < birthday b) :
+    T ⟨a, b', c⟩ ⟨a, b, c⟩ := by
+  simp [T]
+  linarith
+
+lemma T_right {a b c c' : Game} (hc : birthday c' < birthday c) :
+    T ⟨a, b, c'⟩ ⟨a, b, c⟩ := by
+  simp [T]
+  linarith
+
+lemma T_left_mid {a a' b b' c : Game}
+    (ha : birthday a' < birthday a) (hb : birthday b' < birthday b) :
+    T ⟨a', b', c⟩ ⟨a, b, c⟩ := by
+  simp [T]
+  linarith
+
+lemma T_left_right {a a' b c c' : Game}
+    (ha : birthday a' < birthday a) (hc : birthday c' < birthday c) :
+    T ⟨a', b, c'⟩ ⟨a, b, c⟩ := by
+  simp [T]
+  linarith
+
+lemma T_mid_right {a b b' c c' : Game}
+    (hb : birthday b' < birthday b) (hc : birthday c' < birthday c) :
+    T ⟨a, b', c'⟩ ⟨a, b, c⟩ := by
+  simp [T]
+  linarith
+
+lemma T_left_mid_right {a a' b b' c c' : Game}
+    (ha : birthday a' < birthday a) (hb : birthday b' < birthday b)
+    (hc : birthday c' < birthday c) :
+    T ⟨a', b', c'⟩ ⟨a, b, c⟩ := by
+  simp [T]
+  linarith
+
+structure QuadGame where
+  x1 : Game
+  x2 : Game
+  y1 : Game
+  y2 : Game
+
+def Q : QuadGame → QuadGame → Prop :=
+  fun q' q =>
+    q'.x1.birthday + q'.x2.birthday + q'.y1.birthday + q'.y2.birthday <
+      q.x1.birthday + q.x2.birthday + q.y1.birthday + q.y2.birthday
+
+theorem wf_Q : WellFounded Q := by
+  exact InvImage.wf
+    (fun q : QuadGame => q.x1.birthday + q.x2.birthday + q.y1.birthday + q.y2.birthday)
+    wellFounded_lt
+
+lemma Q_of_x1_left {x1 x2 y1 y2 x1' : Game} (hx : x1' ∈ x1.left) :
+    Q ⟨x1', x2, y1, y2⟩ ⟨x1, x2, y1, y2⟩ := by
+  simp [Q]
+  linarith [Game.birthday_lt_left hx]
+
+lemma Q_of_x1_right {x1 x2 y1 y2 x1' : Game} (hx : x1' ∈ x1.right) :
+    Q ⟨x1', x2, y1, y2⟩ ⟨x1, x2, y1, y2⟩ := by
+  simp [Q]
+  linarith [Game.birthday_lt_right hx]
+
+lemma Q_of_x2_left {x1 x2 y1 y2 x2' : Game} (hx : x2' ∈ x2.left) :
+    Q ⟨x1, x2', y1, y2⟩ ⟨x1, x2, y1, y2⟩ := by
+  simp [Q]
+  linarith [Game.birthday_lt_left hx]
+
+lemma Q_of_x2_right {x1 x2 y1 y2 x2' : Game} (hx : x2' ∈ x2.right) :
+    Q ⟨x1, x2', y1, y2⟩ ⟨x1, x2, y1, y2⟩ := by
+  simp [Q]
+  linarith [Game.birthday_lt_right hx]
+
+lemma Q_of_y1_left {x1 x2 y1 y2 y1' : Game} (hy : y1' ∈ y1.left) :
+    Q ⟨x1, x2, y1', y2⟩ ⟨x1, x2, y1, y2⟩ := by
+  simp [Q]
+  linarith [Game.birthday_lt_left hy]
+
+lemma Q_of_y1_right {x1 x2 y1 y2 y1' : Game} (hy : y1' ∈ y1.right) :
+    Q ⟨x1, x2, y1', y2⟩ ⟨x1, x2, y1, y2⟩ := by
+  simp [Q]
+  linarith [Game.birthday_lt_right hy]
+
+lemma Q_of_y2_left {x1 x2 y1 y2 y2' : Game} (hy : y2' ∈ y2.left) :
+    Q ⟨x1, x2, y1, y2'⟩ ⟨x1, x2, y1, y2⟩ := by
+  simp [Q]
+  linarith [Game.birthday_lt_left hy]
+
+lemma Q_of_y2_right {x1 x2 y1 y2 y2' : Game} (hy : y2' ∈ y2.right) :
+    Q ⟨x1, x2, y1, y2'⟩ ⟨x1, x2, y1, y2⟩ := by
+  simp [Q]
+  linarith [Game.birthday_lt_right hy]
 
 
 /-! ## Basic order inequalities -/

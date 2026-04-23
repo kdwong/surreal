@@ -1,424 +1,502 @@
 import Mathlib.Tactic.Linarith
-import Mathlib.Data.List.MinMax
-import Mathlib.Order.Basic
 import Mathlib.Tactic.Abel
 import Surreal.game
 import Surreal.surreal
 import Surreal.addition
-import Surreal.mult_comm_dist
+import Surreal.mult_comm
+import Surreal.CommGroup
+import Surreal.mult_dist
 
-namespace ConwayStrategy
+namespace Game
 
-local notation:70 x " ⊗ " y => Game.mul x y
+open scoped Game
+
 local notation:70 x " ⊕ " y => Game.add x y
-local notation:70 x " ∼ " y => Game.eq x y
-local notation:70 x " ≼ " y => Game.le x y
-local notation:70 x " ≺ " y => Game.lt x y
+local notation:70 x " ⊗ " y => Game.mul x y
 
 
+/-!
+This file is follows the proof strategy in `strategy.md`:
+* `StageA n`: product of surreal games is surreal, and left congruence,
+  for all pairs of product-rank `< n`.
+* `StageB n`: the Conway `P`-inequalities for all quadruples whose four
+  relevant product-ranks are `< n`.
+Then:
+* prove `StageA n` from all earlier stages;
+* prove `StageB n` from `StageA n` by an inner induction on quadruple complexity;
+* extract the final theorems.
+-/
 
+/-! ## Product-rank -/
+/-- Complexity of a product. -/
+def prodRank (x y : Game) : Nat := x.birthday + y.birthday
 
-lemma game_le_trans {a b c : Game} (h1 : a ≼ b) (h2 : b ≼ c) : a ≼ c :=
-  Game.le_trans ⟨h1, h2⟩
+lemma prodRank_comm {x y : Game} : prodRank x y = prodRank y x := by
+  dsimp [prodRank]
+  rw [Nat.add_comm]
 
+lemma prodRank_left_lt {x x' y : Game} (hx : x'.birthday < x.birthday) :
+    prodRank x' y < prodRank x y := by
+  dsimp [prodRank]
+  exact add_lt_add_right hx _
 
-lemma game_eq_trans {a b c : Game} (h1 : a ∼ b) (h2 : b ∼ c) : a ∼ c :=
-  Game.eq_trans ⟨h1, h2⟩
+lemma prodRank_right_lt {x y y' : Game} (hy : y'.birthday < y.birthday) :
+    prodRank x y' < prodRank x y := by
+  dsimp [prodRank]
+  exact add_lt_add_left hy _
 
-lemma game_lt_of_le_of_lt {a b c : Game} (h1 : a ≼ b) (h2 : b ≺ c) : a ≺ c :=
-  Game.lt_of_le_of_lt h1 h2
+lemma prodRank_of_mem_left₁ {x y xl : Game} (hxl : xl ∈ x.left) :
+    prodRank xl y < prodRank x y := by
+  exact prodRank_left_lt (Game.birthday_lt_left hxl)
 
-lemma Game.add_le_add_of_le_of_eq {a b c d : Game}
-    (hab : a ≼ b) (hcd : c ∼ d) : (a ⊕ c) ≼ (b ⊕ d) := by
-  apply Game.add_le_add
-  exact ⟨hab, hcd.1⟩
+lemma prodRank_of_mem_right₁ {x y xr : Game} (hxr : xr ∈ x.right) :
+    prodRank xr y < prodRank x y := by
+  exact prodRank_left_lt (Game.birthday_lt_right hxr)
 
-lemma game_add_le_add_right {a b c : Game} (h : a ≼ b) : (a ⊕ c) ≼ (b ⊕ c) := by
-  apply Game.add_le_add_of_le_of_eq h Game.eq_congr
+lemma prodRank_of_mem_left₂ {x y yl : Game} (hyl : yl ∈ y.left) :
+    prodRank x yl < prodRank x y := by
+  exact prodRank_right_lt (Game.birthday_lt_left hyl)
 
-lemma Game.sub_le_iff {a b c : Game} :
-    ((a ⊕ b.neg) ≼ c) ↔ a ≼ (c ⊕ b) := by
-  constructor
-  · intro h
-    have h1 := Game.add_le_add_of_le_of_eq h (Game.eq_congr (x := b))
-    have assoc : ((a.add b.neg).add b).eq (a.add (b.neg.add b)) :=
-      Game.eq_of_eq Game.add_assoc
-    have inv : (b.neg.add b).eq zero := Game.neg_add b
-    have id : (a.add zero).eq a := Game.eq_of_eq Game.add_zero
-    refine Game.le_trans ⟨?_, h1⟩
-    refine Game.le_trans ⟨?_, assoc.2⟩
-    refine Game.le_trans ⟨?_, Game.add_le_add_of_le_of_eq Game.le_congr inv.symm⟩
-    exact id.2
-  · intro h
-    have h1 := Game.add_le_add_of_le_of_eq h (Game.eq_congr (x := b.neg))
-    have assoc : ((c.add b).add b.neg).eq (c.add (b.add b.neg)) :=
-      Game.eq_of_eq Game.add_assoc
-    have inv : (b.add b.neg).eq zero := Game.add_neg b
-    have id : (c.add zero).eq c := Game.eq_of_eq Game.add_zero
-    refine Game.le_trans ⟨h1, ?_⟩
-    refine Game.le_trans ⟨assoc.1, ?_⟩
-    refine Game.le_trans ⟨Game.add_le_add_of_le_of_eq Game.le_congr inv, ?_⟩
-    exact id.1
+lemma prodRank_of_mem_right₂ {x y yr : Game} (hyr : yr ∈ y.right) :
+    prodRank x yr < prodRank x y := by
+  exact prodRank_right_lt (Game.birthday_lt_right hyr)
 
+/-! ## Statement (iii): the `P`-inequalities -/
 
-lemma P_ineq_rearrange {a b c d : Game} :
-    (((a ⊕ b) ⊕ c.neg) ≼ d) ↔ (a ⊕ b) ≼ (d ⊕ c) := by
-  constructor
-  · intro h
-    have h1 := Game.add_le_add_of_le_of_eq h (Game.eq_congr (x := c))
-    have assoc : (((a.add b).add c.neg).add c).eq ((a.add b).add (c.neg.add c)) :=
-      Game.eq_of_eq Game.add_assoc
-    have inv : (c.neg.add c).eq zero := Game.neg_add c
-    have id : ((a.add b).add zero).eq (a.add b) := Game.eq_of_eq Game.add_zero
-    refine Game.le_trans ⟨?_, h1⟩
-    refine Game.le_trans ⟨?_, assoc.2⟩
-    refine Game.le_trans ⟨?_, Game.add_le_add_of_le_of_eq Game.le_congr inv.symm⟩
-    exact id.2
+def MulCrossLe (x1 x2 y1 y2 : Game) : Prop :=
+  ((x1 ⊗ y2) ⊕ (x2 ⊗ y1)) ≼ ((x1 ⊗ y1) ⊕ (x2 ⊗ y2))
 
-  · intro h
-    have h1 := Game.add_le_add_of_le_of_eq h (Game.eq_congr (x := c.neg))
-    have assoc : ((d.add c).add c.neg).eq (d.add (c.add c.neg)) :=
-      Game.eq_of_eq Game.add_assoc
-    have inv : (c.add c.neg).eq zero := Game.add_neg c
-    have id : (d.add zero).eq d := Game.eq_of_eq Game.add_zero
-    refine Game.le_trans ⟨h1, ?_⟩
-    refine Game.le_trans ⟨assoc.1, ?_⟩
-    refine Game.le_trans ⟨Game.add_le_add_of_le_of_eq Game.le_congr inv, ?_⟩
-    exact id.1
+def MulCrossLt (x1 x2 y1 y2 : Game) : Prop :=
+  ((x1 ⊗ y2) ⊕ (x2 ⊗ y1)) ≺ ((x1 ⊗ y1) ⊕ (x2 ⊗ y2))
 
-def prod_rank (x y : Game) : Nat := Game.birthday x + Game.birthday y
+structure CrossRanksLT (n : Nat) (x1 x2 y1 y2 : Game) : Prop where
+  h11 : prodRank x1 y1 < n
+  h12 : prodRank x1 y2 < n
+  h21 : prodRank x2 y1 < n
+  h22 : prodRank x2 y2 < n
 
-lemma rank_lt_left_left {x y xL : Game} (hxL : xL ∈ x.left) : prod_rank xL y < prod_rank x y := by
-  unfold prod_rank
-  have hx' := Game.birthday_lt_left hxL
-  linarith
+/-! ## Stage-indexed assertions `A(n)` and `B(n)` -/
 
-lemma rank_lt_left_right {x y xR : Game} (hxR : xR ∈ x.right) : prod_rank xR y < prod_rank x y := by
-  unfold prod_rank
-  have hx' := Game.birthday_lt_right hxR
-  linarith
+/-- Stage `A(n)`: product is surreal, and multiplication respects equivalence
+in the left factor, for all products of rank `< n`. -/
+structure StageA (n : Nat) : Prop where
+  surreal :
+  ∀ {x y : Game}, IsSurreal x → IsSurreal y → prodRank x y < n → IsSurreal (x ⊗ y)
+  congr_left :
+  ∀ {x1 x2 y : Game},
+    IsSurreal x1 → IsSurreal x2 → IsSurreal y → x1 ∼ x2 →
+    prodRank x1 y < n → prodRank x2 y < n → (x1 ⊗ y) ∼ (x2 ⊗ y)
 
-lemma rank_lt_right_left {x y yL : Game} (hyL : yL ∈ y.left) : prod_rank x yL < prod_rank x y := by
-  unfold prod_rank
-  have hy' := Game.birthday_lt_left hyL
-  linarith
+/-- Stage `B(n)`: all `P`-inequalities with the four relevant ranks `< n`. -/
+structure StageB (n : Nat) : Prop where
+  weak :
+  ∀ {x1 x2 y1 y2 : Game},
+    IsSurreal x1 → IsSurreal x2 → IsSurreal y1 → IsSurreal y2 →
+    CrossRanksLT n x1 x2 y1 y2 → x1 ≼ x2 → y1 ≼ y2 → MulCrossLe x1 x2 y1 y2
+  strict :
+  ∀ {x1 x2 y1 y2 : Game},
+    IsSurreal x1 → IsSurreal x2 → IsSurreal y1 → IsSurreal y2 →
+    CrossRanksLT n x1 x2 y1 y2 → x1 ≺ x2 → y1 ≺ y2 → MulCrossLt x1 x2 y1 y2
 
-lemma rank_lt_right_right {x y yR : Game}
-(hyR : yR ∈ y.right) : prod_rank x yR < prod_rank x y := by
-  unfold prod_rank
-  have hy' := Game.birthday_lt_right hyR
-  linarith
+abbrev StageData (n : Nat) : Prop := StageA n ∧ StageB n
 
+lemma StageA.congr_right {n : Nat} {x y1 y2 : Game}
+  (hA : StageA n) (hx : IsSurreal x) (hy1 : IsSurreal y1) (hy2 : IsSurreal y2)
+  (hEq : y1 ∼ y2) (h1 : prodRank x y1 < n) (h2 : prodRank x y2 < n) :
+    (x ⊗ y1) ∼ (x ⊗ y2) := by
+  have h1' : prodRank y1 x < n := by
+    simpa [prodRank_comm] using h1
+  have h2' : prodRank y2 x < n := by
+    simpa [prodRank_comm] using h2
+  exact
+    Game.eq_trans
+    ⟨Game.mul_comm (a := x) (b := y1),
+      Game.eq_trans ⟨hA.congr_left hy1 hy2 hx hEq h1' h2', Game.mul_comm (a := y2) (b := x)⟩⟩
 
+/-! ## Access to previous stages -/
 
-def PropA (α : Nat) : Prop :=
-  (∀ x y : Game, IsSurreal x → IsSurreal y → prod_rank x y < α → IsSurreal (x ⊗ y)) ∧
-  (∀ x₁ x₂ y : Game, IsSurreal x₁ → IsSurreal x₂ → IsSurreal y → (x₁ = x₂)
-   → prod_rank x₁ y < α → (x₁ ⊗ y) = (x₂ ⊗ y))
+private lemma prevA {n m : Nat}
+    (hprev : ∀ k < n, StageData k) (hm : m < n) : StageA m := by
+  exact (hprev m hm).1
 
-def PropB (α : Nat) : Prop :=
-  ∀ x₁ x₂ y₁ y₂ : Game,
-  IsSurreal x₁ → IsSurreal x₂ → IsSurreal y₁ → IsSurreal y₂ →
-  prod_rank x₁ y₁ < α → prod_rank x₁ y₂ < α →
-  prod_rank x₂ y₁ < α → prod_rank x₂ y₂ < α →
-  (x₁ ≺ x₂) → (y₁ ≺ y₂) →
-    ((x₁ ⊗ y₂) ⊕ (x₂ ⊗ y₁)) ≺ ((x₁ ⊗ y₁) ⊕ (x₂ ⊗ y₂))
+private lemma prevB {n m : Nat}
+    (hprev : ∀ k < n, StageData k) (hm : m < n) : StageB m := by
+  exact (hprev m hm).2
 
+/-! ## Step A: proving product surreality and congruence from earlier stages -/
 
-lemma prove_A_part_i (x y : Surreal) {α : Nat}
-    (hrank : prod_rank x y ≤ α)
-    (ih_B : PropB α) :
-    ∀ L_opt ∈ (x.val ⊗ y.val).left, ∀ R_opt ∈ (x.val ⊗ y.val).right, L_opt ≺ R_opt := by
-  intro L_opt hL R_opt hR
-  rw [mem_mul_left] at hL
-  rw [mem_mul_right] at hR
+section StageAStep
 
-  rcases hL with ⟨xL1, hxL1, yL1, hyL1, rfl⟩ | ⟨xR1, hxR1, yR1, hyR1, rfl⟩
-  <;> rcases hR with ⟨xL2, hxL2, yR2, hyR2, rfl⟩ | ⟨xR2, hxR2, yL2, hyL2, rfl⟩
+variable {n : Nat}
+variable (hprev : ∀ m < n, StageData m)
 
-  · by_cases h_lt : xL1 ≺ xL2
-    · have hxL1S : IsSurreal xL1 := by
-        have hxS := x.property
-        unfold IsSurreal at hxS
-        exact hxS.2.1 xL1 hxL1
-      have hxL2S : IsSurreal xL2 := by
-        have hxS := x.property
-        unfold IsSurreal at hxS
-        exact hxS.2.1 xL2 hxL2
-      have hyL1S : IsSurreal yL1 := by
-        have hyS := y.property
-        unfold IsSurreal at hyS
-        exact hyS.2.1 yL1 hyL1
-      have hyR2S : IsSurreal yR2 := by
-        have hyS := y.property
-        unfold IsSurreal at hyS
-        exact hyS.2.2 yR2 hyR2
+/-!
+The next four lemmas are the heart of statement (i):
+use the `P`-inequalities from earlier stages to show that every left option
+of `x ⊗ y` is `<` every right option of `x ⊗ y`.
+-/
 
-      let sxL1 : Surreal := ⟨xL1, hxL1S⟩
-      let sxL2 : Surreal := ⟨xL2, hxL2S⟩
-      let syL1 : Surreal := ⟨yL1, hyL1S⟩
-      let syR2 : Surreal := ⟨yR2, hyR2S⟩
+theorem add_lt_left_left {u v : Game} (t : Game) : u ≺ v → (t ⊕ u) ≺ (t ⊕ v) := by
+  intro huv
+  exact Game.add_le_lt ⟨Game.le_congr, huv⟩
 
-      have hyL1_lt_y : yL1 ≺ y := by
-        exact (xL_x_xR (x := y)).1 syL1 hyL1
-      have hy_lt_yR2 : y ≺ yR2 := by
-        exact (xL_x_xR (x := y)).2 syR2 hyR2
-      have hxL2_lt_x : xL2 ≺ x := by
-        exact (xL_x_xR (x := x)).1 sxL2 hxL2
-      have hyL1_lt_yR2 : yL1 ≺ yR2 := by
-        exact Game.lt_trans ⟨hyL1_lt_y, hy_lt_yR2⟩
-
-      have h11 : prod_rank xL1 yL1 < α := by
-        apply lt_of_lt_of_le _ hrank
-        unfold prod_rank
-        have hx' := Game.birthday_lt_left hxL1
-        have hy' := Game.birthday_lt_left hyL1
-        linarith
-      have h12 : prod_rank xL1 y < α := by
-        apply lt_of_lt_of_le _ hrank
-        exact rank_lt_left_left hxL1
-      have h21 : prod_rank xL2 yL1 < α := by
-        apply lt_of_lt_of_le _ hrank
-        unfold prod_rank
-        have hx' := Game.birthday_lt_left hxL2
-        have hy' := Game.birthday_lt_left hyL1
-        linarith
-      have h22 : prod_rank xL2 y < α := by
-        apply lt_of_lt_of_le _ hrank
-        exact rank_lt_left_left hxL2
-      have h23 : prod_rank xL2 yR2 < α := by
-        apply lt_of_lt_of_le _ hrank
-        unfold prod_rank
-        have hx' := Game.birthday_lt_left hxL2
-        have hy' := Game.birthday_lt_right hyR2
-        linarith
-      have h31 : prod_rank x yL1 < α := by
-        apply lt_of_lt_of_le _ hrank
-        exact rank_lt_right_left hyL1
-      have h32 : prod_rank x yR2 < α := by
-        apply lt_of_lt_of_le _ hrank
-        exact rank_lt_right_right hyR2
-
-      have hP₁ :
-          ((xL1 ⊗ y.val).add (xL2 ⊗ yL1)) ≺ ((xL1 ⊗ yL1).add (xL2 ⊗ y.val)) := by
-        exact ih_B xL1 xL2 yL1 y.val
-          hxL1S hxL2S hyL1S y.property
-          h11 h12 h21 h22 h_lt hyL1_lt_y
-
-      have hP₂ :
-          ((xL2 ⊗ yR2).add (x.val ⊗ yL1)) ≺ ((xL2 ⊗ yL1).add (x.val ⊗ yR2)) := by
-        exact ih_B xL2 x.val yL1 yR2
-          hxL2S x.property hyL1S hyR2S
-          h21 h23 h31 h32 hxL2_lt_x hyL1_lt_yR2
-
-      have h_mid₁ :
-          (((xL1 ⊗ y.val).add (x.val ⊗ yL1)).add (Game.neg (xL1 ⊗ yL1))) ≺
-          (((xL2 ⊗ y.val).add (x.val ⊗ yL1)).add (Game.neg (xL2 ⊗ yL1))) := by
-        let A := xL1 ⊗ y.val
-        let B := xL2 ⊗ yL1
-        let C := xL1 ⊗ yL1
-        let D := xL2 ⊗ y.val
-        let X := x.val ⊗ yL1
-
-        have h1 : ((A.add B).add (Game.neg C)) ≺ ((C.add D).add (Game.neg C)) := by
-          exact Game.add_lt_le ⟨hP₁, Game.le_congr⟩
-
-        have h1_rhs_eq : ((C.add D).add (Game.neg C)).eq D := by
-          have e1 : ((C.add D).add (Game.neg C)).eq ((D.add C).add (Game.neg C)) := by
-            exact Game.add_equal ⟨Game.add_comm, Game.eq_congr⟩
-          have e2 : ((D.add C).add (Game.neg C)).eq (D.add (C.add (Game.neg C))) := by
-            exact Game.eq_of_eq Game.add_assoc
-          have e3 : (D.add (C.add (Game.neg C))).eq (D.add zero) := by
-            exact Game.add_equal ⟨Game.eq_congr, Game.add_neg C⟩
-          have e4 : (D.add zero).eq D := by
-            exact Game.eq_of_eq Game.add_zero
-          exact game_eq_trans (game_eq_trans (game_eq_trans e1 e2) e3) e4
-
-        have h2 : ((A.add B).add (Game.neg C)) ≺ D := by
-          exact Game.lt_of_lt_of_le h1 h1_rhs_eq.1
-
-        have h2_lhs_eq : ((A.add B).add (Game.neg C)).eq ((A.add (Game.neg C)).add B) := by
-          have e1 : ((A.add B).add (Game.neg C)).eq (A.add (B.add (Game.neg C))) := by
-            exact Game.eq_of_eq Game.add_assoc
-          have e2 : (A.add (B.add (Game.neg C))).eq (A.add ((Game.neg C).add B)) := by
-            exact Game.add_equal ⟨Game.eq_congr, Game.add_comm⟩
-          have e3 : ((A.add (Game.neg C)).add B).eq (A.add ((Game.neg C).add B)) := by
-            exact Game.eq_of_eq Game.add_assoc
-          exact game_eq_trans (game_eq_trans e1 e2) e3.symm
-
-        have h3 : ((A.add (Game.neg C)).add B) ≺ D := by
-          exact Game.lt_of_le_of_lt h2_lhs_eq.2 h2
-
-        have h4 : (((A.add (Game.neg C)).add B).add (Game.neg B)) ≺ (D.add (Game.neg B)) := by
-          exact Game.add_lt_le ⟨h3, Game.le_congr⟩
-
-        have h4_lhs_eq :
-        (((A.add (Game.neg C)).add B).add (Game.neg B)).eq (A.add (Game.neg C)) := by
-          have e1 : (((A.add (Game.neg C)).add B).add (Game.neg B)).eq
-              ((A.add (Game.neg C)).add (B.add (Game.neg B))) := by
-            exact Game.eq_of_eq Game.add_assoc
-          have e2 : ((A.add (Game.neg C)).add (B.add (Game.neg B))).eq
-              ((A.add (Game.neg C)).add zero) := by
-            exact Game.add_equal ⟨Game.eq_congr, Game.add_neg B⟩
-          have e3 : ((A.add (Game.neg C)).add zero).eq (A.add (Game.neg C)) := by
-            exact Game.eq_of_eq Game.add_zero
-          exact game_eq_trans (game_eq_trans e1 e2) e3
-
-        have h5 : (A.add (Game.neg C)) ≺ (D.add (Game.neg B)) := by
-          exact Game.lt_of_le_of_lt h4_lhs_eq.2 h4
-
-        have h6 : ((A.add (Game.neg C)).add X) ≺ ((D.add (Game.neg B)).add X) := by
-          exact Game.add_lt_le ⟨h5, Game.le_congr⟩
-
-        have h6_lhs_eq : ((A.add (Game.neg C)).add X).eq ((A.add X).add (Game.neg C)) := by
-          have e1 : ((A.add (Game.neg C)).add X).eq (A.add ((Game.neg C).add X)) := by
-            exact Game.eq_of_eq Game.add_assoc
-          have e2 : (A.add ((Game.neg C).add X)).eq (A.add (X.add (Game.neg C))) := by
-            exact Game.add_equal ⟨Game.eq_congr, Game.add_comm⟩
-          have e3 : ((A.add X).add (Game.neg C)).eq (A.add (X.add (Game.neg C))) := by
-            exact Game.eq_of_eq Game.add_assoc
-          exact game_eq_trans (game_eq_trans e1 e2) e3.symm
-
-        have h6_rhs_eq : ((D.add (Game.neg B)).add X).eq ((D.add X).add (Game.neg B)) := by
-          have e1 : ((D.add (Game.neg B)).add X).eq (D.add ((Game.neg B).add X)) := by
-            exact Game.eq_of_eq Game.add_assoc
-          have e2 : (D.add ((Game.neg B).add X)).eq (D.add (X.add (Game.neg B))) := by
-            exact Game.add_equal ⟨Game.eq_congr, Game.add_comm⟩
-          have e3 : ((D.add X).add (Game.neg B)).eq (D.add (X.add (Game.neg B))) := by
-            exact Game.eq_of_eq Game.add_assoc
-          exact game_eq_trans (game_eq_trans e1 e2) e3.symm
-
-        exact Game.lt_of_le_of_lt h6_lhs_eq.2 (Game.lt_of_lt_of_le h6 h6_rhs_eq.1)
-
-      have h_mid₂ :
-          (((xL2 ⊗ y.val).add (x.val ⊗ yL1)).add (Game.neg (xL2 ⊗ yL1))) ≺
-          (((xL2 ⊗ y.val).add (x.val ⊗ yR2)).add (Game.neg (xL2 ⊗ yR2))) := by
-        let A := xL2 ⊗ yR2
-        let B := x.val ⊗ yL1
-        let C := xL2 ⊗ yL1
-        let D := x.val ⊗ yR2
-        let E := xL2 ⊗ y.val
-
-        have h1 : ((A.add B).add (Game.neg C)) ≺ ((C.add D).add (Game.neg C)) := by
-          exact Game.add_lt_le ⟨hP₂, Game.le_congr⟩
-
-        have h1_rhs_eq : ((C.add D).add (Game.neg C)).eq D := by
-          have e1 : ((C.add D).add (Game.neg C)).eq ((D.add C).add (Game.neg C)) := by
-            exact Game.add_equal ⟨Game.add_comm, Game.eq_congr⟩
-          have e2 : ((D.add C).add (Game.neg C)).eq (D.add (C.add (Game.neg C))) := by
-            exact Game.eq_of_eq Game.add_assoc
-          have e3 : (D.add (C.add (Game.neg C))).eq (D.add zero) := by
-            exact Game.add_equal ⟨Game.eq_congr, Game.add_neg C⟩
-          have e4 : (D.add zero).eq D := by
-            exact Game.eq_of_eq Game.add_zero
-          exact game_eq_trans (game_eq_trans (game_eq_trans e1 e2) e3) e4
-
-        have h2 : ((A.add B).add (Game.neg C)) ≺ D := by
-          exact Game.lt_of_lt_of_le h1 h1_rhs_eq.1
-
-        have h2_lhs_eq : ((A.add B).add (Game.neg C)).eq ((B.add (Game.neg C)).add A) := by
-          have e1 : ((A.add B).add (Game.neg C)).eq (A.add (B.add (Game.neg C))) := by
-            exact Game.eq_of_eq Game.add_assoc
-          have e2 : (A.add (B.add (Game.neg C))).eq ((B.add (Game.neg C)).add A) := by
-            exact Game.add_comm
-          exact game_eq_trans e1 e2
-
-        have h3 : ((B.add (Game.neg C)).add A) ≺ D := by
-          exact Game.lt_of_le_of_lt h2_lhs_eq.2 h2
-
-        have h4 : (((B.add (Game.neg C)).add A).add (Game.neg A)) ≺ (D.add (Game.neg A)) := by
-          exact Game.add_lt_le ⟨h3, Game.le_congr⟩
-
-        have h4_lhs_eq :
-        (((B.add (Game.neg C)).add A).add (Game.neg A)).eq (B.add (Game.neg C)) := by
-          have e1 : (((B.add (Game.neg C)).add A).add (Game.neg A)).eq
-              ((B.add (Game.neg C)).add (A.add (Game.neg A))) := by
-            exact Game.eq_of_eq Game.add_assoc
-          have e2 : ((B.add (Game.neg C)).add (A.add (Game.neg A))).eq
-              ((B.add (Game.neg C)).add zero) := by
-            exact Game.add_equal ⟨Game.eq_congr, Game.add_neg A⟩
-          have e3 : ((B.add (Game.neg C)).add zero).eq (B.add (Game.neg C)) := by
-            exact Game.eq_of_eq Game.add_zero
-          exact game_eq_trans (game_eq_trans e1 e2) e3
-
-        have h5 : (B.add (Game.neg C)) ≺ (D.add (Game.neg A)) := by
-          exact Game.lt_of_le_of_lt h4_lhs_eq.2 h4
-
-        have h6 : ((B.add (Game.neg C)).add E) ≺ ((D.add (Game.neg A)).add E) := by
-          exact Game.add_lt_le ⟨h5, Game.le_congr⟩
-
-        have h6_lhs_eq : ((B.add (Game.neg C)).add E).eq ((E.add B).add (Game.neg C)) := by
-          have e1 : ((B.add (Game.neg C)).add E).eq ((E.add B).add (Game.neg C)) := by
-            have e1a : ((B.add (Game.neg C)).add E).eq (E.add (B.add (Game.neg C))) := by
-              exact Game.add_comm
-            have e1b : ((E.add B).add (Game.neg C)).eq (E.add (B.add (Game.neg C))) := by
-              exact Game.eq_of_eq Game.add_assoc
-            exact game_eq_trans e1a e1b.symm
-          exact e1
-
-        have h6_rhs_eq : ((D.add (Game.neg A)).add E).eq ((E.add D).add (Game.neg A)) := by
-          have e1 : ((D.add (Game.neg A)).add E).eq (E.add (D.add (Game.neg A))) := by
-            exact Game.add_comm
-          have e2 : ((E.add D).add (Game.neg A)).eq (E.add (D.add (Game.neg A))) := by
-            exact Game.eq_of_eq Game.add_assoc
-          exact game_eq_trans e1 e2.symm
-
-        exact Game.lt_of_le_of_lt h6_lhs_eq.2 (Game.lt_of_lt_of_le h6 h6_rhs_eq.1)
-
-      exact Game.lt_trans ⟨h_mid₁, h_mid₂⟩
-
-    · by_cases h_eq : xL1 ≈ xL2
-      · sorry
-      · sorry
-  · sorry
-  · sorry
-  · sorry
-
-
-
-lemma prove_A_step (α : Nat)
-    (ih_A : PropA α)
-    (ih_B : PropB α) :
-    PropA (α + 1) := by
+theorem Game.add_lt_right_right {u v : Game} (t : Game) : u ≺ v → (u ⊕ t) ≺ (v ⊕ t) := by
   sorry
 
+theorem Game.add_lt_left_right {u v : Game} (t : Game) : u ≺ v → (t ⊕ u) ≺ (v ⊕ t) := by
+  sorry
 
-lemma prove_B_base_from_current_A (x y xL yL : Game)
+theorem Game.add_lt_right_left {u v : Game} (t : Game) : u ≺ v → (u ⊕ t) ≺ (t ⊕ v) := by
+  sorry
+
+private lemma surreal_left_option
+    {x L : Game}
+    (hx : IsSurreal x) (hL : L ∈ x.left) :
+    IsSurreal L := by
+  unfold IsSurreal at hx
+  exact hx.2.1 _ hL
+
+private lemma surreal_right_option {x R : Game}
+    (hx : IsSurreal x) (hR : R ∈ x.right) : IsSurreal R := by
+  unfold IsSurreal at hx
+  exact hx.2.2 _ hR
+
+private lemma mulOpt4_LL_of_cross {a b c d e : Game}
+    (h : MulCrossLt a c d e) :
+    Game.mulOpt4 a b c d ≺ Game.mulOpt4 a b c e := by
+  unfold MulCrossLt at h
+  sorry
+
+private lemma mul_left_right_case_LL {x y xL xR yL yR : Game}
+  (hprev : ∀ m < n, StageData m) (hx : IsSurreal x) (hy : IsSurreal y)
+  (hxL : xL ∈ x.left) (hyL : yL ∈ y.left) (hyR : yR ∈ y.right)
+  (hxy : prodRank x y < n) :
+  Game.mulOpt4 xL y x yL ≺ Game.mulOpt4 xL y x yR := by
+  let m := prodRank x y
+  have hm : m < n := hxy
+  have hB : StageB m := prevB hprev hm
+  have hxL_sur : IsSurreal xL := surreal_left_option hx hxL
+  have hyL_sur : IsSurreal yL := surreal_left_option hy hyL
+  have hyR_sur : IsSurreal yR := surreal_right_option hy hyR
+  have hxLx : xL ≺ x := by
+    exact IsSurreal.left_lt hx hxL
+  have hyLyR : yL ≺ yR := by
+    exact Game.lt_trans ⟨(IsSurreal.left_lt hy hyL), (IsSurreal.lt_right hy hyR)⟩
+  have hRanks : CrossRanksLT m xL x yL yR := by
+    refine ⟨?_, ?_, ?_, ?_⟩
+    · exact Nat.lt_trans
+        (prodRank_of_mem_left₁ (x := x) (y := yL) hxL)
+        (prodRank_of_mem_left₂ (x := x) (y := y) hyL)
+    · exact Nat.lt_trans
+        (prodRank_of_mem_left₁ (x := x) (y := yR) hxL)
+        (prodRank_of_mem_right₂ (x := x) (y := y) hyR)
+    · exact prodRank_of_mem_left₂ (x := x) (y := y) hyL
+    · exact prodRank_of_mem_right₂ (x := x) (y := y) hyR
+  have hcross : MulCrossLt xL x yL yR :=
+    hB.strict hxL_sur hx hyL_sur hyR_sur hRanks hxLx hyLyR
+  exact mulOpt4_LL_of_cross hcross
+
+private lemma mul_left_right_case_LR {x y xL xR yL yR : Game}
     (hx : IsSurreal x) (hy : IsSurreal y)
-    (hxL : xL ∈ x.left) (hyL : yL ∈ y.left)
-    {α : Nat} (hrank : prod_rank x y < α + 1)
-    (hA : PropA (α + 1)) :
-    ((xL ⊗ y) ⊕ (x ⊗ yL)) ≼ ((xL ⊗ yL) ⊕ (x ⊗ y)) := by
-
+    (hxL : xL ∈ x.left) (hxR : xR ∈ x.right)
+    (hyL : yL ∈ y.left) (hyR : yR ∈ y.right)
+    (hxy : prodRank x y < n) :
+    Game.mulOpt4 xL y x yL ≺ Game.mulOpt4 xR y x yL := by
   sorry
 
-
-lemma prove_B_step (α : Nat)
-    (hA : PropA (α + 1))
-    (ih_B : PropB α) :
-    PropB (α + 1) := by
+private lemma mul_left_right_case_R {x y xL xR yL yR : Game}
+    (hx : IsSurreal x) (hy : IsSurreal y)
+    (hxL : xL ∈ x.left) (hxR : xR ∈ x.right)
+    (hyL : yL ∈ y.left) (hyR : yR ∈ y.right)
+    (hxy : prodRank x y < n) :
+    Game.mulOpt4 xR y x yR ≺ Game.mulOpt4 xL y x yR := by
   sorry
 
+private lemma mul_left_right_case_RR {x y xL xR yL yR : Game}
+    (hx : IsSurreal x) (hy : IsSurreal y)
+    (hxL : xL ∈ x.left) (hxR : xR ∈ x.right)
+    (hyL : yL ∈ y.left) (hyR : yR ∈ y.right)
+    (hxy : prodRank x y < n) :
+    Game.mulOpt4 xR y x yR ≺ Game.mulOpt4 xR y x yL := by
+  sorry
 
-theorem stage_induction (α : Nat) : PropA α ∧ PropB α := by
-  induction α with
-  | zero =>
+private lemma mul_left_lt_right_of_prevB {x y L R : Game}
+    (hprev : ∀ m < n, StageData m) (hx : IsSurreal x) (hy : IsSurreal y)
+    (hxy : prodRank x y < n) (hL : L ∈ (x ⊗ y).left) (hR : R ∈ (x ⊗ y).right) :
+    ¬ (R ≼ L) := by
+  sorry
 
-      constructor
-      · constructor
-        · intro x y hx hy h_rank
-          cases Nat.not_lt_zero _ h_rank
-        · intro x1 x2 y hx1 hx2 hy h_eq h_rank
-          cases Nat.not_lt_zero _ h_rank
-      · intro x1 x2 y1 y2 h_sur_x1 h_sur_x2 h_sur_y1 h_sur_y2
-          h11 h12 h21 h22 hx_le hy_le
-        cases Nat.not_lt_zero _ h11
+/-!
+Next: recursive surreality of the options of `x ⊗ y`.
+Each option is a sum/negative of smaller products, so this uses only
+earlier instances of `StageA`.
+-/
 
-  | succ α ih =>
-      have hA_prev : PropA α := ih.1
-      have hB_prev : PropB α := ih.2
-      have hA_curr : PropA (α + 1) := prove_A_step α hA_prev hB_prev
-      have hB_curr : PropB (α + 1) := prove_B_step α hA_curr hB_prev
-      exact ⟨hA_curr, hB_curr⟩
+private lemma mul_left_option_isSurreal_of_prevA {x y L : Game}
+    (hprev : ∀ m < n, StageData m) (hx : IsSurreal x) (hy : IsSurreal y)
+    (hxy : prodRank x y < n) (hL : L ∈ (x ⊗ y).left) :
+    IsSurreal L := by
+  sorry
 
-end ConwayStrategy
+private lemma mul_right_option_isSurreal_of_prevA {x y R : Game}
+    (hprev : ∀ m < n, StageData m) (hx : IsSurreal x) (hy : IsSurreal y)
+    (hxy : prodRank x y < n) (hR : R ∈ (x ⊗ y).right) :
+    IsSurreal R := by
+  sorry
+
+private theorem stageA_surreal_of_prev {x y : Game}
+    (hprev : ∀ m < n, StageData m) (hx : IsSurreal x) (hy : IsSurreal y)
+    (hxy : prodRank x y < n) : IsSurreal (x ⊗ y) := by
+  unfold IsSurreal
+  constructor
+  · intro L hL R hR
+    exact mul_left_lt_right_of_prevB hprev hx hy hxy hL hR
+  · constructor
+    · intro L hL
+      exact mul_left_option_isSurreal_of_prevA hprev hx hy hxy hL
+    · intro R hR
+      exact mul_right_option_isSurreal_of_prevA hprev hx hy hxy hR
+
+/-!
+Now statement (ii): multiplication respects equivalence in the left factor.
+As in your strategy note, this is proved by matching left/right options and
+using:
+
+* strict `P`-inequalities from earlier `StageB`,
+* congruence on the simpler factor from earlier `StageA`.
+-/
+
+private lemma left_option_mul_congr_of_prev {x1 x2 y L : Game}
+    (hprev : ∀ m < n, StageData m)
+    (hx1 : IsSurreal x1) (hx2 : IsSurreal x2) (hy : IsSurreal y)
+    (hEq : x1 ∼ x2) (h1 : prodRank x1 y < n) (h2 : prodRank x2 y < n)
+    (hL : L ∈ (x1 ⊗ y).left) :
+    ∃ L' ∈ (x2 ⊗ y).left, L ∼ L' := by
+  sorry
+
+private lemma left_option_mul_congr_symm_of_prev {x1 x2 y L : Game}
+    (hprev : ∀ m < n, StageData m)
+    (hx1 : IsSurreal x1) (hx2 : IsSurreal x2) (hy : IsSurreal y)
+    (hEq : x1 ∼ x2) (h1 : prodRank x1 y < n) (h2 : prodRank x2 y < n)
+    (hL : L ∈ (x2 ⊗ y).left) :
+    ∃ L' ∈ (x1 ⊗ y).left, L ∼ L' := by
+  sorry
+
+private lemma right_option_mul_congr_of_prev {x1 x2 y R : Game}
+    (hprev : ∀ m < n, StageData m)
+    (hx1 : IsSurreal x1) (hx2 : IsSurreal x2) (hy : IsSurreal y)
+    (hEq : x1 ∼ x2) (h1 : prodRank x1 y < n) (h2 : prodRank x2 y < n)
+    (hR : R ∈ (x1 ⊗ y).right) :
+    ∃ R' ∈ (x2 ⊗ y).right, R ∼ R' := by
+  sorry
+
+private lemma right_option_mul_congr_symm_of_prev {x1 x2 y R : Game}
+    (hprev : ∀ m < n, StageData m)
+    (hx1 : IsSurreal x1) (hx2 : IsSurreal x2) (hy : IsSurreal y)
+    (hEq : x1 ∼ x2) (h1 : prodRank x1 y < n) (h2 : prodRank x2 y < n)
+    (hR : R ∈ (x2 ⊗ y).right) :
+    ∃ R' ∈ (x1 ⊗ y).right, R ∼ R' := by
+  sorry
+
+private theorem stageA_congr_left_of_prev {x1 x2 y : Game}
+    (hprev : ∀ m < n, StageData m)
+    (hx1 : IsSurreal x1) (hx2 : IsSurreal x2) (hy : IsSurreal y)
+    (hEq : x1 ∼ x2) (h1 : prodRank x1 y < n) (h2 : prodRank x2 y < n) :
+    (x1 ⊗ y) ∼ (x2 ⊗ y) := by
+  refine Game.eq_of_equiv_options
+    (fun L hL => left_option_mul_congr_of_prev hprev hx1 hx2 hy hEq h1 h2 hL)
+    (fun L hL => left_option_mul_congr_symm_of_prev hprev hx1 hx2 hy hEq h1 h2 hL)
+    (fun R hR => right_option_mul_congr_of_prev hprev hx1 hx2 hy hEq h1 h2 hR)
+    (fun R hR => right_option_mul_congr_symm_of_prev hprev hx1 hx2 hy hEq h1 h2 hR)
+
+theorem stageA_of_prev (hprev : ∀ m < n, StageData m) : StageA n := by
+  refine ⟨?_, ?_⟩
+  · intro x y hx hy hxy
+    exact stageA_surreal_of_prev hprev hx hy hxy
+  · intro x1 x2 y hx1 hx2 hy hEq h1 h2
+    exact stageA_congr_left_of_prev hprev hx1 hx2 hy hEq h1 h2
+
+end StageAStep
+
+/-! ## Inner induction for `StageB` -/
+
+structure QuadResult (q : QuadGame) : Prop where
+  weak :
+    q.x1 ≼ q.x2 → q.y1 ≼ q.y2 →
+    MulCrossLe q.x1 q.x2 q.y1 q.y2
+  strict :
+    q.x1 ≺ q.x2 → q.y1 ≺ q.y2 →
+    MulCrossLt q.x1 q.x2 q.y1 q.y2
+
+section StageBStep
+
+variable {n : Nat}
+
+/-!
+Base cases for the inner induction:
+these are exactly the inequalities of the form `P(xL, x : yL, y)` etc.,
+reduced to “a left option of `x ⊗ y` is `< x ⊗ y`”, using `StageA n`.
+-/
+
+private lemma base_P_LL {x y xL yL : Game}
+    (hA : StageA n) (hx : IsSurreal x) (hy : IsSurreal y)
+    (hxL : xL ∈ x.left) (hyL : yL ∈ y.left) (hxy : prodRank x y < n) :
+    MulCrossLt xL x yL y := by
+  sorry
+
+private lemma base_P_LR {x y xL yR : Game}
+    (hA : StageA n) (hx : IsSurreal x) (hy : IsSurreal y)
+    (hxL : xL ∈ x.left) (hyR : yR ∈ y.right) (hxy : prodRank x y < n) :
+    MulCrossLt xL x y yR := by
+  sorry
+
+private lemma base_P_RL {x y xR yL : Game}
+    (hA : StageA n) (hx : IsSurreal x) (hy : IsSurreal y)
+    (hxR : xR ∈ x.right) (hyL : yL ∈ y.left) (hxy : prodRank x y < n) :
+    MulCrossLt x xR yL y := by
+  sorry
+
+private lemma base_P_RR {x y xR yR : Game}
+    (hA : StageA n) (hx : IsSurreal x) (hy : IsSurreal y)
+    (hxR : xR ∈ x.right) (hyR : yR ∈ y.right) (hxy : prodRank x y < n) :
+    MulCrossLt x xR y yR := by
+  sorry
+
+/-!
+Recursive reductions for the inner induction.
+These are the “Conway reductions” from a general `P(x1,x2:y1,y2)`
+to smaller quadruples.
+-/
+
+private lemma quad_result_weak_of_smaller {q : QuadGame}
+    (hA : StageA n)
+    (IH : ∀ q', Q q' q →
+        IsSurreal q'.x1 → IsSurreal q'.x2 → IsSurreal q'.y1 → IsSurreal q'.y2 →
+        CrossRanksLT n q'.x1 q'.x2 q'.y1 q'.y2 → QuadResult q')
+    (hx1 : IsSurreal q.x1) (hx2 : IsSurreal q.x2)
+    (hy1 : IsSurreal q.y1) (hy2 : IsSurreal q.y2)
+    (hRanks : CrossRanksLT n q.x1 q.x2 q.y1 q.y2)
+    (hx : q.x1 ≼ q.x2) (hy : q.y1 ≼ q.y2) :
+    MulCrossLe q.x1 q.x2 q.y1 q.y2 := by
+  sorry
+
+private lemma quad_result_strict_of_smaller {q : QuadGame}
+    (hA : StageA n)
+    (IH :
+      ∀ q', Q q' q →
+        IsSurreal q'.x1 → IsSurreal q'.x2 → IsSurreal q'.y1 → IsSurreal q'.y2 →
+        CrossRanksLT n q'.x1 q'.x2 q'.y1 q'.y2 →
+        QuadResult q')
+    (hx1 : IsSurreal q.x1) (hx2 : IsSurreal q.x2)
+    (hy1 : IsSurreal q.y1) (hy2 : IsSurreal q.y2)
+    (hRanks : CrossRanksLT n q.x1 q.x2 q.y1 q.y2)
+    (hx : q.x1 ≺ q.x2) (hy : q.y1 ≺ q.y2) :
+    MulCrossLt q.x1 q.x2 q.y1 q.y2 := by
+  sorry
+
+private theorem quad_result_of_A
+    (hA : StageA n) :
+    ∀ q : QuadGame,
+      IsSurreal q.x1 → IsSurreal q.x2 → IsSurreal q.y1 → IsSurreal q.y2 →
+      CrossRanksLT n q.x1 q.x2 q.y1 q.y2 →
+      QuadResult q := by
+  intro q
+  refine wf_Q.induction
+    (C := fun q : QuadGame =>
+      IsSurreal q.x1 → IsSurreal q.x2 → IsSurreal q.y1 → IsSurreal q.y2 →
+      CrossRanksLT n q.x1 q.x2 q.y1 q.y2 →
+      QuadResult q) q ?_
+  intro q IH hx1 hx2 hy1 hy2 hRanks
+  refine ⟨?_, ?_⟩
+  · intro hleX hleY
+    exact quad_result_weak_of_smaller hA IH hx1 hx2 hy1 hy2 hRanks hleX hleY
+  · intro hltX hltY
+    exact quad_result_strict_of_smaller hA IH hx1 hx2 hy1 hy2 hRanks hltX hltY
+
+theorem stageB_of_prev (hA : StageA n) : StageB n := by
+  refine ⟨?_, ?_⟩
+  · intro x1 x2 y1 y2 hx1 hx2 hy1 hy2 hRanks hleX hleY
+    let q : QuadGame := ⟨x1, x2, y1, y2⟩
+    exact (quad_result_of_A (n := n) hA q hx1 hx2 hy1 hy2 hRanks).weak hleX hleY
+  · intro x1 x2 y1 y2 hx1 hx2 hy1 hy2 hRanks hltX hltY
+    let q : QuadGame := ⟨x1, x2, y1, y2⟩
+    exact (quad_result_of_A (n := n) hA q hx1 hx2 hy1 hy2 hRanks).strict hltX hltY
+
+end StageBStep
+
+/-! ## Main stage induction -/
+
+theorem mul_stage (n : Nat) : StageA n ∧ StageB n := by
+  refine Nat.strong_induction_on n ?_
+  intro n IH
+  have hA : StageA n := stageA_of_prev (n := n) (fun m hm => IH m hm)
+  have hB : StageB n := stageB_of_prev (n := n) hA
+  exact ⟨hA, hB⟩
+
+/-! ## Final extracted theorems -/
+
+theorem mul_isSurreal {x y : Game}
+    (hx : IsSurreal x) (hy : IsSurreal y) :
+    IsSurreal (x ⊗ y) := by
+  let n := prodRank x y + 1
+  have hA : StageA n := (mul_stage n).1
+  have hxy : prodRank x y < n := by
+    dsimp [n]
+    exact Nat.lt_succ_self _
+  exact hA.surreal hx hy hxy
+
+theorem mul_congr_left
+    {x1 x2 y : Game}
+    (hx1 : IsSurreal x1) (hx2 : IsSurreal x2) (hy : IsSurreal y)
+    (hEq : x1 ∼ x2) :
+    (x1 ⊗ y) ∼ (x2 ⊗ y) := by
+  let n := max (prodRank x1 y) (prodRank x2 y) + 1
+  have hA : StageA n := (mul_stage n).1
+  have h1 : prodRank x1 y < n := by
+    dsimp [n]
+    exact Nat.lt_succ_of_le (Nat.le_max_left _ _)
+  have h2 : prodRank x2 y < n := by
+    dsimp [n]
+    exact Nat.lt_succ_of_le (Nat.le_max_right _ _)
+  exact hA.congr_left hx1 hx2 hy hEq h1 h2
+
+theorem mul_congr_right
+    {x y1 y2 : Game}
+    (hx : IsSurreal x) (hy1 : IsSurreal y1) (hy2 : IsSurreal y2)
+    (hEq : y1 ∼ y2) :
+    (x ⊗ y1) ∼ (x ⊗ y2) := by
+  let n := max (prodRank x y1) (prodRank x y2) + 1
+  have hA : StageA n := (mul_stage n).1
+  have h1 : prodRank x y1 < n := by
+    dsimp [n]
+    exact Nat.lt_succ_of_le (Nat.le_max_left _ _)
+  have h2 : prodRank x y2 < n := by
+    dsimp [n]
+    exact Nat.lt_succ_of_le (Nat.le_max_right _ _)
+  exact hA.congr_right hx hy1 hy2 hEq h1 h2
+
+end Game
+
+namespace Surreal
+
+open scoped Game
+
+/-- Product of surreal numbers: outline endpoint after `Game.mul_isSurreal`. -/
+def mul (a b : Surreal) : Surreal :=
+  ⟨Game.mul a.val b.val, Game.mul_isSurreal a.property b.property⟩
+
+/-- Well-definedness on surreal numbers, left factor. -/
+theorem mul_congr_left
+    {x1 x2 y : Surreal}
+    (hEq : (x1 : Game) ∼ (x2 : Game)) :
+    (Game.mul (x1 : Game) (y : Game)) ∼ (Game.mul (x2 : Game) (y : Game)) := by
+  exact Game.mul_congr_left x1.property x2.property y.property hEq
+
+/-- Well-definedness on surreal numbers, right factor. -/
+theorem mul_congr_right
+    {x y1 y2 : Surreal}
+    (hEq : (y1 : Game) ∼ (y2 : Game)) :
+    (Game.mul (x : Game) (y1 : Game)) ∼ (Game.mul (x : Game) (y2 : Game)) := by
+  exact Game.mul_congr_right x.property y1.property y2.property hEq
+
+end Surreal
