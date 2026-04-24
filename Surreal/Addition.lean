@@ -259,7 +259,6 @@ theorem Game.add_right_cancel {a b c : Game} (h : (a ⊕ c).le (b ⊕ c)) : a.le
   exact (Game.add_right_iff ⟨a, b, c⟩).1 h
 
 
-
 /-! ##  Some other inequalities-/
 
 theorem Game.add_le_add {a b c d : Game} : (a.le c ∧ b.le d) → (a ⊕ b).le (c ⊕ d) := by
@@ -319,6 +318,25 @@ theorem Game.add_le_lt {a b c d : Game} : (a.le c) ∧ (b.lt d) → (a ⊕ b).lt
     have h_bad : d.le b := Game.add_reduce ⟨h_contra2, h.1⟩
     exact h.2.2 h_bad
 
+theorem Game.add_lt_left_left {u v : Game} (t : Game) : u ≺ v → (t ⊕ u) ≺ (t ⊕ v) := by
+  intro huv
+  exact Game.add_le_lt ⟨Game.le_congr, huv⟩
+
+theorem Game.add_lt_right_right {u v : Game} (t : Game) : u ≺ v → (u ⊕ t) ≺ (v ⊕ t) := by
+  intro huv
+  exact Game.add_lt_le ⟨huv, Game.le_congr⟩
+
+theorem Game.add_lt_left_right {u v : Game} (t : Game) : u ≺ v → (t ⊕ u) ≺ (v ⊕ t) := by
+  intro huv
+  exact Game.lt_of_le_of_lt
+    (Game.add_comm (a := t) (b := u)).1
+    (Game.add_lt_right_right t huv)
+
+theorem Game.add_lt_right_left {u v : Game} (t : Game) : u ≺ v → (u ⊕ t) ≺ (t ⊕ v) := by
+  intro huv
+  exact Game.lt_of_lt_of_le
+    (Game.add_lt_right_right t huv)
+    (Game.add_comm (a := v) (b := t)).1
 
 /-! ##  Associativity of ⊕ -/
 
