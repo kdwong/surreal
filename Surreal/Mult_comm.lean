@@ -429,12 +429,12 @@ theorem Game.mul_one_eq {a : Game} : (a ⊗ one) = a := by
     constructor
     · rw [map_id_iff,← zero, ← one, ← hx]
       intro lx lx_
-      simp [Game.mul_zero_eq, Game.add_zero, Game.neg_zero]
+      simp [Game.mul_zero_eq, Game.add_zero', Game.neg_zero]
       apply IH
       exact birthday_lt_left lx_
     · rw [map_id_iff,← zero, ← one, ← hx]
       intro rx rx_
-      simp [Game.mul_zero_eq, Game.add_zero, Game.neg_zero]
+      simp [Game.mul_zero_eq, Game.add_zero', Game.neg_zero]
       apply IH
       exact birthday_lt_right rx_
 

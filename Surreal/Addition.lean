@@ -105,7 +105,7 @@ private lemma map_id_iff {α : Type} (f : α → α) (l : List α) :
 private lemma map_eq_self_of_pointwise {f : Game → Game} {l : List Game}
     (h : ∀ x ∈ l, f x = x) : l.map f = l := (map_id_iff f l).2 h
 
-theorem Game.add_zero {a : Game} : (a ⊕ zero) = a := by
+theorem Game.add_zero' {a : Game} : (a ⊕ zero) = a := by
   induction a using wf_R.induction with
   | h x IH =>
       cases x with
@@ -118,7 +118,7 @@ theorem Game.add_zero {a : Game} : (a ⊕ zero) = a := by
           · intro xr hxr
             exact IH xr (Game.birthday_lt_right hxr)
 
-theorem Game.zero_add {a : Game} : (zero ⊕ a) = a := by
+theorem Game.zero_add' {a : Game} : (zero ⊕ a) = a := by
   induction a using wf_R.induction with
   | h x IH =>
       cases x with
@@ -130,6 +130,12 @@ theorem Game.zero_add {a : Game} : (zero ⊕ a) = a := by
             exact IH xl (Game.birthday_lt_left hxl)
           · intro xr hxr
             exact IH xr (Game.birthday_lt_right hxr)
+
+theorem Game.add_zero {a : Game} : (a ⊕ zero) ∼ a := by
+  exact Game.eq_of_eq Game.add_zero'
+
+theorem Game.zero_add {a : Game} : (zero ⊕ a) ∼ a := by
+  exact Game.eq_of_eq Game.zero_add'
 
 
 /-! ## Commutativity of ⊕ -/
@@ -191,16 +197,16 @@ theorem Game.add_comm {a b : Game} : Game.eq (a ⊕ b) (b ⊕ a) := by
 These two statements have to be proved hand-in-hand
 -/
 
-private lemma not_self_le_left {x l : Game} (hl : l ∈ x.left) : ¬ x.le l :=
+private lemma not_self_le_left {x l : Game} (hl : l ∈ x.left) : ¬ x ≼ l :=
   Game.not_ge_left_of_le Game.le_congr hl
 
-private lemma not_right_le_self {x r : Game} (hr : r ∈ x.right) : ¬ r.le x :=
+private lemma not_right_le_self {x r : Game} (hr : r ∈ x.right) : ¬ r ≼ x :=
   Game.not_le_right_of_le Game.le_congr hr
 
 private theorem Game.add_right_iff (x : TriGame) :
-    ((x.a ⊕ x.c).le (x.b ⊕ x.c)) ↔ x.a.le x.b := by
+    ((x.a ⊕ x.c) ≼ (x.b ⊕ x.c)) ↔ x.a ≼ x.b := by
   refine wf_T.induction
-    (C := fun t : TriGame => ((t.a ⊕ t.c).le (t.b ⊕ t.c)) ↔ t.a.le t.b) x ?_
+    (C := fun t : TriGame => ((t.a ⊕ t.c) ≼ (t.b ⊕ t.c)) ↔ t.a ≼ t.b) x ?_
   intro t IH
   rcases t with ⟨a, b, c⟩
   constructor
@@ -249,43 +255,43 @@ private theorem Game.add_right_iff (x : TriGame) :
             ⟨(IH ⟨a, b, cr⟩ (T_of_c_right_mem (a := a) (b := b) (c := c) hcr)).2 hab, hcontra⟩)
 
 lemma Game.big_aux (x : TriGame) :
-  (x.a.le x.b → (x.a ⊕ x.c).le (x.b ⊕ x.c)) ∧ (((x.a ⊕ x.c).le (x.b ⊕ x.c)) → x.a.le x.b) := by
+  (x.a ≼ x.b → (x.a ⊕ x.c) ≼ (x.b ⊕ x.c)) ∧ (((x.a ⊕ x.c) ≼ (x.b ⊕ x.c)) → x.a ≼ x.b) := by
   exact ⟨(Game.add_right_iff x).2, (Game.add_right_iff x).1⟩
 
-theorem Game.add_le_add_right {a b c : Game} (hab : a.le b) : (a ⊕ c).le (b ⊕ c) := by
+theorem Game.add_le_add_right {a b c : Game} (hab : a ≼ b) : (a ⊕ c) ≼ (b ⊕ c) := by
   exact (Game.add_right_iff ⟨a, b, c⟩).2 hab
 
-theorem Game.add_right_cancel {a b c : Game} (h : (a ⊕ c).le (b ⊕ c)) : a.le b := by
+theorem Game.add_right_cancel {a b c : Game} (h : (a ⊕ c) ≼ (b ⊕ c)) : a ≼ b := by
   exact (Game.add_right_iff ⟨a, b, c⟩).1 h
 
 
 /-! ##  Some other inequalities-/
 
-theorem Game.add_le_add {a b c d : Game} : (a.le c ∧ b.le d) → (a ⊕ b).le (c ⊕ d) := by
+theorem Game.add_le_add {a b c d : Game} : (a ≼ c ∧ b ≼ d) → (a ⊕ b) ≼ (c ⊕ d) := by
   intro ⟨h_ac, h_bd⟩
-  have h1 : (a ⊕ b).le (c ⊕ b) :=
+  have h1 : (a ⊕ b) ≼ (c ⊕ b) :=
     (Game.big_aux ⟨a, c, b⟩).1 h_ac
   let t : TriGame := {a := b, b := d, c := c}
-  have t1 : (b ⊕ c).le (d ⊕ c) := (Game.big_aux t).1 h_bd
-  have t2 : (c ⊕ b).le (d ⊕ c) := by
+  have t1 : (b ⊕ c) ≼ (d ⊕ c) := (Game.big_aux t).1 h_bd
+  have t2 : (c ⊕ b) ≼ (d ⊕ c) := by
     have cb_eq : (c ⊕ b).eq (b ⊕ c) := Game.add_comm
     unfold eq at cb_eq
     apply Game.le_trans ⟨cb_eq.1, t1⟩
-  have t3 : (c ⊕ b).le (c ⊕ d) := by
+  have t3 : (c ⊕ b) ≼ (c ⊕ d) := by
     have dc_eq : (d ⊕ c).eq (c ⊕ d) := Game.add_comm
     unfold eq at dc_eq
     apply Game.le_trans ⟨t2, dc_eq.1⟩
   exact Game.le_trans ⟨h1, t3⟩
 
-theorem Game.add_reduce {a b c d : Game} : ((c ⊕ d).le (a ⊕ b) ∧ (b.le d)) → (c.le a) := by
+theorem Game.add_reduce {a b c d : Game} : ((c ⊕ d) ≼ (a ⊕ b) ∧ (b ≼ d)) → (c ≼ a) := by
   intro h
   rcases h with ⟨h_main, h_bd⟩
-  have h_mono : (b ⊕ c).le (d ⊕ c) := (Game.big_aux ⟨b, d, c⟩).1 h_bd
-  have comm_cb : (c ⊕ b).le (b ⊕ c) := (Game.add_comm).1
-  have comm_dc : (d ⊕ c).le (c ⊕ d) := (Game.add_comm).1
-  have step1 : (c ⊕ b).le (d ⊕ c) := Game.le_trans ⟨comm_cb, h_mono⟩
-  have step2 : (c ⊕ b).le (c ⊕ d) := Game.le_trans ⟨step1, comm_dc⟩
-  have step3 : (c ⊕ b).le (a ⊕ b) := Game.le_trans ⟨step2, h_main⟩
+  have h_mono : (b ⊕ c) ≼ (d ⊕ c) := (Game.big_aux ⟨b, d, c⟩).1 h_bd
+  have comm_cb : (c ⊕ b) ≼ (b ⊕ c) := (Game.add_comm).1
+  have comm_dc : (d ⊕ c) ≼ (c ⊕ d) := (Game.add_comm).1
+  have step1 : (c ⊕ b) ≼ (d ⊕ c) := Game.le_trans ⟨comm_cb, h_mono⟩
+  have step2 : (c ⊕ b) ≼ (c ⊕ d) := Game.le_trans ⟨step1, comm_dc⟩
+  have step3 : (c ⊕ b) ≼ (a ⊕ b) := Game.le_trans ⟨step2, h_main⟩
   exact (Game.big_aux ⟨c, a, b⟩).2 step3
 
 theorem Game.add_equal {a b c d : Game} : (a.eq c) ∧ (b.eq d) → (a ⊕ b).eq (c ⊕ d) := by
@@ -296,27 +302,48 @@ theorem Game.add_equal {a b c d : Game} : (a.eq c) ∧ (b.eq d) → (a ⊕ b).eq
   · exact Game.add_le_add ⟨h1.1, h2.1⟩
   · exact Game.add_le_add ⟨h1.2, h2.2⟩
 
-theorem Game.add_lt_le {a b c d : Game} : (a.lt c) ∧ (b.le d) → (a ⊕ b).lt (c ⊕ d) := by
+theorem Game.add_lt_le {a b c d : Game} : (a ≺ c) ∧ (b ≼ d) → (a ⊕ b) ≺ (c ⊕ d) := by
   intro h
   unfold lt at h
   constructor
   · exact Game.add_le_add  ⟨h.1.1, h.2⟩
   · intro h_contra
-    have h_bad : c.le a := Game.add_reduce ⟨h_contra, h.2⟩
+    have h_bad : c ≼ a := Game.add_reduce ⟨h_contra, h.2⟩
     exact h.1.2 h_bad
 
-theorem Game.add_le_lt {a b c d : Game} : (a.le c) ∧ (b.lt d) → (a ⊕ b).lt (c ⊕ d) := by
+theorem Game.add_le_lt {a b c d : Game} : (a ≼ c) ∧ (b ≺ d) → (a ⊕ b) ≺ (c ⊕ d) := by
   intro h
   unfold lt at h
   constructor
   · exact Game.add_le_add ⟨h.1, h.2.1⟩
   · intro h_contra
-    have h_contra1 : (d ⊕ c).le (a ⊕ b) := by
+    have h_contra1 : (d ⊕ c) ≼ (a ⊕ b) := by
       apply le_trans ⟨(Game.add_comm).1, h_contra⟩
-    have h_contra2 : (d ⊕ c).le (b ⊕ a) := by
+    have h_contra2 : (d ⊕ c) ≼ (b ⊕ a) := by
       apply le_trans ⟨h_contra1, (Game.add_comm).1⟩
-    have h_bad : d.le b := Game.add_reduce ⟨h_contra2, h.1⟩
+    have h_bad : d ≼ b := Game.add_reduce ⟨h_contra2, h.1⟩
     exact h.2.2 h_bad
+
+
+theorem Game.add_le_right_right {u v : Game} (t : Game) : u ≼ v → (u ⊕ t) ≼ (v ⊕ t) := by
+  intro huv
+  exact Game.add_le_add_right huv
+
+theorem Game.add_le_left_right {u v : Game} (t : Game) : u ≼ v → (t ⊕ u) ≼ (v ⊕ t) := by
+  intro huv
+  have comm_tu : (t ⊕ u) ≼ (u ⊕ t) := (Game.add_comm).1
+  exact Game.le_trans ⟨comm_tu, (Game.add_le_add_right huv)⟩
+
+theorem Game.add_le_right_left {u v : Game} (t : Game) : u ≼ v → (u ⊕ t) ≼ (t ⊕ v) := by
+  intro huv
+  have comm_tv : (v ⊕ t) ≼ (t ⊕ v) := (Game.add_comm).1
+  exact Game.le_trans ⟨(Game.add_le_add_right huv), comm_tv⟩
+
+theorem Game.add_le_left_left {u v : Game} (t : Game) : u ≼ v → (t ⊕ u) ≼ (t ⊕ v) := by
+  intro huv
+  have comm_tu : (t ⊕ u) ≼ (u ⊕ t) := (Game.add_comm).1
+  exact Game.le_trans ⟨comm_tu, (Game.add_le_right_left t huv)⟩
+
 
 theorem Game.add_lt_left_left {u v : Game} (t : Game) : u ≺ v → (t ⊕ u) ≺ (t ⊕ v) := by
   intro huv
@@ -446,16 +473,16 @@ private lemma mem_neg_right_iff {x r : Game} :
     exact ⟨⟨l, hl⟩, by simp, rfl⟩
 
 theorem bigame_neg_le_neg (x : Game.BiGame) :
-    Game.le x.a x.b ↔ Game.le (Game.neg x.b) (Game.neg x.a) := by
+    x.a ≼ x.b ↔ (Game.neg x.b) ≼ (Game.neg x.a) := by
   refine Game.wf_B.induction
     (C := fun x : Game.BiGame =>
-      Game.le x.a x.b ↔ Game.le (Game.neg x.b) (Game.neg x.a)) x ?_
+     x.a ≼ x.b ↔ (Game.neg x.b) ≼ (Game.neg x.a)) x ?_
   rintro ⟨a, b⟩ IH
   have ih_left {aL : Game} (haL : aL ∈ a.left) :
-      Game.le b aL ↔ Game.le (Game.neg aL) (Game.neg b) := by
+      b ≼ aL ↔ (Game.neg aL) ≼ (Game.neg b) := by
     simpa using IH ⟨b, aL⟩ (Game.B_of_left_mem_swap (a := a) (b := b) haL)
   have ih_right {bR : Game} (hbR : bR ∈ b.right) :
-      Game.le bR a ↔ Game.le (Game.neg a) (Game.neg bR) := by
+      bR ≼ a ↔ (Game.neg a) ≼ (Game.neg bR) := by
     simpa using IH ⟨bR, a⟩ (Game.B_of_right_mem_swap (a := a) (b := b) hbR)
   constructor
   · intro h
@@ -555,7 +582,7 @@ open Surreal
 /-! ##  Sum of surreal numbers is surreal-/
 
 private lemma add_left_lt_right {a b : Surreal} {L R : Game}
-  (hL : L ∈ (a.val ⊕ b.val).left) (hR : R ∈ (a.val ⊕ b.val).right) : Game.lt L R := by
+  (hL : L ∈ (a.val ⊕ b.val).left) (hR : R ∈ (a.val ⊕ b.val).right) : L ≺ R := by
   rw [mem_add_left_iff] at hL
   rw [mem_add_right_iff] at hR
   rcases hL with ⟨al, hal, rfl⟩ | ⟨bl, hbl, rfl⟩
@@ -610,7 +637,7 @@ def Surreal.add (a b : Surreal) : Surreal := ⟨a.val ⊕ b.val, add_isSurreal�
 
 private lemma surreal_left_lt_right {x xl xr : Game} (sx : IsSurreal x)
     (hxl : xl ∈ x.left) (hxr : xr ∈ x.right) :
-    xl.lt xr := by
+    xl ≺ xr := by
   have hsx := sx
   unfold IsSurreal at hsx
   rcases hsx with ⟨_, hL, hR⟩
@@ -625,8 +652,8 @@ private lemma surreal_left_lt_right {x xl xr : Game} (sx : IsSurreal x)
 
 private lemma not_neg_le_neg {x xl xr : Game} (sx : IsSurreal x)
     (hxl : xl ∈ x.left) (hxr : xr ∈ x.right) :
-    ¬ Game.le (Game.neg xl) (Game.neg xr) := by
-  have hlt : xl.lt xr := surreal_left_lt_right sx hxl hxr
+    ¬ (Game.neg xl) ≼ (Game.neg xr) := by
+  have hlt : xl ≺ xr := surreal_left_lt_right sx hxl hxr
   rw [Game.lt] at hlt
   intro h
   exact hlt.2 ((bigame_neg_le_neg ⟨xr, xl⟩).2 h)

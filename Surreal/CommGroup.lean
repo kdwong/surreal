@@ -77,14 +77,14 @@ instance : AddCommGroup GameQ where
     refine Quotient.inductionOn x ?_
     intro a
     change (q (Game.zero.add a) : GameQ) = q a
-    exact q_sound_eq (Game.zero_add (a := a))
+    exact q_sound_eq (Game.zero_add' (a := a))
 
   add_zero := by
     intro x
     refine Quotient.inductionOn x ?_
     intro a
     change (q (a.add Game.zero) : GameQ) = q a
-    exact q_sound_eq (Game.add_zero (a := a))
+    exact q_sound_eq (Game.add_zero' (a := a))
 
   nsmul := nsmulRec
   zsmul := zsmulRec
@@ -102,6 +102,66 @@ instance : AddCommGroup GameQ where
     intro a b
     change (q (a.add b) : GameQ) = q (b.add a)
     exact q_sound (Game.add_comm (a := a) (b := b))
+
+instance : LE GameQ where
+  le := Quotient.lift₂ Game.le
+    (by
+      intro a a' b b' ha hb
+      apply propext
+      constructor
+      · intro hab
+        exact Game.le_trans ⟨ha.2, Game.le_trans ⟨hab, hb.1⟩⟩
+      · intro ha'b'
+        exact Game.le_trans ⟨ha.1, Game.le_trans ⟨ha'b', hb.2⟩⟩)
+
+instance : PartialOrder GameQ where
+  le := (· ≤ ·)
+
+  le_refl := by
+    intro x
+    refine Quotient.inductionOn x ?_
+    intro a
+    change Game.le a a
+    exact Game.le_congr
+
+  le_trans := by
+    intro x y z hxy hyz
+    revert hxy hyz
+    refine Quotient.inductionOn₃ x y z ?_
+    intro a b c hxy hyz
+    change Game.le a c
+    change Game.le a b at hxy
+    change Game.le b c at hyz
+    exact Game.le_trans ⟨hxy, hyz⟩
+
+  le_antisymm := by
+    intro x y hxy hyx
+    revert hxy hyx
+    refine Quotient.inductionOn₂ x y ?_
+    intro a b hxy hyx
+    apply Quotient.sound
+    change Game.eq a b
+    constructor
+    · change Game.le a b at hxy
+      exact hxy
+    · change Game.le b a at hyx
+      exact hyx
+
+noncomputable instance : IsOrderedAddMonoid GameQ where
+  add_le_add_left := by
+    intro a b hab c
+    revert hab
+    refine Quotient.inductionOn₃ a b c ?_
+    intro a' b' c' hab
+    change Game.le (Game.add c' a') (Game.add c' b')
+    have h1 : Game.le (Game.add c' a') (Game.add a' c') :=
+      (Game.add_comm (a := c') (b := a')).1
+    have h2 : Game.le (Game.add a' c') (Game.add b' c') :=
+      Game.add_le_add_right (a := a') (b := b') (c := c') hab
+    have h3 : Game.le (Game.add b' c') (Game.add c' b') :=
+      (Game.add_comm (a := b') (b := c')).1
+    exact Game.le_trans ⟨h1, Game.le_trans ⟨h2, h3⟩⟩
+
 
 theorem eq_of_q_eq {u v : Game} (h : (q u : GameQ) = q v) : u ∼ v :=
   q_eq.mp h
@@ -246,7 +306,7 @@ noncomputable instance : AddCommGroup SurrealNumber where
       apply Subtype.ext
       dsimp [Surreal.add]
       simp [sr_zero]
-      rw [Game.add_zero]
+      rw [Game.add_zero']
     rw [h_eq]
     exact Setoid.refl _
 
@@ -260,7 +320,7 @@ noncomputable instance : AddCommGroup SurrealNumber where
       apply Subtype.ext
       dsimp [Surreal.add]
       simp [sr_zero]
-      rw [Game.zero_add]
+      rw [Game.zero_add']
     rw [h_eq]
     exact Setoid.refl _
 
