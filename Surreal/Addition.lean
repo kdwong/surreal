@@ -1,8 +1,8 @@
 import Mathlib.Tactic.Linarith
 import Mathlib.Data.List.MinMax
 import Mathlib.Order.Basic
-import Surreal.game
-import Surreal.surreal
+import Surreal.Game
+import Surreal.Surreal
 
 open scoped Game
 

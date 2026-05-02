@@ -2,9 +2,9 @@ import Mathlib.Tactic.Linarith
 import Mathlib.Data.List.MinMax
 import Mathlib.Order.Basic
 import Mathlib.Tactic.Abel
-import Surreal.game
-import Surreal.surreal
-import Surreal.addition
+import Surreal.Game
+import Surreal.Surreal
+import Surreal.Addition
 
 
 /-- ## Definition of a ⊗ b

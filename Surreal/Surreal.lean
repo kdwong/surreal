@@ -1,7 +1,7 @@
 import Mathlib.Tactic.Linarith
 import Mathlib.Data.List.MinMax
 import Mathlib.Order.Basic
-import Surreal.game
+import Surreal.Game
 
 
 /-!
@@ -119,6 +119,18 @@ theorem totality {x y : Game} (hx : IsSurreal x) (hy : IsSurreal y) :
   by_cases hxy : Game.le x y
   · exact Or.inl hxy
   · exact Or.inr (le_of_not_le hx hy hxy)
+
+theorem trichotomy {x y : Game} (hx : IsSurreal x) (hy : IsSurreal y) :
+  (Game.lt x y) ∨ (Game.eq x y) ∨ (Game.lt y x) := by
+  have h_total : (Game.le x y) ∨ (Game.le y x) := totality hx hy
+  rcases h_total with hxy | hyx
+  · by_cases hyx : (Game.le y x)
+    · exact Or.inr (Or.inl ⟨hxy, hyx⟩)
+    · exact Or.inl ⟨hxy, hyx⟩
+  · by_cases hxy : (Game.le x y)
+    · exact Or.inr (Or.inl ⟨hxy, hyx⟩)
+    · exact Or.inr (Or.inr ⟨hyx, hxy⟩)
+
 
 end IsSurreal
 
