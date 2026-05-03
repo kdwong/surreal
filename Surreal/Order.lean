@@ -43,7 +43,7 @@ private lemma dm_of_replace
   unfold IsDershowitzMannaLT
   exact ⟨X, Z, Y, hY, rfl, rfl, hsmall⟩
 
-private lemma dm_pair_one_left {a b c : ℕ} (h : a < b) :
+lemma dm_pair_one_left {a b c : ℕ} (h : a < b) :
     IsDershowitzMannaLT ({a, c} : Multiset ℕ) ({b, c} : Multiset ℕ) := by
   unfold IsDershowitzMannaLT
   refine
@@ -63,7 +63,7 @@ private lemma dm_pair_one_left {a b c : ℕ} (h : a < b) :
     subst z
     exact ⟨b, by simp, h⟩
 
-private lemma dm_pair_one_right {a b c : ℕ} (h : a < b) :
+lemma dm_pair_one_right {a b c : ℕ} (h : a < b) :
     IsDershowitzMannaLT ({c, a} : Multiset ℕ) ({c, b} : Multiset ℕ) := by
   unfold IsDershowitzMannaLT
   refine
@@ -80,6 +80,13 @@ private lemma dm_pair_one_right {a b c : ℕ} (h : a < b) :
     simp at hz
     subst z
     exact ⟨b, by simp, h⟩
+
+lemma dm_pair_both {a b c d : ℕ} (hab : a < b) (hcd : c < d) :
+    IsDershowitzMannaLT ({a, c} : Multiset ℕ) ({b, d} : Multiset ℕ) := by
+  exact IsDershowitzMannaLT.trans
+    (dm_pair_one_right (a := c) (b := d) (c := a) hcd)
+    (dm_pair_one_left (a := a) (b := b) (c := d) hab)
+
 
 private lemma dm_triple_one₁ {a a' b c : ℕ} (h : a' < a) :
     IsDershowitzMannaLT ({a', b, c} : Multiset ℕ) ({a, b, c} : Multiset ℕ) := by

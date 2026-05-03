@@ -11,7 +11,7 @@ import Surreal.MulOpt
 open Multiset
 open Game
 
-namespace ConwayDMBlueprint
+namespace Conway
 
 local notation:70 x " ⊕ " y => Game.add x y
 local notation:70 x " ⊗ " y => Game.mul x y
@@ -102,7 +102,34 @@ lemma lt_right_game {x xR : Game} (sx : IsSurreal x) (hxR : xR ∈ x.right) :
 -/
 lemma lt_rearrange_neg {a b c d : Game} :
     (((a ⊕ b) ⊕ c.neg) ≺ d) ↔ (a ⊕ b) ≺ (d ⊕ c) := by
-  sorry
+  have cancel_neg_add (x : Game) : ((x ⊕ c.neg) ⊕ c).eq x := by
+    apply Game.eq_of_q_eq
+    change (Game.q (((x ⊕ c.neg) ⊕ c)) : Game.GameQ) = Game.q x
+    simp
+  have cancel_add_neg (x : Game) : ((x ⊕ c) ⊕ c.neg).eq x := by
+    apply Game.eq_of_q_eq
+    change (Game.q (((x ⊕ c) ⊕ c.neg)) : Game.GameQ) = Game.q x
+    simp
+  rw [Game.lt, Game.lt]
+  constructor
+  · rintro ⟨h₁, h₂⟩
+    constructor
+    · have h' : (((a ⊕ b) ⊕ c.neg) ⊕ c).le (d ⊕ c) :=
+        Game.add_le_add_right h₁
+      exact Game.le_trans ⟨(cancel_neg_add (a ⊕ b)).2, h'⟩
+    · intro hcontra
+      have h' : ((d ⊕ c) ⊕ c.neg).le ((a ⊕ b) ⊕ c.neg) :=
+        Game.add_le_add_right hcontra
+      exact h₂ (Game.le_trans ⟨(cancel_add_neg d).2, h'⟩)
+  · rintro ⟨h₁, h₂⟩
+    constructor
+    · have h' : ((a ⊕ b) ⊕ c.neg).le ((d ⊕ c) ⊕ c.neg) :=
+        Game.add_le_add_right h₁
+      exact Game.le_trans ⟨h', (cancel_add_neg d).1⟩
+    · intro hcontra
+      have h' : (d ⊕ c).le (((a ⊕ b) ⊕ c.neg) ⊕ c) :=
+        Game.add_le_add_right hcontra
+      exact h₂ (Game.le_trans ⟨h', (cancel_neg_add (a ⊕ b)).1⟩)
 
 
 
@@ -145,14 +172,67 @@ private lemma A_option_isSurreal_left
     (sx : IsSurreal x) (sy : IsSurreal y)
     {L : Game} (hL : L ∈ (x ⊗ y).left) :
     IsSurreal L := by
-  /-
-    Decompose `hL` with `Game.mem_mul_left`.
-    In either branch, `L` is a `Game.mulOpt4 ...`.
-    Use recursive A-calls on the three smaller products:
-      xOpt * y, x * yOpt, xOpt * yOpt.
-    Then close under `+` and `neg`.
-  -/
-  sorry
+  rw [mem_mul_left] at hL
+  rcases hL with ⟨xl, hxl, yl, hyl, rfl⟩ | ⟨xr, hxr, yr, hyr, rfl⟩
+  · have sxl : IsSurreal xl := IsSurreal.isSurreal_left sx hxl
+    have syl : IsSurreal yl := IsSurreal.isSurreal_left sy hyl
+
+    have hμ1 : GoalLT (.A xl y) (.A x y) := by
+      dsimp [GoalLT, μGoal, μA]
+      exact dm_pair_one_left
+        (a := Game.birthday xl) (b := Game.birthday x) (c := Game.birthday y)
+        (Game.birthday_lt_left hxl)
+
+    have hμ2 : GoalLT (.A x yl) (.A x y) := by
+      dsimp [GoalLT, μGoal, μA]
+      exact dm_pair_one_right
+        (a := Game.birthday yl) (b := Game.birthday y) (c := Game.birthday x)
+        (Game.birthday_lt_left hyl)
+
+    have hμ3 : GoalLT (.A xl yl) (.A x y) := by
+      dsimp [GoalLT, μGoal, μA]
+      exact dm_pair_both
+        (a := Game.birthday xl) (b := Game.birthday x)
+        (c := Game.birthday yl) (d := Game.birthday y)
+        (Game.birthday_lt_left hxl) (Game.birthday_lt_left hyl)
+
+    have h1 : IsSurreal (xl ⊗ y) := (IH (.A xl y) hμ1) sxl sy
+    have h2 : IsSurreal (x ⊗ yl) := (IH (.A x yl) hμ2) sx syl
+    have h3 : IsSurreal (xl ⊗ yl) := (IH (.A xl yl) hμ3) sxl syl
+
+    have h12 : IsSurreal ((xl ⊗ y) ⊕ (x ⊗ yl)) := add_isSurreal_game h1 h2
+    have h3n : IsSurreal (xl ⊗ yl).neg := neg_isSurreal_game h3
+    simpa [Game.mulOpt4] using add_isSurreal_game h12 h3n
+
+  · have sxr : IsSurreal xr := IsSurreal.isSurreal_right sx hxr
+    have syr : IsSurreal yr := IsSurreal.isSurreal_right sy hyr
+
+    have hμ1 : GoalLT (.A xr y) (.A x y) := by
+      dsimp [GoalLT, μGoal, μA]
+      exact dm_pair_one_left
+        (a := Game.birthday xr) (b := Game.birthday x) (c := Game.birthday y)
+        (Game.birthday_lt_right hxr)
+
+    have hμ2 : GoalLT (.A x yr) (.A x y) := by
+      dsimp [GoalLT, μGoal, μA]
+      exact dm_pair_one_right
+        (a := Game.birthday yr) (b := Game.birthday y) (c := Game.birthday x)
+        (Game.birthday_lt_right hyr)
+
+    have hμ3 : GoalLT (.A xr yr) (.A x y) := by
+      dsimp [GoalLT, μGoal, μA]
+      exact dm_pair_both
+        (a := Game.birthday xr) (b := Game.birthday x)
+        (c := Game.birthday yr) (d := Game.birthday y)
+        (Game.birthday_lt_right hxr) (Game.birthday_lt_right hyr)
+
+    have h1 : IsSurreal (xr ⊗ y) := (IH (.A xr y) hμ1) sxr sy
+    have h2 : IsSurreal (x ⊗ yr) := (IH (.A x yr) hμ2) sx syr
+    have h3 : IsSurreal (xr ⊗ yr) := (IH (.A xr yr) hμ3) sxr syr
+
+    have h12 : IsSurreal ((xr ⊗ y) ⊕ (x ⊗ yr)) := add_isSurreal_game h1 h2
+    have h3n : IsSurreal (xr ⊗ yr).neg := neg_isSurreal_game h3
+    simpa [Game.mulOpt4] using add_isSurreal_game h12 h3n
 
 private lemma A_option_isSurreal_right
     (x y : Game)
@@ -160,10 +240,67 @@ private lemma A_option_isSurreal_right
     (sx : IsSurreal x) (sy : IsSurreal y)
     {R : Game} (hR : R ∈ (x ⊗ y).right) :
     IsSurreal R := by
-  /-
-    Same as the left-option helper, but using `Game.mem_mul_right`.
-  -/
-  sorry
+  rw [mem_mul_right] at hR
+  rcases hR with ⟨xl, hxl, yr, hyr, rfl⟩ | ⟨xr, hxr, yl, hyl, rfl⟩
+  · have sxl : IsSurreal xl := IsSurreal.isSurreal_left sx hxl
+    have syr : IsSurreal yr := IsSurreal.isSurreal_right sy hyr
+
+    have hμ1 : GoalLT (.A xl y) (.A x y) := by
+      dsimp [GoalLT, μGoal, μA]
+      exact dm_pair_one_left
+        (a := Game.birthday xl) (b := Game.birthday x) (c := Game.birthday y)
+        (Game.birthday_lt_left hxl)
+
+    have hμ2 : GoalLT (.A x yr) (.A x y) := by
+      dsimp [GoalLT, μGoal, μA]
+      exact dm_pair_one_right
+        (a := Game.birthday yr) (b := Game.birthday y) (c := Game.birthday x)
+        (Game.birthday_lt_right hyr)
+
+    have hμ3 : GoalLT (.A xl yr) (.A x y) := by
+      dsimp [GoalLT, μGoal, μA]
+      exact dm_pair_both
+        (a := Game.birthday xl) (b := Game.birthday x)
+        (c := Game.birthday yr) (d := Game.birthday y)
+        (Game.birthday_lt_left hxl) (Game.birthday_lt_right hyr)
+
+    have h1 : IsSurreal (xl ⊗ y) := (IH (.A xl y) hμ1) sxl sy
+    have h2 : IsSurreal (x ⊗ yr) := (IH (.A x yr) hμ2) sx syr
+    have h3 : IsSurreal (xl ⊗ yr) := (IH (.A xl yr) hμ3) sxl syr
+
+    have h12 : IsSurreal ((xl ⊗ y) ⊕ (x ⊗ yr)) := add_isSurreal_game h1 h2
+    have h3n : IsSurreal (xl ⊗ yr).neg := neg_isSurreal_game h3
+    simpa [Game.mulOpt4] using add_isSurreal_game h12 h3n
+
+  · have sxr : IsSurreal xr := IsSurreal.isSurreal_right sx hxr
+    have syl : IsSurreal yl := IsSurreal.isSurreal_left sy hyl
+
+    have hμ1 : GoalLT (.A xr y) (.A x y) := by
+      dsimp [GoalLT, μGoal, μA]
+      exact dm_pair_one_left
+        (a := Game.birthday xr) (b := Game.birthday x) (c := Game.birthday y)
+        (Game.birthday_lt_right hxr)
+
+    have hμ2 : GoalLT (.A x yl) (.A x y) := by
+      dsimp [GoalLT, μGoal, μA]
+      exact dm_pair_one_right
+        (a := Game.birthday yl) (b := Game.birthday y) (c := Game.birthday x)
+        (Game.birthday_lt_left hyl)
+
+    have hμ3 : GoalLT (.A xr yl) (.A x y) := by
+      dsimp [GoalLT, μGoal, μA]
+      exact dm_pair_both
+        (a := Game.birthday xr) (b := Game.birthday x)
+        (c := Game.birthday yl) (d := Game.birthday y)
+        (Game.birthday_lt_right hxr) (Game.birthday_lt_left hyl)
+
+    have h1 : IsSurreal (xr ⊗ y) := (IH (.A xr y) hμ1) sxr sy
+    have h2 : IsSurreal (x ⊗ yl) := (IH (.A x yl) hμ2) sx syl
+    have h3 : IsSurreal (xr ⊗ yl) := (IH (.A xr yl) hμ3) sxr syl
+
+    have h12 : IsSurreal ((xr ⊗ y) ⊕ (x ⊗ yl)) := add_isSurreal_game h1 h2
+    have h3n : IsSurreal (xr ⊗ yl).neg := neg_isSurreal_game h3
+    simpa [Game.mulOpt4] using add_isSurreal_game h12 h3n
 
 
 /-! ### Four branch-family lemmas -/
@@ -747,4 +884,4 @@ theorem conway_C {x1 x2 y : Game}
     (∀ yR ∈ y.right, CRight x1 x2 y yR) := by
   exact (ABC_main (.C x1 x2 y)) sx1 sx2 sy hLt
 
-end ConwayDMBlueprint
+end Conway
