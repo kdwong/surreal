@@ -1,24 +1,20 @@
 
 ---
 
-# Corrected 3-variable $C$-dependency list
+# Three-statement induction strategy
 
-Recall the statements: If $x, x_1, x_2, y, y_1, y_2$ are surreal numbers
+Recall the statements: If $x, x_1, x_2, y, y_1, y_2$ are surreal numbers. Then one wishes to prove these three statements simultaneously:
 
-$$A(x,y): xy \text{ surreal}.$$
+$\bullet$ $A(x,y)$: $xy$ is surreal.
 
-$$B(x_1,x_2,y): \quad x_1 = x_2 \Longrightarrow x_1y = x_2y.$$
+$\bullet$ $B(x_1,x_2,y)$: If $x_1 = x_2$, then $x_1y = x_2y.$
 
-$$
-C(x_1,x_2,y):
-\quad
-x_1<x_2
-\Longrightarrow
-\begin{cases}
+$\bullet$ $C(x_1,x_2,y)$: If $x_1<x_2$, then  $\begin{cases}
 x_1y+x_2y^L<x_1y^L+x_2y,\\
-x_1y^R+x_2y<x_1y+x_2y^R.
+x_1y^R+x_2y<x_1y+x_2y^R
 \end{cases}
-$$
+$
+for all left options $y^L$ of $y$ and all right options $y^R$ of $y$.
 
 And the original Conway's $C_4$ statement is
 
@@ -40,19 +36,17 @@ $\bullet$ If $a_1, a_2 < a$, then $\{a_1, a_2,b\} \prec \{a,b\}$.
 
 $\bullet$ $\{a,b\} \prec \{a,b,c\}$.
 
+We list the dependencies for the induction argument smaller $A, B, C \to A \to B \to C$.
+
 ---
 
 # 1. Dependencies for $A(x,y)$
 
 ## 1a. Smaller $A$-instances
 
-Unchanged:
-
 $$
 A(x^L,y),\quad A(x^R,y),\quad A(x,y^L),\quad A(x,y^R),
 $$
-
-and
 
 $$
 A(x^L,y^L),\quad A(x^L,y^R),\quad A(x^R,y^L),\quad A(x^R,y^R).
@@ -66,7 +60,7 @@ $$
 
 ### If $x_{L1}\sim x_{L2}$
 
-Original file had:
+The dependencies are:
 
 $$
 B(x_{L1},x_{L2},y),\quad
@@ -74,7 +68,7 @@ B(x_{L1},x_{L2},y^R),\quad
 C_4(x_{L1},x;y^L,y^R).
 $$
 
-Corrected:
+Equivalently:
 
 $$
 B(x_{L1},x_{L2},y),\quad
@@ -86,14 +80,14 @@ $$
 
 ### If $x_{L1}<x_{L2}$
 
-Original file had:
+The dependencies are:
 
 $$
 C_4(x_{L1},x_{L2};y^L,y),\quad
 C_4(x_{L2},x;y^L,y^R).
 $$
 
-Corrected:
+Equivalently:
 
 $$
 C(x_{L1},x_{L2},y),\quad
@@ -104,14 +98,14 @@ $$
 
 ### If $x_{L1}>x_{L2}$
 
-Original file had:
+The dependencies are:
 
 $$
 C_4(x_{L1},x;y^L,y^R),\quad
 C_4(x_{L2},x_{L1};y,y^R).
 $$
 
-Corrected:
+Equivalently:
 
 $$
 C(y^L, y^R, x),\quad
@@ -122,11 +116,11 @@ $$
 
 ## Family F2: $(x^L,y_{L1})$ versus $(x^R,y_{L2})$
 
-Here $y_{L1},y_{L2}$ are both left options of $y$. So whenever the first pair is $x^L,x$, $x,x^R$, or $x^L,x^R$ and the second pair is $y_{L1},y_{L2}$, we use symmetry and replace by $C(y_{L1},y_{L2},x)$.
+Here $y_{L1},y_{L2}$ are both left options of $y$. So whenever the first pair is $(x^L,x)$, $(x,x^R)$, or $(x^L,x^R)$ and the second pair is $(y_{L1},y_{L2})$, we use symmetry and replace by $C(y_{L1},y_{L2},x)$.
 
 ### If $y_{L1}\sim y_{L2}$
 
-Original file had:
+The dependencies are:
 
 $$
 B(y_{L1},y_{L2},x),\quad
@@ -135,7 +129,7 @@ C_4(x^L,x^R;y_{L1},y).
 $$
 
 
-Corrected:
+Equivalently:
 
 $$
 B(y_{L1},y_{L2},x),\quad
@@ -147,16 +141,16 @@ $$
 
 ### If $y_{L1}<y_{L2}$
 
-Original file had:
+The dependencies are:
 
 $$
 C_4(x^L,x;y_{L1},y_{L2}),\quad
 C_4(x^L,x^R;y_{L2},y).
 $$
 
-The first term is switched by symmetry; the second term contains $y$, so it is kept in place.
+The first term is switched by symmetry.
 
-Corrected:
+Equivalently:
 
 $$
 C(y_{L1},y_{L2},x),\quad
@@ -167,16 +161,16 @@ $$
 
 ### If $y_{L1}>y_{L2}$
 
-Original file had:
+The dependencies are:
 
 $$
 C_4(x^L,x^R;y_{L1},y),\quad
 C_4(x,x^R;y_{L2},y_{L1}).
 $$
 
-The first term contains $y$, so it stays in the $x$-position. The second term has both $y_{L2},y_{L1}$ as options of $y$, so it is switched by symmetry.
+The second term is switched by symmetry.
 
-Corrected:
+Equivalently:
 
 $$
 C(x^L,x^R,y),\quad
@@ -191,7 +185,7 @@ Now $y_{R1},y_{R2}$ are right options of $y$.
 
 ### If $y_{R1}\sim y_{R2}$
 
-Original file had:
+The dependencies are:
 
 $$
 B(y_{R1},y_{R2},x),\quad
@@ -199,9 +193,7 @@ B(y_{R1},y_{R2},x^L),\quad
 C_4(x^L,x^R;y,y_{R1}).
 $$
 
-Since the second pair contains $y$, keep the first pair.
-
-Corrected:
+Equivalently:
 
 $$
 B(y_{R1},y_{R2},x),\quad
@@ -213,14 +205,14 @@ $$
 
 ### If $y_{R1}<y_{R2}$
 
-Original file had:
+The dependencies are:
 
 $$
 C_4(x^L,x^R;y,y_{R1}),\quad
 C_4(x^L,x;y_{R1},y_{R2}).
 $$
 
-Corrected:
+Equivalently:
 
 $$
 C(x^L,x^R,y),\quad
@@ -231,14 +223,14 @@ $$
 
 ### If $y_{R1}>y_{R2}$
 
-Original file had:
+The dependencies are:
 
 $$
 C_4(x,x^R;y_{R2},y_{R1}),\quad
 C_4(x^L,x^R;y,y_{R2}).
 $$
 
-Corrected:
+Equivalently:
 
 $$
 C(y_{R2},y_{R1},x),\quad
@@ -251,7 +243,7 @@ $$
 
 ### If $x_{R1}\sim x_{R2}$
 
-Original file had:
+The dependencies are:
 
 $$
 B(x_{R1},x_{R2},y),\quad
@@ -259,7 +251,7 @@ B(x_{R1},x_{R2},y^L),\quad
 C_4(x,x_{R1};y^L,y^R).
 $$
 
-Corrected:
+Equivalently:
 
 $$
 B(x_{R1},x_{R2},y),\quad
@@ -271,14 +263,14 @@ $$
 
 ### If $x_{R1}<x_{R2}$
 
-Original file had:
+The dependencies are:
 
 $$
 C_4(x_{R1},x_{R2};y,y^R),\quad
 C_4(x,x_{R2};y^L,y^R).
 $$
 
-Corrected:
+Equivalently:
 
 $$
 C(x_{R1},x_{R2},y),\quad
@@ -289,14 +281,14 @@ $$
 
 ### If $x_{R1}>x_{R2}$
 
-Original file had:
+The dependencies are:
 
 $$
 C_4(x,x_{R1};y^L,y^R),\quad
 C_4(x_{R2},x_{R1};y^L,y).
 $$
 
-Corrected:
+Equivalently:
 
 $$
 C(y^L,y^R,x),\quad
@@ -317,13 +309,13 @@ $$
 
 ### $x_1$-LL branch
 
-Original:
+The dependencies are:
 
 $$
 B(x_1,x_2,y^L),\quad C_4(x_1^L,x_2;y^L,y).
 $$
 
-Corrected:
+Equivalently:
 
 $$
 B(x_1,x_2,y^L),\quad C(x_1^L,x_2,y).
@@ -333,13 +325,13 @@ $$
 
 ### $x_1$-RR branch
 
-Original:
+The dependencies are:
 
 $$
 B(x_1,x_2,y^R),\quad C_4(x_2,x_1^R;y,y^R).
 $$
 
-Corrected:
+Equivalently:
 
 $$
 B(x_1,x_2,y^R),\quad C(x_2,x_1^R,y).
@@ -349,13 +341,13 @@ $$
 
 ### $x_1$-LR branch
 
-Original:
+The dependencies are:
 
 $$
 B(x_1,x_2,y^R),\quad C_4(x_1^L,x_2;y,y^R).
 $$
 
-Corrected:
+Equivalently:
 
 $$
 B(x_1,x_2,y^R),\quad C(x_1^L,x_2,y).
@@ -365,13 +357,13 @@ $$
 
 ### $x_1$-RL branch
 
-Original:
+The dependencies are:
 
 $$
 B(x_1,x_2,y^L),\quad C_4(x_2,x_1^R;y^L,y).
 $$
 
-Corrected:
+Equivalently:
 
 $$
 B(x_1,x_2,y^L),\quad C(x_2,x_1^R,y).
@@ -383,13 +375,13 @@ $$
 
 ### $x_2$-LL branch
 
-Original:
+The dependencies are:
 
 $$
 B(x_2,x_1,y^L),\quad C_4(x_2^L,x_1;y^L,y).
 $$
 
-Corrected:
+Equivalently:
 
 $$
 B(x_2,x_1,y^L),\quad C(x_2^L,x_1,y).
@@ -399,13 +391,13 @@ $$
 
 ### $x_2$-RR branch
 
-Original:
+The dependencies are:
 
 $$
 B(x_2,x_1,y^R),\quad C_4(x_1,x_2^R;y,y^R).
 $$
 
-Corrected:
+Equivalently:
 
 $$
 B(x_2,x_1,y^R),\quad C(x_1,x_2^R,y).
@@ -415,13 +407,13 @@ $$
 
 ### $x_2$-LR branch
 
-Original:
+The dependencies are:
 
 $$
 B(x_2,x_1,y^R),\quad C_4(x_2^L,x_1;y,y^R).
 $$
 
-Corrected:
+Equivalently:
 
 $$
 B(x_2,x_1,y^R),\quad C(x_2^L,x_1,y).
@@ -431,13 +423,13 @@ $$
 
 ### $x_2$-RL branch
 
-Original:
+The dependencies are:
 
 $$
 B(x_2,x_1,y^L),\quad C_4(x_1,x_2^R;y^L,y).
 $$
 
-Corrected:
+Equivalently:
 
 $$
 B(x_2,x_1,y^L),\quad C(x_1,x_2^R,y).
@@ -445,9 +437,9 @@ $$
 
 ---
 
-# 3. Corrected dependencies for the old $C(x_1,x_2,y)$
+# 3. Corrected dependencies for $C(x_1,x_2,y)$
 
-The old $C(x_1,x_2,y)$ has two halves:
+Recall $C(x_1,x_2,y)$ has two halves:
 
 $$
 x_1y+x_2y^L<x_1y^L+x_2y,
@@ -504,7 +496,7 @@ $$
 
 ### If $x_1^R<x_2$
 
-Use the two old $C$-instances
+Use the two $C$-instances
 
 $$
 C(x_1,x_1^R,y),\quad C(x_1^R,x_2,y).
