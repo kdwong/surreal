@@ -23,7 +23,7 @@ def CRight (x1 x2 y yR : Game) : Prop :=
   ((x1 ⊗ yR) ⊕ (x2 ⊗ y)) ≺ ((x1 ⊗ y) ⊕ (x2 ⊗ yR))
 
 
-/-! ### Public bookkeeping lemmas from Step1 -/
+/-! ### Public bookkeeping lemmas -/
 
 def MulCrossLe (x1 x2 y1 y2 : Game) : Prop :=
   ((x1 ⊗ y2) ⊕ (x2 ⊗ y1)) ≼ ((x1 ⊗ y1) ⊕ (x2 ⊗ y2))
