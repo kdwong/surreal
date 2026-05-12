@@ -9,22 +9,20 @@ $\bullet$ $A(x,y)$: $xy$ is surreal.
 
 $\bullet$ $B(x_1,x_2,y)$: If $x_1 = x_2$, then $x_1y = x_2y.$
 
-$\bullet$ $C(x_1,x_2,y)$: If $x_1<x_2$, then  $\begin{cases}
-x_1y+x_2y^L<x_1y^L+x_2y,\\
-x_1y^R+x_2y<x_1y+x_2y^R
-\end{cases}
-$
+$\bullet$ $C(x_1,x_2,y)$: If $x_1<x_2$, then  
+
+$$x_1y + x_2 y^L < x_1 y^L + x_2y$$
+
+$$x_1y^R+x_2y<x_1y+x_2y^R$$
+
 for all left options $y^L$ of $y$ and all right options $y^R$ of $y$.
 
 And the original Conway's $C_4$ statement is
 
-$$
-C_4(x_1,x_2,y_1,y_2):
-\quad
-x_1<x_2
-\Longrightarrow
-x_1y_2+x_2y_1<x_1y_1+x_2y_2
-$$
+$\bullet$ $C_4(x_1,x_2,y_1,y_2):$
+If $x_1<x_2$, then $x_1y_2+x_2y_1<x_1y_1+x_2y_2$
+
+In other words, $C(x_1,x_2,y)$ is $C_4(x_1,x_2,y^L,y)$ and $C_4(x_1,x_2,y,y^R)$.
 
 We will only use the $A$, $B$ and $C$ statements and use the Dershowitz–Manna ordering for well-founded induction. Here are the dependency in the proof of these statements, which relies on two important facts needed for the Dershowitz–Manna order $\prec$ on multiset of $\mathbb{N}$:
 
@@ -456,13 +454,13 @@ To prove these, one bridges between $x_1$ and $x_2$.
 Assume $x_1<x_2$. Then either there is a right option $x_1^R$ with
 
 $$
-x_1<x_1^R\le x_2,
+x_1 < x_1^R \leq x_2,
 $$
 
 or there is a left option $x_2^L$ with
 
 $$
-x_1\le x_2^L<x_2.
+x_1 \leq x_2^L < x_2.
 $$
 
 ---
