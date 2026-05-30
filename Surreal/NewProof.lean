@@ -30,32 +30,15 @@ local notation:70 x " ⊗ " y => Game.mul x y
   Dershowitz–Manna order of multisets of birthdays.
 -/
 
-/-! ### DM measure on birthdays -/
+/-! ### DM measure on birthdays
 
-theorem dm_wf :
-    WellFounded (IsDershowitzMannaLT : Multiset ℕ → Multiset ℕ → Prop) := by
-  exact wellFounded_isDershowitzMannaLT
+The shared `Goal`, `μGoal`, `GoalLT`, and `wfGoal` declarations from
+`Surreal.Order` drive the simultaneous induction below.
+-/
 
-def μA (x y : Game) : Multiset ℕ :=
-  {Game.birthday x, Game.birthday y}
-
-def μB (x1 x2 y : Game) : Multiset ℕ :=
-  {Game.birthday x1, Game.birthday x2, Game.birthday y}
-
-inductive Goal where
-  | A : Game → Game → Goal
-  | B : Game → Game → Game → Goal
-  | C : Game → Game → Game → Goal
-deriving Repr
-
-def μGoal : Goal → Multiset ℕ
-  | .A x y      => μA x y
-  | .B x1 x2 y  => μB x1 x2 y
-  | .C x1 x2 y  => μB x1 x2 y
-
-abbrev GoalLT : Goal → Goal → Prop := InvImage IsDershowitzMannaLT μGoal
-
-theorem wfGoal : WellFounded GoalLT := by exact InvImage.wf μGoal dm_wf
+abbrev CConditions (x1 x2 y : Game) : Prop :=
+  (∀ yL ∈ y.left, CLeft x1 x2 y yL) ∧
+  (∀ yR ∈ y.right, CRight x1 x2 y yR)
 
 def Holds : Goal → Prop
   | .A x y =>
@@ -65,9 +48,7 @@ def Holds : Goal → Prop
       x1 ∼ x2 → (x1 ⊗ y) ∼ (x2 ⊗ y)
   | .C x1 x2 y =>
       IsSurreal x1 → IsSurreal x2 → IsSurreal y →
-      x1 ≺ x2 →
-      (∀ yL ∈ y.left, CLeft x1 x2 y yL) ∧
-      (∀ yR ∈ y.right, CRight x1 x2 y yR)
+      x1 ≺ x2 → CConditions x1 x2 y
 
 /-! ### Small wrappers around existing APIs -/
 
@@ -166,6 +147,25 @@ lemma bridge_exists_of_lt {x1 x2 : Game} (h : x1 ≺ x2) :
 
 /-! ### A-case helpers -/
 
+private lemma A_mulOpt_isSurreal
+    (x y x' y' : Game)
+    (IH : ∀ g', GoalLT g' (.A x y) → Holds g')
+    (sx : IsSurreal x) (sy : IsSurreal y)
+    (sx' : IsSurreal x') (sy' : IsSurreal y')
+    (hx' : Game.birthday x' < Game.birthday x)
+    (hy' : Game.birthday y' < Game.birthday y) :
+    IsSurreal (M x' y x y') := by
+  have h1 : IsSurreal (x' ⊗ y) := (IH (.A x' y) (goal_lt_A₁ hx')) sx' sy
+  have h2 : IsSurreal (x ⊗ y') := (IH (.A x y') (goal_lt_A₂ hy')) sx sy'
+  have h3 : IsSurreal (x' ⊗ y') := by
+    apply (IH (.A x' y') ?_) sx' sy'
+    exact IsDershowitzMannaLT.trans
+      (goal_lt_A₁ (x := x) (x' := x') (y := y') hx')
+      (goal_lt_A₂ (x := x) (y := y) (y' := y') hy')
+  have h12 : IsSurreal ((x' ⊗ y) ⊕ (x ⊗ y')) := add_isSurreal_game h1 h2
+  have h3n : IsSurreal (x' ⊗ y').neg := neg_isSurreal_game h3
+  simpa [M, Game.mulOpt4] using add_isSurreal_game h12 h3n
+
 private lemma A_option_isSurreal_left
     (x y : Game)
     (IH : ∀ g', GoalLT g' (.A x y) → Holds g')
@@ -174,65 +174,12 @@ private lemma A_option_isSurreal_left
     IsSurreal L := by
   rw [mem_mul_left] at hL
   rcases hL with ⟨xl, hxl, yl, hyl, rfl⟩ | ⟨xr, hxr, yr, hyr, rfl⟩
-  · have sxl : IsSurreal xl := IsSurreal.isSurreal_left sx hxl
-    have syl : IsSurreal yl := IsSurreal.isSurreal_left sy hyl
-
-    have hμ1 : GoalLT (.A xl y) (.A x y) := by
-      dsimp [GoalLT, μGoal, μA]
-      exact dm_pair_one_left
-        (a := Game.birthday xl) (b := Game.birthday x) (c := Game.birthday y)
-        (Game.birthday_lt_left hxl)
-
-    have hμ2 : GoalLT (.A x yl) (.A x y) := by
-      dsimp [GoalLT, μGoal, μA]
-      exact dm_pair_one_right
-        (a := Game.birthday yl) (b := Game.birthday y) (c := Game.birthday x)
-        (Game.birthday_lt_left hyl)
-
-    have hμ3 : GoalLT (.A xl yl) (.A x y) := by
-      dsimp [GoalLT, μGoal, μA]
-      exact dm_pair_both
-        (a := Game.birthday xl) (b := Game.birthday x)
-        (c := Game.birthday yl) (d := Game.birthday y)
-        (Game.birthday_lt_left hxl) (Game.birthday_lt_left hyl)
-
-    have h1 : IsSurreal (xl ⊗ y) := (IH (.A xl y) hμ1) sxl sy
-    have h2 : IsSurreal (x ⊗ yl) := (IH (.A x yl) hμ2) sx syl
-    have h3 : IsSurreal (xl ⊗ yl) := (IH (.A xl yl) hμ3) sxl syl
-
-    have h12 : IsSurreal ((xl ⊗ y) ⊕ (x ⊗ yl)) := add_isSurreal_game h1 h2
-    have h3n : IsSurreal (xl ⊗ yl).neg := neg_isSurreal_game h3
-    simpa [Game.mulOpt4] using add_isSurreal_game h12 h3n
-
-  · have sxr : IsSurreal xr := IsSurreal.isSurreal_right sx hxr
-    have syr : IsSurreal yr := IsSurreal.isSurreal_right sy hyr
-
-    have hμ1 : GoalLT (.A xr y) (.A x y) := by
-      dsimp [GoalLT, μGoal, μA]
-      exact dm_pair_one_left
-        (a := Game.birthday xr) (b := Game.birthday x) (c := Game.birthday y)
-        (Game.birthday_lt_right hxr)
-
-    have hμ2 : GoalLT (.A x yr) (.A x y) := by
-      dsimp [GoalLT, μGoal, μA]
-      exact dm_pair_one_right
-        (a := Game.birthday yr) (b := Game.birthday y) (c := Game.birthday x)
-        (Game.birthday_lt_right hyr)
-
-    have hμ3 : GoalLT (.A xr yr) (.A x y) := by
-      dsimp [GoalLT, μGoal, μA]
-      exact dm_pair_both
-        (a := Game.birthday xr) (b := Game.birthday x)
-        (c := Game.birthday yr) (d := Game.birthday y)
-        (Game.birthday_lt_right hxr) (Game.birthday_lt_right hyr)
-
-    have h1 : IsSurreal (xr ⊗ y) := (IH (.A xr y) hμ1) sxr sy
-    have h2 : IsSurreal (x ⊗ yr) := (IH (.A x yr) hμ2) sx syr
-    have h3 : IsSurreal (xr ⊗ yr) := (IH (.A xr yr) hμ3) sxr syr
-
-    have h12 : IsSurreal ((xr ⊗ y) ⊕ (x ⊗ yr)) := add_isSurreal_game h1 h2
-    have h3n : IsSurreal (xr ⊗ yr).neg := neg_isSurreal_game h3
-    simpa [Game.mulOpt4] using add_isSurreal_game h12 h3n
+  · exact A_mulOpt_isSurreal x y xl yl IH sx sy
+      (IsSurreal.isSurreal_left sx hxl) (IsSurreal.isSurreal_left sy hyl)
+      (Game.birthday_lt_left hxl) (Game.birthday_lt_left hyl)
+  · exact A_mulOpt_isSurreal x y xr yr IH sx sy
+      (IsSurreal.isSurreal_right sx hxr) (IsSurreal.isSurreal_right sy hyr)
+      (Game.birthday_lt_right hxr) (Game.birthday_lt_right hyr)
 
 private lemma A_option_isSurreal_right
     (x y : Game)
@@ -242,65 +189,12 @@ private lemma A_option_isSurreal_right
     IsSurreal R := by
   rw [mem_mul_right] at hR
   rcases hR with ⟨xl, hxl, yr, hyr, rfl⟩ | ⟨xr, hxr, yl, hyl, rfl⟩
-  · have sxl : IsSurreal xl := IsSurreal.isSurreal_left sx hxl
-    have syr : IsSurreal yr := IsSurreal.isSurreal_right sy hyr
-
-    have hμ1 : GoalLT (.A xl y) (.A x y) := by
-      dsimp [GoalLT, μGoal, μA]
-      exact dm_pair_one_left
-        (a := Game.birthday xl) (b := Game.birthday x) (c := Game.birthday y)
-        (Game.birthday_lt_left hxl)
-
-    have hμ2 : GoalLT (.A x yr) (.A x y) := by
-      dsimp [GoalLT, μGoal, μA]
-      exact dm_pair_one_right
-        (a := Game.birthday yr) (b := Game.birthday y) (c := Game.birthday x)
-        (Game.birthday_lt_right hyr)
-
-    have hμ3 : GoalLT (.A xl yr) (.A x y) := by
-      dsimp [GoalLT, μGoal, μA]
-      exact dm_pair_both
-        (a := Game.birthday xl) (b := Game.birthday x)
-        (c := Game.birthday yr) (d := Game.birthday y)
-        (Game.birthday_lt_left hxl) (Game.birthday_lt_right hyr)
-
-    have h1 : IsSurreal (xl ⊗ y) := (IH (.A xl y) hμ1) sxl sy
-    have h2 : IsSurreal (x ⊗ yr) := (IH (.A x yr) hμ2) sx syr
-    have h3 : IsSurreal (xl ⊗ yr) := (IH (.A xl yr) hμ3) sxl syr
-
-    have h12 : IsSurreal ((xl ⊗ y) ⊕ (x ⊗ yr)) := add_isSurreal_game h1 h2
-    have h3n : IsSurreal (xl ⊗ yr).neg := neg_isSurreal_game h3
-    simpa [Game.mulOpt4] using add_isSurreal_game h12 h3n
-
-  · have sxr : IsSurreal xr := IsSurreal.isSurreal_right sx hxr
-    have syl : IsSurreal yl := IsSurreal.isSurreal_left sy hyl
-
-    have hμ1 : GoalLT (.A xr y) (.A x y) := by
-      dsimp [GoalLT, μGoal, μA]
-      exact dm_pair_one_left
-        (a := Game.birthday xr) (b := Game.birthday x) (c := Game.birthday y)
-        (Game.birthday_lt_right hxr)
-
-    have hμ2 : GoalLT (.A x yl) (.A x y) := by
-      dsimp [GoalLT, μGoal, μA]
-      exact dm_pair_one_right
-        (a := Game.birthday yl) (b := Game.birthday y) (c := Game.birthday x)
-        (Game.birthday_lt_left hyl)
-
-    have hμ3 : GoalLT (.A xr yl) (.A x y) := by
-      dsimp [GoalLT, μGoal, μA]
-      exact dm_pair_both
-        (a := Game.birthday xr) (b := Game.birthday x)
-        (c := Game.birthday yl) (d := Game.birthday y)
-        (Game.birthday_lt_right hxr) (Game.birthday_lt_left hyl)
-
-    have h1 : IsSurreal (xr ⊗ y) := (IH (.A xr y) hμ1) sxr sy
-    have h2 : IsSurreal (x ⊗ yl) := (IH (.A x yl) hμ2) sx syl
-    have h3 : IsSurreal (xr ⊗ yl) := (IH (.A xr yl) hμ3) sxr syl
-
-    have h12 : IsSurreal ((xr ⊗ y) ⊕ (x ⊗ yl)) := add_isSurreal_game h1 h2
-    have h3n : IsSurreal (xr ⊗ yl).neg := neg_isSurreal_game h3
-    simpa [Game.mulOpt4] using add_isSurreal_game h12 h3n
+  · exact A_mulOpt_isSurreal x y xl yr IH sx sy
+      (IsSurreal.isSurreal_left sx hxl) (IsSurreal.isSurreal_right sy hyr)
+      (Game.birthday_lt_left hxl) (Game.birthday_lt_right hyr)
+  · exact A_mulOpt_isSurreal x y xr yl IH sx sy
+      (IsSurreal.isSurreal_right sx hxr) (IsSurreal.isSurreal_left sy hyl)
+      (Game.birthday_lt_right hxr) (Game.birthday_lt_left hyl)
 
 
 /-! ### Four branch-family lemmas -/
@@ -606,6 +500,8 @@ private lemma B_product_le
     exact (IH (.A a y) goal_lt_A_from_B₁) sa sy
   have hAb : IsSurreal (b ⊗ y) := by
     exact (IH (.A b y) goal_lt_A_from_B₂) sb sy
+  have IHswap := IHswap_of_IH IH
+  have hEq' : b ∼ a := ⟨hEq.2, hEq.1⟩
   unfold Game.le
   constructor
   · intro L hL
@@ -621,8 +517,7 @@ private lemma B_product_le
       have hlt : aL ≺ b := by
         exact Game.lt_of_lt_of_le (left_lt_game sa haL) hEq.1
       have hC :
-          (∀ yL' ∈ y.left, CLeft aL b y yL') ∧
-          (∀ yR' ∈ y.right, CRight aL b y yR') := by
+          CConditions aL b y := by
         exact
           (IH (.C aL b y)
             (goal_lt_C_from_B_left_left (Game.birthday_lt_left haL)))
@@ -637,8 +532,7 @@ private lemma B_product_le
       have hlt : b ≺ aR := by
         exact Game.lt_of_le_of_lt hEq.2 (lt_right_game sa haR)
       have hC :
-          (∀ yL' ∈ y.left, CLeft b aR y yL') ∧
-          (∀ yR' ∈ y.right, CRight b aR y yR') := by
+          CConditions b aR y := by
         exact
           (IH (.C b aR y)
             (goal_lt_C_from_B_left_right (Game.birthday_lt_right haR)))
@@ -650,8 +544,6 @@ private lemma B_product_le
       ⟨bL, hbL, yR, hyR, rfl⟩ | ⟨bR, hbR, yL, hyL, rfl⟩
     · have sbL : IsSurreal bL := IsSurreal.isSurreal_left sb hbL
       have syR : IsSurreal yR := IsSurreal.isSurreal_right sy hyR
-      have IHswap := IHswap_of_IH IH
-      have hEq' : b ∼ a := ⟨hEq.2, hEq.1⟩
       have hB : (b ⊗ yR) ∼ (a ⊗ yR) := by
         exact
           (IHswap (.B b a yR) (goal_lt_B₃ (Game.birthday_lt_right hyR)))
@@ -659,8 +551,7 @@ private lemma B_product_le
       have hlt : bL ≺ a := by
         exact Game.lt_of_lt_of_le (left_lt_game sb hbL) hEq.2
       have hC :
-          (∀ yL' ∈ y.left, CLeft bL a y yL') ∧
-          (∀ yR' ∈ y.right, CRight bL a y yR') := by
+          CConditions bL a y := by
         exact
           (IH (.C bL a y)
             (goal_lt_C_from_B_right_left (Game.birthday_lt_left hbL)))
@@ -668,8 +559,6 @@ private lemma B_product_le
       exact (product_lt_mulOpt4_LR hB (hC.2 yR hyR)).2
     · have sbR : IsSurreal bR := IsSurreal.isSurreal_right sb hbR
       have syL : IsSurreal yL := IsSurreal.isSurreal_left sy hyL
-      have IHswap := IHswap_of_IH IH
-      have hEq' : b ∼ a := ⟨hEq.2, hEq.1⟩
       have hB : (b ⊗ yL) ∼ (a ⊗ yL) := by
         exact
           (IHswap (.B b a yL) (goal_lt_B₃ (Game.birthday_lt_left hyL)))
@@ -677,8 +566,7 @@ private lemma B_product_le
       have hlt : a ≺ bR := by
         exact Game.lt_of_le_of_lt hEq.1 (lt_right_game sb hbR)
       have hC :
-          (∀ yL' ∈ y.left, CLeft a bR y yL') ∧
-          (∀ yR' ∈ y.right, CRight a bR y yR') := by
+          CConditions a bR y := by
         exact
           (IH (.C a bR y)
             (goal_lt_C_from_B_right_right (Game.birthday_lt_right hbR)))
@@ -708,13 +596,20 @@ private lemma B_product_eq
 /-! ### C-case helper -/
 
 
+private lemma C_compose
+    {x1 xm x2 y : Game}
+    (h1 : CConditions x1 xm y)
+    (h2 : CConditions xm x2 y) :
+    CConditions x1 x2 y := by
+  exact ⟨fun yL hyL => C_compose_left (h1.1 yL hyL) (h2.1 yL hyL),
+    fun yR hyR => C_compose_right (h1.2 yR hyR) (h2.2 yR hyR)⟩
+
 private lemma C_core
     (x1 x2 y : Game)
     (IH : ∀ g', GoalLT g' (.C x1 x2 y) → Holds g')
     (sx1 : IsSurreal x1) (sx2 : IsSurreal x2) (sy : IsSurreal y)
     (hLt : x1 ≺ x2) :
-    (∀ yL ∈ y.left, CLeft x1 x2 y yL) ∧
-    (∀ yR ∈ y.right, CRight x1 x2 y yR) := by
+    CConditions x1 x2 y := by
   rcases bridge_exists_of_lt hLt with hbridge | hbridge
 
   · /- Case A: ∃ x1R ∈ x1.right, x1R ≼ x2 -/
@@ -726,23 +621,17 @@ private lemma C_core
       exact (IH (.A x1 y) goal_lt_A_from_C₁) sx1 sy
 
     have hAdj :
-        (∀ yL ∈ y.left, CLeft x1 x1R y yL) ∧
-        (∀ yR ∈ y.right, CRight x1 x1R y yR) := by
+        CConditions x1 x1R y := by
       exact adjacentC_right_of_A hAxy hx1R
 
     rcases trichotomy_game sx1R sx2 with hltR | heqR | hgtR
 
     · /- A2: x1R ≺ x2 -/
       have hRec :
-          (∀ yL ∈ y.left, CLeft x1R x2 y yL) ∧
-          (∀ yR ∈ y.right, CRight x1R x2 y yR) := by
+          CConditions x1R x2 y := by
         exact (IH (.C x1R x2 y) (goal_lt_C₁ bx1R)) sx1R sx2 sy hltR
 
-      refine ⟨?_, ?_⟩
-      · intro yL hyL
-        exact C_compose_left (hAdj.1 yL hyL) (hRec.1 yL hyL)
-      · intro yR hyR
-        exact C_compose_right (hAdj.2 yR hyR) (hRec.2 yR hyR)
+      exact C_compose hAdj hRec
 
     · /- A1: x1R ∼ x2 -/
       have hBy : (x1R ⊗ y) ∼ (x2 ⊗ y) := by
@@ -779,23 +668,17 @@ private lemma C_core
       exact (IH (.A x2 y) goal_lt_A_from_C₂) sx2 sy
 
     have hAdj :
-        (∀ yL ∈ y.left, CLeft x2L x2 y yL) ∧
-        (∀ yR ∈ y.right, CRight x2L x2 y yR) := by
+        CConditions x2L x2 y := by
       exact adjacentC_left_of_A hAxy hx2L
 
     rcases trichotomy_game sx1 sx2L with hltL | heqL | hgtL
 
     · /- B2: x1 ≺ x2L -/
       have hRec :
-          (∀ yL ∈ y.left, CLeft x1 x2L y yL) ∧
-          (∀ yR ∈ y.right, CRight x1 x2L y yR) := by
+          CConditions x1 x2L y := by
         exact (IH (.C x1 x2L y) (goal_lt_C₂ bx2L)) sx1 sx2L sy hltL
 
-      refine ⟨?_, ?_⟩
-      · intro yL hyL
-        exact C_compose_left (hRec.1 yL hyL) (hAdj.1 yL hyL)
-      · intro yR hyR
-        exact C_compose_right (hRec.2 yR hyR) (hAdj.2 yR hyR)
+      exact C_compose hRec hAdj
 
     · /- B1: x1 ∼ x2L -/
       have hBy : (x1 ⊗ y) ∼ (x2L ⊗ y) := by
