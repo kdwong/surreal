@@ -140,58 +140,42 @@ theorem Game.zero_add {a : Game} : (zero ⊕ a) ∼ a := by
 
 /-! ## Commutativity of ⊕ -/
 
+private abbrev AddCommIH (x y : Game) : Prop :=
+  ∀ z : Game.BiGame, Game.B z ⟨x, y⟩ → Game.eq (z.a ⊕ z.b) (z.b ⊕ z.a)
+
+private lemma add_comm_ih_swap {x y : Game} (IH : AddCommIH x y) : AddCommIH y x := by
+  rintro ⟨a, b⟩ h
+  exact Game.eq_symm <| IH ⟨b, a⟩ (by simpa [Game.B, Nat.add_comm] using h)
+
 private lemma left_option_add_comm {x y l : Game}
-    (hx : ∀ xl, xl ∈ x.left → Game.eq (xl ⊕ y) (y ⊕ xl))
-    (hy : ∀ yl, yl ∈ y.left → Game.eq (x ⊕ yl) (yl ⊕ x))
+    (IH : AddCommIH x y)
     (hl : l ∈ (x ⊕ y).left) : ∃ l' ∈ (y ⊕ x).left, Game.eq l l' := by
   rcases (mem_add_left_iff (x := x) (y := y) (l := l)).1 hl with
     ⟨xl, hxl, rfl⟩ | ⟨yl, hyl, rfl⟩
-  · exact ⟨y ⊕ xl, mem_add_left₂ (x := y) (y := x) hxl, hx xl hxl⟩
-  · exact ⟨yl ⊕ x, mem_add_left₁ (x := y) (y := x) hyl, hy yl hyl⟩
+  · exact ⟨y ⊕ xl, mem_add_left₂ (x := y) (y := x) hxl,
+      IH ⟨xl, y⟩ (Game.B_of_left_mem_fst hxl)⟩
+  · exact ⟨yl ⊕ x, mem_add_left₁ (x := y) (y := x) hyl,
+      IH ⟨x, yl⟩ (Game.B_of_left_mem_snd hyl)⟩
 
 private lemma right_option_add_comm {x y r : Game}
-    (hx : ∀ xr, xr ∈ x.right → Game.eq (xr ⊕ y) (y ⊕ xr))
-    (hy : ∀ yr, yr ∈ y.right → Game.eq (x ⊕ yr) (yr ⊕ x))
+    (IH : AddCommIH x y)
     (hr : r ∈ (x ⊕ y).right) : ∃ r' ∈ (y ⊕ x).right, Game.eq r r' := by
   rcases (mem_add_right_iff (x := x) (y := y) (r := r)).1 hr with
     ⟨xr, hxr, rfl⟩ | ⟨yr, hyr, rfl⟩
-  · exact ⟨y ⊕ xr, mem_add_right₂  (x := y) (y := x) hxr, hx xr hxr⟩
-  · exact ⟨yr ⊕ x, mem_add_right₁ (x := y) (y := x) hyr, hy yr hyr⟩
+  · exact ⟨y ⊕ xr, mem_add_right₂ (x := y) (y := x) hxr,
+      IH ⟨xr, y⟩ (Game.B_of_right_mem_fst hxr)⟩
+  · exact ⟨yr ⊕ x, mem_add_right₁ (x := y) (y := x) hyr,
+      IH ⟨x, yr⟩ (Game.B_of_right_mem_snd hyr)⟩
 
 theorem Game.add_comm {a b : Game} : Game.eq (a ⊕ b) (b ⊕ a) := by
-  let P : BiGame → Prop := fun z => Game.eq (z.a ⊕ z.b) (z.b ⊕ z.a)
-  have hP : ∀ z : BiGame, P z := by
-    intro z
-    refine wf_B.induction (C := P) z ?_
-    intro z IH
-    rcases z with ⟨x, y⟩
-    dsimp [P]
-    have hxL : ∀ xl, xl ∈ x.left → Game.eq (xl ⊕ y) (y ⊕ xl) := by
-      intro xl hxl
-      exact IH ⟨xl, y⟩ (B_of_left_mem_fst (x := x) (y := y) hxl)
-    have hyL : ∀ yl, yl ∈ y.left → Game.eq (x ⊕ yl) (yl ⊕ x) := by
-      intro yl hyl
-      exact IH ⟨x, yl⟩ (B_of_left_mem_snd (x := x) (y := y) hyl)
-    have hxR : ∀ xr, xr ∈ x.right → Game.eq (xr ⊕ y) (y ⊕ xr) := by
-      intro xr hxr
-      exact IH ⟨xr, y⟩ (B_of_right_mem_fst (x := x) (y := y) hxr)
-    have hyR : ∀ yr, yr ∈ y.right → Game.eq (x ⊕ yr) (yr ⊕ x) := by
-      intro yr hyr
-      exact IH ⟨x, yr⟩ (B_of_right_mem_snd (x := x) (y := y) hyr)
-    apply Game.eq_of_equiv_options
-    · intro l hl
-      exact left_option_add_comm hxL hyL hl
-    · intro l hl
-      exact left_option_add_comm (x := y) (y := x)
-        (hx := fun yl hyl => Game.eq_symm (hyL yl hyl))
-        (hy := fun xl hxl => Game.eq_symm (hxL xl hxl)) hl
-    · intro r hr
-      exact right_option_add_comm hxR hyR hr
-    · intro r hr
-      exact right_option_add_comm (x := y) (y := x)
-        (hx := fun yr hyr => Game.eq_symm (hyR yr hyr))
-        (hy := fun xr hxr => Game.eq_symm (hxR xr hxr)) hr
-  exact hP ⟨a, b⟩
+  refine wf_B.induction
+    (C := fun z : BiGame => Game.eq (z.a ⊕ z.b) (z.b ⊕ z.a)) ⟨a, b⟩ ?_
+  rintro ⟨x, y⟩ IH
+  exact Game.eq_of_equiv_options
+    (fun _ hl => left_option_add_comm IH hl)
+    (fun _ hl => left_option_add_comm (x := y) (y := x) (add_comm_ih_swap IH) hl)
+    (fun _ hr => right_option_add_comm IH hr)
+    (fun _ hr => right_option_add_comm (x := y) (y := x) (add_comm_ih_swap IH) hr)
 
 /-! ##  a ≤ b → (a ⊕ c) ≤ (b ⊕ c)  ↔   (a ⊕ c) ≤  (b ⊕ c) → a ≤ b
 These two statements have to be proved hand-in-hand

@@ -68,7 +68,7 @@ lemma dm_pair_both {a b c d : ℕ} (hab : a < b) (hcd : c < d) :
 
 private lemma dm_triple_one₁ {a a' b c : ℕ} (h : a' < a) :
     IsDershowitzMannaLT ({a', b, c} : Multiset ℕ) ({a, b, c} : Multiset ℕ) := by
-  simpa [add_comm, add_left_comm, add_assoc] using
+  simpa [add_comm, add_left_comm, add_assoc, Multiset.cons_swap] using
     dm_of_replace_one {b, c} {a'} (a := a) (by simpa using h)
 
 private lemma dm_triple_one₂ {a b b' c : ℕ} (h : b' < b) :
@@ -83,12 +83,12 @@ private lemma dm_triple_one₃ {a b c c' : ℕ} (h : c' < c) :
 
 private lemma dm_triple_one₁_swap {a a' b c : ℕ} (h : a' < a) :
     IsDershowitzMannaLT ({b, a', c} : Multiset ℕ) ({a, b, c} : Multiset ℕ) := by
-  simpa [add_comm, add_left_comm, add_assoc] using
+  simpa [add_comm, add_left_comm, add_assoc, Multiset.cons_swap] using
     dm_of_replace_one {b, c} {a'} (a := a) (by simpa using h)
 
 private lemma dm_triple_one₂_swap {a b b' c : ℕ} (h : b' < b) :
     IsDershowitzMannaLT ({b', a, c} : Multiset ℕ) ({a, b, c} : Multiset ℕ) := by
-  simpa [add_comm, add_left_comm, add_assoc] using
+  simpa [add_comm, add_left_comm, add_assoc, Multiset.cons_swap] using
     dm_of_replace_one {a, c} {b'} (a := b) (by simpa using h)
 
 private lemma dm_triple_from_pair_replace_left
@@ -100,6 +100,8 @@ private lemma dm_triple_from_pair_replace_left
 private lemma dm_triple_from_pair_replace_right
     {a b c d : ℕ} (hb : b < a) (hc : c < a) :
     IsDershowitzMannaLT ({b, c, d} : Multiset ℕ) ({d, a} : Multiset ℕ) := by
+  change IsDershowitzMannaLT (b ::ₘ c ::ₘ d ::ₘ 0) (d ::ₘ a ::ₘ 0)
+  rw [Multiset.cons_swap d a]
   simpa [add_comm, add_left_comm, add_assoc] using
     dm_of_replace_one {d} {b, c} (a := a) (by simpa using And.intro hb hc)
 
@@ -110,6 +112,8 @@ private lemma dm_pair_lt_triple_middle {a b c : ℕ} :
 
 private lemma dm_pair_lt_triple_left {a b c : ℕ} :
     IsDershowitzMannaLT ({b, c} : Multiset ℕ) ({a, b, c} : Multiset ℕ) := by
+  change IsDershowitzMannaLT (b ::ₘ c ::ₘ 0) (a ::ₘ b ::ₘ c ::ₘ 0)
+  rw [Multiset.cons_swap a b]
   simpa [add_comm, add_left_comm, add_assoc] using
     dm_of_replace_one {b, c} ∅ (a := a) (by simp)
 

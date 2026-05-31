@@ -49,48 +49,42 @@ instance : Mul SurrealNumber where
 
 /-! ## Ring multiplication theorems -/
 
-theorem SurrealNumber.mul_comm (a b : SurrealNumber) :
-    a * b = b * a := by
+theorem SurrealNumber.mul_comm (a b : SurrealNumber) : a * b = b * a := by
   refine Quotient.inductionOn₂ a b ?_
   intro a b
   apply Quotient.sound
   change Game.eq (a.val.mul b.val) (b.val.mul a.val)
   exact Game.mul_comm
 
-theorem SurrealNumber.mul_assoc (a b c : SurrealNumber) :
-    a * b * c = a * (b * c) := by
+theorem SurrealNumber.mul_assoc (a b c : SurrealNumber) : a * b * c = a * (b * c) := by
   refine Quotient.inductionOn₃ a b c ?_
   intro a b c
   apply Quotient.sound
   change Game.eq ((a.val.mul b.val).mul c.val) (a.val.mul (b.val.mul c.val))
   exact Game.mul_assoc_of_isSurreal a.property b.property c.property
 
-theorem SurrealNumber.one_mul (a : SurrealNumber) :
-    1 * a = a := by
+theorem SurrealNumber.one_mul (a : SurrealNumber) : 1 * a = a := by
   refine Quotient.inductionOn a ?_
   intro a
   apply Quotient.sound
   change Game.eq (Game.one.mul a.val) a.val
   exact Game.one_mul
 
-theorem SurrealNumber.mul_one (a : SurrealNumber) :
-    a * 1 = a := by
+theorem SurrealNumber.mul_one (a : SurrealNumber) : a * 1 = a := by
   refine Quotient.inductionOn a ?_
   intro a
   apply Quotient.sound
   change Game.eq (a.val.mul Game.one) a.val
   exact Game.mul_one
 
-theorem SurrealNumber.zero_mul (a : SurrealNumber) :
-    0 * a = 0 := by
+theorem SurrealNumber.zero_mul (a : SurrealNumber) : 0 * a = 0 := by
   refine Quotient.inductionOn a ?_
   intro a
   apply Quotient.sound
   change Game.eq (Game.zero.mul a.val) Game.zero
   exact Game.zero_mul a.val
 
-theorem SurrealNumber.mul_zero (a : SurrealNumber) :
-    a * 0 = 0 := by
+theorem SurrealNumber.mul_zero (a : SurrealNumber) : a * 0 = 0 := by
   refine Quotient.inductionOn a ?_
   intro a
   apply Quotient.sound
@@ -140,15 +134,12 @@ noncomputable instance : CommRing SurrealNumber where
     exact neg_add_cancel a
   nsmul := nsmulRec
   zsmul := zsmulRec
-
   mul_assoc := SurrealNumber.mul_assoc
   mul_comm := SurrealNumber.mul_comm
   one_mul := SurrealNumber.one_mul
   mul_one := SurrealNumber.mul_one
-
   left_distrib := SurrealNumber.left_distrib
   right_distrib := SurrealNumber.right_distrib
-
   zero_mul := SurrealNumber.zero_mul
   mul_zero := SurrealNumber.mul_zero
 
@@ -176,63 +167,46 @@ private lemma exists_left_nonneg_of_pos
   exact hy.2 hy_le_zero
 
 
-theorem Game.mul_pos_of_isSurreal
-    {x y : Game}
+theorem Game.mul_pos_of_isSurreal {x y : Game}
     (sx : IsSurreal x) (sy : IsSurreal y)
     (hx : Game.lt Game.zero x) (hy : Game.lt Game.zero y) :
     Game.lt Game.zero (x ⊗ y) := by
   classical
   refine
     (Game.wf_R.induction
-      (C := fun y =>
-        IsSurreal y →
-          Game.lt Game.zero y →
-            Game.lt Game.zero (x ⊗ y))
+      (C := fun y => IsSurreal y → Game.lt Game.zero y → Game.lt Game.zero (x ⊗ y))
       y ?_) sy hy
-
   intro y IH sy hy
-
   obtain ⟨yL, hyL, h0le_yL⟩ := exists_left_nonneg_of_pos hy
   have syL : IsSurreal yL := IsSurreal.isSurreal_left sy hyL
-
   have h0le_xyL : Game.le Game.zero (x ⊗ yL) := by
     by_cases hyL_le_zero : Game.le yL Game.zero
     · have hyL_eq_zero : Game.eq yL Game.zero := by
         exact ⟨hyL_le_zero, h0le_yL⟩
-
       have hxyL_eq_zero : Game.eq (x ⊗ yL) Game.zero := by
         have hcomm₁ : Game.eq (x ⊗ yL) (yL ⊗ x) := by
           exact Game.mul_comm (a := x) (b := yL)
-
         have hcong : Game.eq (yL ⊗ x) (Game.zero ⊗ x) := by
           exact Conway.conway_B
             syL IsSurreal.isSurreal_zero sx hyL_eq_zero
-
         have hzero : Game.eq (Game.zero ⊗ x) Game.zero := by
           exact Game.zero_mul x
-
         exact Game.eq_trans ⟨hcomm₁, Game.eq_trans ⟨hcong, hzero⟩⟩
       exact hxyL_eq_zero.2
     · have hyL_pos : Game.lt Game.zero yL := by
         exact ⟨h0le_yL, hyL_le_zero⟩
       exact (IH yL (Game.birthday_lt_left hyL) syL hyL_pos).1
   have hC :=
-    Conway.conway_C
-      (x1 := Game.zero) (x2 := x) (y := y)
-      IsSurreal.isSurreal_zero sx sy hx
+    Conway.conway_C (x1 := Game.zero) (x2 := x) (y := y) IsSurreal.isSurreal_zero sx sy hx
   have hCL := hC.1 yL hyL
   have hxyL_lt_xy : Game.lt (x ⊗ yL) (x ⊗ y) := by
-    have hCL' :
-        Game.lt (Game.add Game.zero (x ⊗ yL)) (Game.add Game.zero (x ⊗ y)) := by
-      simpa
-        [CLeft, Game.mulOpt4,
-          Game.zero_mul_eq, Game.add_zero, Game.neg_zero]
+    have hCL' : Game.lt (Game.add Game.zero (x ⊗ yL)) (Game.add Game.zero (x ⊗ y)) := by
+      simpa [CLeft, Game.mulOpt4, Game.zero_mul_eq, Game.add_zero, Game.neg_zero]
         using hCL
     have hL : Game.eq (x ⊗ yL) (Game.add Game.zero (x ⊗ yL)) := by
       exact Game.eq_symm (Game.zero_add (a := x ⊗ yL))
     have hR : Game.eq (x ⊗ y) (Game.add Game.zero (x ⊗ y)) := by
       exact Game.eq_symm (Game.zero_add (a := x ⊗ y))
-
     constructor
     · exact Game.le_trans
         ⟨hL.1, Game.le_trans ⟨hCL'.1, hR.2⟩⟩
@@ -246,11 +220,8 @@ theorem Game.mul_pos_of_isSurreal
     exact hxyL_lt_xy.2 (Game.le_trans ⟨hxy_le_zero, h0le_xyL⟩)
 
 
-
 theorem SurrealNumber.mul_pos
-    {a b : SurrealNumber}
-    (ha : 0 < a) (hb : 0 < b) :
-    0 < a * b := by
+    {a b : SurrealNumber} (ha : 0 < a) (hb : 0 < b) : 0 < a * b := by
   revert ha hb
   refine Quotient.inductionOn₂ a b ?_
   intro a b ha hb
@@ -260,9 +231,7 @@ theorem SurrealNumber.mul_pos
   exact Game.mul_pos_of_isSurreal a.property b.property ha hb
 
 theorem SurrealNumber.mul_nonneg
-    {a b : SurrealNumber}
-    (ha : 0 ≤ a) (hb : 0 ≤ b) :
-    0 ≤ a * b := by
+    {a b : SurrealNumber} (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a * b := by
   rcases _root_.lt_or_eq_of_le ha with ha_lt | ha_eq
   · rcases _root_.lt_or_eq_of_le hb with hb_lt | hb_eq
     · exact (SurrealNumber.mul_pos ha_lt hb_lt).le
@@ -278,9 +247,7 @@ noncomputable instance SurrealNumber.instZeroLEOneClass :
 /-! ### Multiplication monotonicity from `mul_nonneg` and `mul_pos` -/
 
 theorem SurrealNumber.mul_le_mul_of_nonneg_left'
-    {a b c : SurrealNumber}
-    (ha : 0 ≤ a) (hbc : b ≤ c) :
-    a * b ≤ a * c := by
+    {a b c : SurrealNumber} (ha : 0 ≤ a) (hbc : b ≤ c) : a * b ≤ a * c := by
   have hdiff : 0 ≤ c - b := by
     exact _root_.sub_nonneg.mpr hbc
   have hprod : 0 ≤ a * (c - b) := by
@@ -290,9 +257,7 @@ theorem SurrealNumber.mul_le_mul_of_nonneg_left'
   exact _root_.sub_nonneg.mp hprod'
 
 theorem SurrealNumber.mul_le_mul_of_nonneg_right'
-    {a b c : SurrealNumber}
-    (hc : 0 ≤ c) (hab : a ≤ b) :
-    a * c ≤ b * c := by
+    {a b c : SurrealNumber} (hc : 0 ≤ c) (hab : a ≤ b) : a * c ≤ b * c := by
   have hdiff : 0 ≤ b - a := by
     exact _root_.sub_nonneg.mpr hab
   have hprod : 0 ≤ (b - a) * c := by
@@ -302,9 +267,7 @@ theorem SurrealNumber.mul_le_mul_of_nonneg_right'
   exact _root_.sub_nonneg.mp hprod'
 
 theorem SurrealNumber.mul_lt_mul_of_pos_left'
-    {a b c : SurrealNumber}
-    (ha : 0 < a) (hbc : b < c) :
-    a * b < a * c := by
+    {a b c : SurrealNumber} (ha : 0 < a) (hbc : b < c) : a * b < a * c := by
   have hdiff : 0 < c - b := by
     exact _root_.sub_pos.mpr hbc
   have hprod : 0 < a * (c - b) := by
@@ -314,9 +277,7 @@ theorem SurrealNumber.mul_lt_mul_of_pos_left'
   exact _root_.sub_pos.mp hprod'
 
 theorem SurrealNumber.mul_lt_mul_of_pos_right'
-    {a b c : SurrealNumber}
-    (hc : 0 < c) (hab : a < b) :
-    a * c < b * c := by
+    {a b c : SurrealNumber} (hc : 0 < c) (hab : a < b) : a * c < b * c := by
   have hdiff : 0 < b - a := by
     exact _root_.sub_pos.mpr hab
   have hprod : 0 < (b - a) * c := by
@@ -332,8 +293,6 @@ noncomputable instance SurrealNumber.instPosMulMono :
     PosMulMono SurrealNumber where
   mul_le_mul_of_nonneg_left := by
     intro a ha b c hbc
-    -- ha : 0 ≤ a, hbc : b ≤ c
-    -- goal: a * b ≤ a * c
     have hdiff : 0 ≤ c - b := by
       exact _root_.sub_nonneg.mpr hbc
     have hprod : 0 ≤ a * (c - b) := by
@@ -346,8 +305,6 @@ noncomputable instance SurrealNumber.instMulPosMono :
     MulPosMono SurrealNumber where
   mul_le_mul_of_nonneg_right := by
     intro c hc a b hab
-    -- hc : 0 ≤ c, hab : a ≤ b
-    -- goal: a * c ≤ b * c
     have hdiff : 0 ≤ b - a := by
       exact _root_.sub_nonneg.mpr hab
     have hprod : 0 ≤ (b - a) * c := by
@@ -360,8 +317,6 @@ noncomputable instance SurrealNumber.instPosMulStrictMono :
     PosMulStrictMono SurrealNumber where
   mul_lt_mul_of_pos_left := by
     intro a ha b c hbc
-    -- ha : 0 < a, hbc : b < c
-    -- goal: a * b < a * c
     have hdiff : 0 < c - b := by
       exact _root_.sub_pos.mpr hbc
     have hprod : 0 < a * (c - b) := by
@@ -374,8 +329,6 @@ noncomputable instance SurrealNumber.instMulPosStrictMono :
     MulPosStrictMono SurrealNumber where
   mul_lt_mul_of_pos_right := by
     intro c hc a b hab
-    -- hc : 0 < c, hab : a < b
-    -- goal: a * c < b * c
     have hdiff : 0 < b - a := by
       exact _root_.sub_pos.mpr hab
     have hprod : 0 < (b - a) * c := by
@@ -384,23 +337,12 @@ noncomputable instance SurrealNumber.instMulPosStrictMono :
       simpa [sub_mul] using hprod
     exact _root_.sub_pos.mp hprod'
 
-
-/-
-  `IsOrderedRing` has no `mul_nonneg` field.
-  It is assembled from the additive ordered structure plus the two non-strict
-  multiplication monotonicity classes.
--/
 noncomputable instance : IsOrderedRing SurrealNumber where
   __ := inferInstanceAs (IsOrderedAddMonoid SurrealNumber)
   __ := inferInstanceAs (PosMulMono SurrealNumber)
   __ := inferInstanceAs (MulPosMono SurrealNumber)
 
-/-
-  `IsStrictOrderedRing` is assembled from `IsOrderedRing` plus the two strict
-  multiplication monotonicity classes.
--/
-private lemma SurrealNumber.not_one_le_zero :
-    ¬ ((1 : SurrealNumber) ≤ 0) := by
+private lemma SurrealNumber.not_one_le_zero : ¬ ((1 : SurrealNumber) ≤ 0) := by
   intro h
   change Game.le Game.one Game.zero at h
   rw [Game.le] at h
@@ -412,21 +354,17 @@ noncomputable instance : IsStrictOrderedRing SurrealNumber where
   __ := inferInstanceAs (IsOrderedRing SurrealNumber)
   __ := inferInstanceAs (PosMulStrictMono SurrealNumber)
   __ := inferInstanceAs (MulPosStrictMono SurrealNumber)
-
   le_of_add_le_add_left := by
     intro a b c h
     have h' : (-a) + (a + b) ≤ (-a) + (a + c) := by
       exact add_le_add_left h (-a)
     simpa [add_assoc] using h'
-
   exists_pair_ne := by
     refine ⟨(0 : SurrealNumber), (1 : SurrealNumber), ?_⟩
     intro h01
     have hle10 : (1 : SurrealNumber) ≤ 0 := by
       rw [← h01]
     exact SurrealNumber.not_one_le_zero hle10
-
-
 
 /-! ## Examples -/
 

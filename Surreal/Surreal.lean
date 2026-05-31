@@ -164,9 +164,6 @@ local notation:70 x " ∼ " y => eq x y
 
 /-! ## Well-founded auxiliary relations -/
 
-private def S : Surreal → Surreal → Prop := fun y x => Game.birthday y < Game.birthday x
-private lemma wf_S : WellFounded S :=  by
-  exact InvImage.wf (fun s : Surreal => Game.birthday s) wellFounded_lt
 
 structure BiSurreal where
   a : Surreal
@@ -249,32 +246,14 @@ theorem xL_x_xR {x : Surreal} :
     (∀ xL ∈ x.left, Game.lt xL x.val) ∧ (∀ xR ∈ x.right, Game.lt x.val xR) :=
   IsSurreal.xL_x_xR x.property
 
-theorem le_of_not_le {x y : Surreal} (h : ¬ (x ≼ y)) : y ≼ x := by
-  classical
-  unfold le at h
-  rw [Game.le, not_and_or] at h
-  push_neg at h
-  rcases h with h | h
-  · rcases h with ⟨xL, hxL, hy_le_xL⟩
-    exact Game.le_trans ⟨hy_le_xL, (IsSurreal.left_lt x.property hxL).1⟩
-  · rcases h with ⟨yR, hyR, hyR_le_x⟩
-    exact Game.le_trans ⟨(IsSurreal.lt_right y.property hyR).1, hyR_le_x⟩
+theorem le_of_not_le {x y : Surreal} (h : ¬ x ≼ y) : y ≼ x :=
+  IsSurreal.le_of_not_le x.property y.property h
 
-theorem totality {x y : Surreal} : (x ≼ y) ∨ (y ≼ x) := by
-  by_cases hxy : x ≼ y
-  · exact Or.inl hxy
-  · exact Or.inr (le_of_not_le hxy)
+theorem totality {x y : Surreal} : (x ≼ y) ∨ (y ≼ x) :=
+  IsSurreal.totality x.property y.property
 
-
-theorem trichotomy {x y : Surreal} : (x ≺ y) ∨ (x ∼ y) ∨ (y ≺ x) := by
-  have h_total : (x ≼ y) ∨ (y ≼ x) := totality
-  rcases h_total with hxy | hyx
-  · by_cases hyx : (y ≼ x)
-    · exact Or.inr (Or.inl ⟨hxy, hyx⟩)
-    · exact Or.inl ⟨hxy, hyx⟩
-  · by_cases hxy : (x ≼ y)
-    · exact Or.inr (Or.inl ⟨hxy, hyx⟩)
-    · exact Or.inr (Or.inr ⟨hyx, hxy⟩)
+theorem trichotomy {x y : Surreal} : (x ≺ y) ∨ (x ∼ y) ∨ (y ≺ x) :=
+  IsSurreal.trichotomy x.property y.property
 
 theorem not_le_iff_lt {x y : Surreal} : (x ≺ y) ↔ ¬(y ≼ x) := by
   constructor
