@@ -13,7 +13,7 @@ $\bullet$ $C(x_1,x_2,y)$: If $x_1<x_2$, then
 
 $$x_1y + x_2 y^L < x_1 y^L + x_2y$$
 
-$$x_1y^R+x_2y<x_1y+x_2y^R$$
+$$x_1y^R + x_2y < x_1y + x_2y^R$$
 
 for all left options $y^L$ of $y$ and all right options $y^R$ of $y$.
 
@@ -546,7 +546,7 @@ $$
 So the dependency list is:
 
 $$
-C(x_1,x_2^L,y),\quad C(x_2^L,x_2,y) \leftrightarrow A(x_2,y).
+C(x_1,x_2^L,y),\quad C(x_2^L,x_2,y) \rightsquigarrow A(x_2,y).
 $$
 
 ---

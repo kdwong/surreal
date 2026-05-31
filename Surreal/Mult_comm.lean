@@ -292,110 +292,56 @@ private lemma mem_mul_right_of_right_left {a b aR bL : Game}
   rw [Game.mulOpt4, mem_mul_right]
   exact Or.inr ⟨aR, haR, bL, hbL, rfl⟩
 
+private abbrev MulCommIH (a b : Game) : Prop :=
+  ∀ x : BiGame, B x ⟨a, b⟩ → (x.a ⊗ x.b) ∼ (x.b ⊗ x.a)
+
+private lemma mul_comm_ih_swap {a b : Game} (IH : MulCommIH a b) : MulCommIH b a := by
+  rintro ⟨x, y⟩ h
+  exact Game.eq_symm <| IH ⟨y, x⟩ (by simpa [B, Nat.add_comm] using h)
+
 private lemma left_option_mul_comm {a b g : Game}
-    (ih_aL : ∀ aL ∈ a.left, (aL ⊗ b) ∼ (b ⊗ aL))
-    (ih_bL : ∀ bL ∈ b.left, (a ⊗ bL) ∼ (bL ⊗ a))
-    (ih_aR : ∀ aR ∈ a.right, (aR ⊗ b) ∼ (b ⊗ aR))
-    (ih_bR : ∀ bR ∈ b.right, (a ⊗ bR) ∼ (bR ⊗ a))
-    (ih_LL : ∀ aL ∈ a.left, ∀ bL ∈ b.left, (aL ⊗ bL) ∼ (bL ⊗ aL))
-    (ih_RR : ∀ aR ∈ a.right, ∀ bR ∈ b.right, (aR ⊗ bR) ∼ (bR ⊗ aR))
+    (IH : MulCommIH a b)
     (hg : g ∈ (a ⊗ b).left) : ∃ g' ∈ (b ⊗ a).left, eq g g' := by
   rw [mem_mul_left] at hg
   rcases hg with ⟨aL, haL, bL, hbL, rfl⟩ | ⟨aR, haR, bR, hbR, rfl⟩
   · refine ⟨_, mem_mul_left_of_left_left (a := b) (b := a) hbL haL, ?_⟩
-    exact Game.mulOpt4_comm a b aL bL (ih_bL _ hbL) (ih_aL _ haL) (ih_LL _ haL _ hbL)
+    exact Game.mulOpt4_comm a b aL bL
+      (IH ⟨a, bL⟩ (Game.B_of_left_mem_snd hbL))
+      (IH ⟨aL, b⟩ (Game.B_of_left_mem_fst haL))
+      (IH ⟨aL, bL⟩ (Game.B_of_left_left haL hbL))
   · refine ⟨_, mem_mul_left_of_right_right (a := b) (b := a) hbR haR, ?_⟩
-    exact Game.mulOpt4_comm a b aR bR (ih_bR _ hbR) (ih_aR _ haR) (ih_RR _ haR _ hbR)
-
-private lemma left_option_mul_comm_symm {a b g : Game}
-    (ih_aL : ∀ aL ∈ a.left, (aL ⊗ b) ∼ (b ⊗ aL))
-    (ih_bL : ∀ bL ∈ b.left, (a ⊗ bL) ∼ (bL ⊗ a))
-    (ih_aR : ∀ aR ∈ a.right, (aR ⊗ b) ∼ (b ⊗ aR))
-    (ih_bR : ∀ bR ∈ b.right, (a ⊗ bR) ∼ (bR ⊗ a))
-    (ih_LL : ∀ aL ∈ a.left, ∀ bL ∈ b.left, (aL ⊗ bL) ∼ (bL ⊗ aL))
-    (ih_RR : ∀ aR ∈ a.right, ∀ bR ∈ b.right, (aR ⊗ bR) ∼ (bR ⊗ aR))
-    (hg : g ∈ (b ⊗ a).left) : ∃ g' ∈ (a ⊗ b).left, g ∼ g' := by
-  rw [mem_mul_left] at hg
-  rcases hg with ⟨bL, hbL, aL, haL, rfl⟩ | ⟨bR, hbR, aR, haR, rfl⟩
-  · refine ⟨_, mem_mul_left_of_left_left haL hbL, ?_⟩
-    exact Game.eq_symm <|
-      Game.mulOpt4_comm a b aL bL (ih_bL _ hbL) (ih_aL _ haL) (ih_LL _ haL _ hbL)
-  · refine ⟨_, mem_mul_left_of_right_right haR hbR, ?_⟩
-    exact Game.eq_symm <|
-      Game.mulOpt4_comm a b aR bR (ih_bR _ hbR) (ih_aR _ haR) (ih_RR _ haR _ hbR)
+    exact Game.mulOpt4_comm a b aR bR
+      (IH ⟨a, bR⟩ (Game.B_of_right_mem_snd hbR))
+      (IH ⟨aR, b⟩ (Game.B_of_right_mem_fst haR))
+      (IH ⟨aR, bR⟩ (Game.B_of_right_right haR hbR))
 
 private lemma right_option_mul_comm {a b g : Game}
-    (ih_aL : ∀ aL ∈ a.left, (aL ⊗ b) ∼ (b ⊗ aL))
-    (ih_bL : ∀ bL ∈ b.left, (a ⊗ bL) ∼ (bL ⊗ a))
-    (ih_aR : ∀ aR ∈ a.right, (aR ⊗ b) ∼ (b ⊗ aR))
-    (ih_bR : ∀ bR ∈ b.right, (a ⊗ bR) ∼ (bR ⊗ a))
-    (ih_LR : ∀ aL ∈ a.left, ∀ bR ∈ b.right, (aL ⊗ bR) ∼ (bR ⊗ aL))
-    (ih_RL : ∀ aR ∈ a.right, ∀ bL ∈ b.left, (aR ⊗ bL) ∼ (bL ⊗ aR))
+    (IH : MulCommIH a b)
     (hg : g ∈ (a ⊗ b).right) : ∃ g' ∈ (b ⊗ a).right, g ∼ g' := by
   rw [mem_mul_right] at hg
   rcases hg with ⟨aL, haL, bR, hbR, rfl⟩ | ⟨aR, haR, bL, hbL, rfl⟩
   · refine ⟨_, mem_mul_right_of_right_left (a := b) (b := a) hbR haL, ?_⟩
-    exact Game.mulOpt4_comm a b aL bR (ih_bR _ hbR) (ih_aL _ haL) (ih_LR _ haL _ hbR)
+    exact Game.mulOpt4_comm a b aL bR
+      (IH ⟨a, bR⟩ (Game.B_of_right_mem_snd hbR))
+      (IH ⟨aL, b⟩ (Game.B_of_left_mem_fst haL))
+      (IH ⟨aL, bR⟩ (Game.B_of_left_right haL hbR))
   · refine ⟨_, mem_mul_right_of_left_right (a := b) (b := a) hbL haR, ?_⟩
-    exact Game.mulOpt4_comm a b aR bL (ih_bL _ hbL) (ih_aR _ haR) (ih_RL _ haR _ hbL)
-
-private lemma right_option_mul_comm_symm {a b g : Game}
-    (ih_aL : ∀ aL ∈ a.left, (aL ⊗ b) ∼ (b ⊗ aL))
-    (ih_bL : ∀ bL ∈ b.left, (a ⊗ bL) ∼ (bL ⊗ a))
-    (ih_aR : ∀ aR ∈ a.right, (aR ⊗ b) ∼ (b ⊗ aR))
-    (ih_bR : ∀ bR ∈ b.right, (a ⊗ bR) ∼ (bR ⊗ a))
-    (ih_LR : ∀ aL ∈ a.left, ∀ bR ∈ b.right, (aL ⊗ bR) ∼ (bR ⊗ aL))
-    (ih_RL : ∀ aR ∈ a.right, ∀ bL ∈ b.left, (aR ⊗ bL) ∼ (bL ⊗ aR))
-    (hg : g ∈ (b ⊗ a).right) : ∃ g' ∈ (a ⊗ b).right, g ∼ g' := by
-  rw [mem_mul_right] at hg
-  rcases hg with ⟨bL, hbL, aR, haR, rfl⟩ | ⟨bR, hbR, aL, haL, rfl⟩
-  · refine ⟨_, mem_mul_right_of_right_left haR hbL, ?_⟩
-    exact Game.eq_symm <|
-      Game.mulOpt4_comm a b aR bL (ih_bL _ hbL) (ih_aR _ haR) (ih_RL _ haR _ hbL)
-  · refine ⟨_, mem_mul_right_of_left_right haL hbR, ?_⟩
-    exact Game.eq_symm <|
-      Game.mulOpt4_comm a b aL bR (ih_bR _ hbR) (ih_aL _ haL) (ih_LR _ haL _ hbR)
+    exact Game.mulOpt4_comm a b aR bL
+      (IH ⟨a, bL⟩ (Game.B_of_left_mem_snd hbL))
+      (IH ⟨aR, b⟩ (Game.B_of_right_mem_fst haR))
+      (IH ⟨aR, bL⟩ (Game.B_of_right_left haR hbL))
 
 lemma Game.bigame_mul_comm (x : BiGame) : eq (x.a ⊗ x.b) (x.b ⊗ x.a) := by
   refine wf_B.induction (C := fun x : BiGame => (x.a ⊗ x.b) ∼ (x.b ⊗ x.a)) x ?_
   rintro ⟨a, b⟩ IH
-  have ih_aL : ∀ aL ∈ a.left, (aL ⊗ b) ∼ (b ⊗ aL) := by
-    intro aL haL
-    exact IH ⟨aL, b⟩ (Game.B_of_left_mem_fst haL)
-  have ih_bL : ∀ bL ∈ b.left, (a ⊗ bL) ∼ (bL ⊗ a) := by
-    intro bL hbL
-    exact IH ⟨a, bL⟩ (Game.B_of_left_mem_snd hbL)
-  have ih_aR : ∀ aR ∈ a.right, (aR ⊗ b) ∼ (b ⊗ aR) := by
-    intro aR haR
-    exact IH ⟨aR, b⟩ (Game.B_of_right_mem_fst haR)
-  have ih_bR : ∀ bR ∈ b.right, (a ⊗ bR) ∼ (bR ⊗ a) := by
-    intro bR hbR
-    exact IH ⟨a, bR⟩ (Game.B_of_right_mem_snd hbR)
-  have ih_LL : ∀ aL ∈ a.left, ∀ bL ∈ b.left, (aL ⊗ bL) ∼ (bL ⊗ aL) := by
-    intro aL haL bL hbL
-    exact IH ⟨aL, bL⟩ (Game.B_of_left_left haL hbL)
-  have ih_RR : ∀ aR ∈ a.right, ∀ bR ∈ b.right, (aR ⊗ bR) ∼ (bR ⊗ aR) := by
-    intro aR haR bR hbR
-    exact IH ⟨aR, bR⟩ (Game.B_of_right_right haR hbR)
-  have ih_LR : ∀ aL ∈ a.left, ∀ bR ∈ b.right, (aL ⊗ bR) ∼ (bR ⊗ aL) := by
-    intro aL haL bR hbR
-    exact IH ⟨aL, bR⟩ (Game.B_of_left_right haL hbR)
-  have ih_RL : ∀ aR ∈ a.right, ∀ bL ∈ b.left, (aR ⊗ bL) ∼ (bL ⊗ aR) := by
-    intro aR haR bL hbL
-    exact IH ⟨aR, bL⟩ (Game.B_of_right_left haR hbL)
-  refine Game.eq_of_equiv_options ?_ ?_ ?_ ?_
-  · intro g hg
-    exact left_option_mul_comm ih_aL ih_bL ih_aR ih_bR ih_LL ih_RR hg
-  · intro g hg
-    exact left_option_mul_comm_symm ih_aL ih_bL ih_aR ih_bR ih_LL ih_RR hg
-  · intro g hg
-    exact right_option_mul_comm ih_aL ih_bL ih_aR ih_bR ih_LR ih_RL hg
-  · intro g hg
-    exact right_option_mul_comm_symm ih_aL ih_bL ih_aR ih_bR ih_LR ih_RL hg
+  exact Game.eq_of_equiv_options
+    (fun _ hg => left_option_mul_comm IH hg)
+    (fun _ hg => left_option_mul_comm (a := b) (b := a) (mul_comm_ih_swap IH) hg)
+    (fun _ hg => right_option_mul_comm IH hg)
+    (fun _ hg => right_option_mul_comm (a := b) (b := a) (mul_comm_ih_swap IH) hg)
 
-theorem Game.mul_comm {a b : Game} : (a ⊗ b) ∼ (b ⊗ a) := by
-  let bi : BiGame := {a := a, b := b}
-  apply Game.bigame_mul_comm bi
+theorem Game.mul_comm {a b : Game} : (a ⊗ b) ∼ (b ⊗ a) :=
+  Game.bigame_mul_comm ⟨a, b⟩
 
 
 /-- ## a ⊗ 1 = 1 ⊗ a = a -/

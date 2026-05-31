@@ -46,6 +46,66 @@ def MulCrossLt (x1 x2 y1 y2 : Game) : Prop :=
   · intro h
     exact le_antisymm (game_q_le.mpr h.1) (game_q_le.mpr h.2)
 
+private theorem game_q_mul_comm (a b : Game) : q (a ⊗ b) = q (b ⊗ a) := by
+  exact game_q_equiv.mpr Game.mul_comm
+
+/-- Transpose a strict cross-product inequality using commutativity of multiplication. -/
+lemma MulCrossLt.swap {x1 x2 y1 y2 : Game} (h : MulCrossLt x1 x2 y1 y2) :
+    MulCrossLt y1 y2 x1 x2 := by
+  unfold MulCrossLt at *
+  apply game_q_lt.mp
+  have hq := game_q_lt.mpr h
+  simp only [q_add] at hq ⊢
+  calc
+    q (y1 ⊗ x2) + q (y2 ⊗ x1) = q (x2 ⊗ y1) + q (x1 ⊗ y2) := by
+      rw [game_q_mul_comm y1 x2, game_q_mul_comm y2 x1]
+    _ = q (x1 ⊗ y2) + q (x2 ⊗ y1) := by
+      exact _root_.add_comm _ _
+    _ < q (x1 ⊗ y1) + q (x2 ⊗ y2) := hq
+    _ = q (y1 ⊗ x1) + q (y2 ⊗ x2) := by
+      rw [game_q_mul_comm x1 y1, game_q_mul_comm x2 y2]
+
+/-- Compose strict cross-product inequalities through an intermediate first coordinate. -/
+lemma MulCrossLt.trans {x1 xm x2 y1 y2 : Game}
+    (h1 : MulCrossLt x1 xm y1 y2)
+    (h2 : MulCrossLt xm x2 y1 y2) :
+    MulCrossLt x1 x2 y1 y2 := by
+  unfold MulCrossLt at *
+  apply game_q_lt.mp
+  have hq1 := game_q_lt.mpr h1
+  have hq2 := game_q_lt.mpr h2
+  simp only [q_add] at hq1 hq2 ⊢
+  have hs := _root_.add_lt_add hq1 hq2
+  have hs' :=
+    _root_.add_lt_add_right hs (-(q (xm ⊗ y1) + q (xm ⊗ y2)))
+  convert hs' using 1 <;> abel
+
+/-- Replace the right first-coordinate endpoint by equivalent products. -/
+lemma MulCrossLt.congr_right {x1 xm x2 y1 y2 : Game}
+    (hEq1 : (xm ⊗ y1) ∼ (x2 ⊗ y1))
+    (hEq2 : (xm ⊗ y2) ∼ (x2 ⊗ y2))
+    (h : MulCrossLt x1 xm y1 y2) :
+    MulCrossLt x1 x2 y1 y2 := by
+  unfold MulCrossLt at *
+  apply game_q_lt.mp
+  have hq := game_q_lt.mpr h
+  have hEq1q := game_q_equiv.mpr hEq1
+  have hEq2q := game_q_equiv.mpr hEq2
+  simpa only [q_add, hEq1q, hEq2q] using hq
+
+/-- Replace the left first-coordinate endpoint by equivalent products. -/
+lemma MulCrossLt.congr_left {x1 xm x2 y1 y2 : Game}
+    (hEq1 : (x1 ⊗ y1) ∼ (xm ⊗ y1))
+    (hEq2 : (x1 ⊗ y2) ∼ (xm ⊗ y2))
+    (h : MulCrossLt xm x2 y1 y2) :
+    MulCrossLt x1 x2 y1 y2 := by
+  unfold MulCrossLt at *
+  apply game_q_lt.mp
+  have hq := game_q_lt.mpr h
+  have hEq1q := game_q_equiv.mpr hEq1
+  have hEq2q := game_q_equiv.mpr hEq2
+  simpa only [q_add, hEq1q, hEq2q] using hq
+
 lemma mulOpt4_xslot_mono_le_of_cross {a b c d e : Game}
     (h : MulCrossLe a c d e) :
     M a e b d ≼ M c e b d := by
@@ -229,30 +289,14 @@ lemma C_compose_left
     (h1 : CLeft x1 xm y yL)
     (h2 : CLeft xm x2 y yL) :
     CLeft x1 x2 y yL := by
-  unfold CLeft at *
-  apply game_q_lt.mp
-  have hq1 := game_q_lt.mpr h1
-  have hq2 := game_q_lt.mpr h2
-  simp only [q_add] at hq1 hq2 ⊢
-  have hs := _root_.add_lt_add hq1 hq2
-  have hs' :=
-    _root_.add_lt_add_right hs (-(q (xm ⊗ yL) + q (xm ⊗ y)))
-  convert hs' using 1 <;> abel
+  exact MulCrossLt.trans h1 h2
 
 lemma C_compose_right
     {x1 xm x2 y yR : Game}
     (h1 : CRight x1 xm y yR)
     (h2 : CRight xm x2 y yR) :
     CRight x1 x2 y yR := by
-  unfold CRight at *
-  apply game_q_lt.mp
-  have hq1 := game_q_lt.mpr h1
-  have hq2 := game_q_lt.mpr h2
-  simp only [q_add] at hq1 hq2 ⊢
-  have hs := _root_.add_lt_add hq1 hq2
-  have hs' :=
-    _root_.add_lt_add_right hs (-(q (xm ⊗ yR) + q (xm ⊗ y)))
-  convert hs' using 1 <;> abel
+  exact MulCrossLt.trans h1 h2
 
 lemma C_replace_eq_left
     {x1 xm x2 y yL : Game}
@@ -260,13 +304,7 @@ lemma C_replace_eq_left
     (hEq : (xm ⊗ y) ∼ (x2 ⊗ y))
     (hAdj : CLeft x1 xm y yL) :
     CLeft x1 x2 y yL := by
-  unfold CLeft at *
-  apply game_q_lt.mp
-  have hq := game_q_lt.mpr hAdj
-  have hEqLq : q (xm ⊗ yL) = q (x2 ⊗ yL) := game_q_equiv.mpr hEqL
-  have hEqq : q (xm ⊗ y) = q (x2 ⊗ y) := game_q_equiv.mpr hEq
-  simp only [q_add] at hq ⊢
-  simpa [hEqLq, hEqq] using hq
+  exact MulCrossLt.congr_right hEqL hEq hAdj
 
 lemma C_replace_eq_right
     {x1 xm x2 y yR : Game}
@@ -274,13 +312,7 @@ lemma C_replace_eq_right
     (hEq : (xm ⊗ y) ∼ (x2 ⊗ y))
     (hAdj : CRight x1 xm y yR) :
     CRight x1 x2 y yR := by
-  unfold CRight at *
-  apply game_q_lt.mp
-  have hq := game_q_lt.mpr hAdj
-  have hEqRq : q (xm ⊗ yR) = q (x2 ⊗ yR) := game_q_equiv.mpr hEqR
-  have hEqq : q (xm ⊗ y) = q (x2 ⊗ y) := game_q_equiv.mpr hEq
-  simp only [q_add] at hq ⊢
-  simpa [hEqRq, hEqq] using hq
+  exact MulCrossLt.congr_right hEq hEqR hAdj
 
 lemma C_replace_eq_left_first
     {x1 xm x2 y yL : Game}
@@ -288,13 +320,7 @@ lemma C_replace_eq_left_first
     (hEq : (x1 ⊗ y) ∼ (xm ⊗ y))
     (hAdj : CLeft xm x2 y yL) :
     CLeft x1 x2 y yL := by
-  unfold CLeft at *
-  apply game_q_lt.mp
-  have hq := game_q_lt.mpr hAdj
-  have hEqLq : q (x1 ⊗ yL) = q (xm ⊗ yL) := game_q_equiv.mpr hEqL
-  have hEqq : q (x1 ⊗ y) = q (xm ⊗ y) := game_q_equiv.mpr hEq
-  simp only [q_add] at hq ⊢
-  simpa [← hEqLq, ← hEqq] using hq
+  exact MulCrossLt.congr_left hEqL hEq hAdj
 
 lemma C_replace_eq_right_first
     {x1 xm x2 y yR : Game}
@@ -302,13 +328,7 @@ lemma C_replace_eq_right_first
     (hEq : (x1 ⊗ y) ∼ (xm ⊗ y))
     (hAdj : CRight xm x2 y yR) :
     CRight x1 x2 y yR := by
-  unfold CRight at *
-  apply game_q_lt.mp
-  have hq := game_q_lt.mpr hAdj
-  have hEqRq : q (x1 ⊗ yR) = q (xm ⊗ yR) := game_q_equiv.mpr hEqR
-  have hEqq : q (x1 ⊗ y) = q (xm ⊗ y) := game_q_equiv.mpr hEq
-  simp only [q_add] at hq ⊢
-  simpa [← hEqRq, ← hEqq] using hq
+  exact MulCrossLt.congr_left hEq hEqR hAdj
 
 
 /-! ### Inequalities involving the MulOpt -/
@@ -339,32 +359,8 @@ lemma MulCrossLt_of_CLeft_y
     {xL x yL yR : Game}
     (h : CLeft yL yR x xL) :
     MulCrossLt xL x yL yR := by
-  unfold CLeft MulCrossLt at *
-  apply game_q_lt.mp
-  have hq := game_q_lt.mpr h
-  simp only [q_add] at hq ⊢
-
-  have h₁ : q (xL ⊗ yR) = q (yR ⊗ xL) :=
-    game_q_equiv.mpr
-      (Game.mul_comm : (xL ⊗ yR) ∼ (yR ⊗ xL))
-  have h₂ : q (x ⊗ yL) = q (yL ⊗ x) :=
-    game_q_equiv.mpr
-      (Game.mul_comm : (x ⊗ yL) ∼ (yL ⊗ x))
-  have h₃ : q (xL ⊗ yL) = q (yL ⊗ xL) :=
-    game_q_equiv.mpr
-      (Game.mul_comm : (xL ⊗ yL) ∼ (yL ⊗ xL))
-  have h₄ : q (x ⊗ yR) = q (yR ⊗ x) :=
-    game_q_equiv.mpr
-      (Game.mul_comm : (x ⊗ yR) ∼ (yR ⊗ x))
-  calc
-    q (xL ⊗ yR) + q (x ⊗ yL)
-        = q (yR ⊗ xL) + q (yL ⊗ x) := by
-            rw [h₁, h₂]
-    _   = q (yL ⊗ x) + q (yR ⊗ xL) := by
-            exact _root_.add_comm _ _
-    _   < q (yL ⊗ xL) + q (yR ⊗ x) := hq
-    _   = q (xL ⊗ yL) + q (x ⊗ yR) := by
-            rw [← h₃, ← h₄]
+  apply MulCrossLt.swap
+  simpa [CLeft, MulCrossLt] using h
 
 /-- Move from a left `y`-option to a right `y`-option. -/
 lemma mulOpt4_move_y_left_to_right
@@ -397,33 +393,8 @@ lemma MulCrossLt_of_CRight_y
     {xR x yL yR : Game}
     (h : CRight yL yR x xR) :
     MulCrossLt x xR yL yR := by
-  unfold CRight MulCrossLt at *
-  apply game_q_lt.mp
-  have hq := game_q_lt.mpr h
-  simp only [q_add] at hq ⊢
-
-  have h₁ : q (x ⊗ yR) = q (yR ⊗ x) :=
-    game_q_equiv.mpr
-      (Game.mul_comm : (x ⊗ yR) ∼ (yR ⊗ x))
-  have h₂ : q (xR ⊗ yL) = q (yL ⊗ xR) :=
-    game_q_equiv.mpr
-      (Game.mul_comm : (xR ⊗ yL) ∼ (yL ⊗ xR))
-  have h₃ : q (x ⊗ yL) = q (yL ⊗ x) :=
-    game_q_equiv.mpr
-      (Game.mul_comm : (x ⊗ yL) ∼ (yL ⊗ x))
-  have h₄ : q (xR ⊗ yR) = q (yR ⊗ xR) :=
-    game_q_equiv.mpr
-      (Game.mul_comm : (xR ⊗ yR) ∼ (yR ⊗ xR))
-
-  calc
-    q (x ⊗ yR) + q (xR ⊗ yL)
-        = q (yR ⊗ x) + q (yL ⊗ xR) := by
-            rw [h₁, h₂]
-    _   = q (yL ⊗ xR) + q (yR ⊗ x) := by
-            exact _root_.add_comm _ _
-    _   < q (yL ⊗ x) + q (yR ⊗ xR) := hq
-    _   = q (x ⊗ yL) + q (xR ⊗ yR) := by
-            rw [← h₃, ← h₄]
+  apply MulCrossLt.swap
+  simpa [CRight, MulCrossLt] using h
 
 lemma mulOpt4_move_y_right_to_left
     {xR y x yL yR : Game}

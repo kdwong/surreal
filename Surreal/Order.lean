@@ -43,43 +43,22 @@ private lemma dm_of_replace
   unfold IsDershowitzMannaLT
   exact ⟨X, Z, Y, hY, rfl, rfl, hsmall⟩
 
+private lemma dm_of_replace_one
+    (X Z : Multiset ℕ) {a : ℕ}
+    (hsmall : ∀ z ∈ Z, z < a) :
+    IsDershowitzMannaLT (X + Z) (X + {a}) := by
+  apply dm_of_replace
+  · simp
+  · simpa using hsmall
+
 lemma dm_pair_one_left {a b c : ℕ} (h : a < b) :
     IsDershowitzMannaLT ({a, c} : Multiset ℕ) ({b, c} : Multiset ℕ) := by
-  unfold IsDershowitzMannaLT
-  refine
-    ⟨({c} : Multiset ℕ),
-      ({a} : Multiset ℕ),
-      ({b} : Multiset ℕ),
-      ?_, ?_, ?_, ?_⟩
-  · simp
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-    ac_rfl
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-    ac_rfl
-  · intro z hz
-    simp at hz
-    subst z
-    exact ⟨b, by simp, h⟩
+  simpa [add_comm] using
+    dm_of_replace_one {c} {a} (a := b) (by simpa using h)
 
 lemma dm_pair_one_right {a b c : ℕ} (h : a < b) :
     IsDershowitzMannaLT ({c, a} : Multiset ℕ) ({c, b} : Multiset ℕ) := by
-  unfold IsDershowitzMannaLT
-  refine
-    ⟨({c} : Multiset ℕ),
-      ({a} : Multiset ℕ),
-      ({b} : Multiset ℕ),
-      ?_, ?_, ?_, ?_⟩
-  · simp
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-  · intro z hz
-    simp at hz
-    subst z
-    exact ⟨b, by simp, h⟩
+  simpa using dm_of_replace_one {c} {a} (a := b) (by simpa using h)
 
 lemma dm_pair_both {a b c d : ℕ} (hab : a < b) (hcd : c < d) :
     IsDershowitzMannaLT ({a, c} : Multiset ℕ) ({b, d} : Multiset ℕ) := by
@@ -87,179 +66,56 @@ lemma dm_pair_both {a b c d : ℕ} (hab : a < b) (hcd : c < d) :
     (dm_pair_one_right (a := c) (b := d) (c := a) hcd)
     (dm_pair_one_left (a := a) (b := b) (c := d) hab)
 
-
 private lemma dm_triple_one₁ {a a' b c : ℕ} (h : a' < a) :
     IsDershowitzMannaLT ({a', b, c} : Multiset ℕ) ({a, b, c} : Multiset ℕ) := by
-  unfold IsDershowitzMannaLT
-  refine
-    ⟨({b, c} : Multiset ℕ),
-      ({a'} : Multiset ℕ),
-      ({a} : Multiset ℕ),
-      ?_, ?_, ?_, ?_⟩
-  · simp
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-    ac_rfl
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-    ac_rfl
-  · intro z hz
-    simp at hz
-    subst z
-    exact ⟨a, by simp, h⟩
+  simpa [add_comm, add_left_comm, add_assoc, Multiset.cons_swap] using
+    dm_of_replace_one {b, c} {a'} (a := a) (by simpa using h)
 
 private lemma dm_triple_one₂ {a b b' c : ℕ} (h : b' < b) :
     IsDershowitzMannaLT ({a, b', c} : Multiset ℕ) ({a, b, c} : Multiset ℕ) := by
-  unfold IsDershowitzMannaLT
-  refine
-    ⟨({a, c} : Multiset ℕ),
-      ({b'} : Multiset ℕ),
-      ({b} : Multiset ℕ),
-      ?_, ?_, ?_, ?_⟩
-  · simp
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-    ac_rfl
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-    ac_rfl
-  · intro z hz
-    simp at hz
-    subst z
-    exact ⟨b, by simp, h⟩
+  simpa [add_comm, add_left_comm, add_assoc] using
+    dm_of_replace_one {a, c} {b'} (a := b) (by simpa using h)
 
 private lemma dm_triple_one₃ {a b c c' : ℕ} (h : c' < c) :
     IsDershowitzMannaLT ({a, b, c'} : Multiset ℕ) ({a, b, c} : Multiset ℕ) := by
-  unfold IsDershowitzMannaLT
-  refine
-    ⟨({a, b} : Multiset ℕ),
-      ({c'} : Multiset ℕ),
-      ({c} : Multiset ℕ),
-      ?_, ?_, ?_, ?_⟩
-  · simp
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-  · intro z hz
-    simp at hz
-    subst z
-    exact ⟨c, by simp, h⟩
+  simpa [add_comm, add_left_comm, add_assoc] using
+    dm_of_replace_one {a, b} {c'} (a := c) (by simpa using h)
 
 private lemma dm_triple_one₁_swap {a a' b c : ℕ} (h : a' < a) :
     IsDershowitzMannaLT ({b, a', c} : Multiset ℕ) ({a, b, c} : Multiset ℕ) := by
-  unfold IsDershowitzMannaLT
-  refine
-    ⟨({b, c} : Multiset ℕ),
-      ({a'} : Multiset ℕ),
-      ({a} : Multiset ℕ),
-      ?_, ?_, ?_, ?_⟩
-  · simp
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-    ac_rfl
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-    ac_rfl
-  · intro z hz
-    simp at hz
-    subst z
-    exact ⟨a, by simp, h⟩
+  simpa [add_comm, add_left_comm, add_assoc, Multiset.cons_swap] using
+    dm_of_replace_one {b, c} {a'} (a := a) (by simpa using h)
 
 private lemma dm_triple_one₂_swap {a b b' c : ℕ} (h : b' < b) :
     IsDershowitzMannaLT ({b', a, c} : Multiset ℕ) ({a, b, c} : Multiset ℕ) := by
-  unfold IsDershowitzMannaLT
-  refine
-    ⟨({a, c} : Multiset ℕ),
-      ({b'} : Multiset ℕ),
-      ({b} : Multiset ℕ),
-      ?_, ?_, ?_, ?_⟩
-  · simp
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-    ac_rfl
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-    ac_rfl
-  · intro z hz
-    simp at hz
-    subst z
-    exact ⟨b, by simp, h⟩
+  simpa [add_comm, add_left_comm, add_assoc, Multiset.cons_swap] using
+    dm_of_replace_one {a, c} {b'} (a := b) (by simpa using h)
 
 private lemma dm_triple_from_pair_replace_left
     {a b c d : ℕ} (hb : b < a) (hc : c < a) :
     IsDershowitzMannaLT ({b, c, d} : Multiset ℕ) ({a, d} : Multiset ℕ) := by
-  unfold IsDershowitzMannaLT
-  refine
-    ⟨({d} : Multiset ℕ),
-      ({b, c} : Multiset ℕ),
-      ({a} : Multiset ℕ),
-      ?_, ?_, ?_, ?_⟩
-  · simp
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-    ac_rfl
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-    ac_rfl
-  · intro z hz
-    simp at hz
-    rcases hz with rfl | rfl
-    · exact ⟨a, by simp, hb⟩
-    · exact ⟨a, by simp, hc⟩
+  simpa [add_comm, add_left_comm, add_assoc] using
+    dm_of_replace_one {d} {b, c} (a := a) (by simpa using And.intro hb hc)
 
 private lemma dm_triple_from_pair_replace_right
     {a b c d : ℕ} (hb : b < a) (hc : c < a) :
     IsDershowitzMannaLT ({b, c, d} : Multiset ℕ) ({d, a} : Multiset ℕ) := by
-  unfold IsDershowitzMannaLT
-  refine
-    ⟨({d} : Multiset ℕ),
-      ({b, c} : Multiset ℕ),
-      ({a} : Multiset ℕ),
-      ?_, ?_, ?_, ?_⟩
-  · simp
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-    ac_rfl
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-  · intro z hz
-    simp at hz
-    rcases hz with rfl | rfl
-    · exact ⟨a, by simp, hb⟩
-    · exact ⟨a, by simp, hc⟩
+  change IsDershowitzMannaLT (b ::ₘ c ::ₘ d ::ₘ 0) (d ::ₘ a ::ₘ 0)
+  rw [Multiset.cons_swap d a]
+  simpa [add_comm, add_left_comm, add_assoc] using
+    dm_of_replace_one {d} {b, c} (a := a) (by simpa using And.intro hb hc)
 
 private lemma dm_pair_lt_triple_middle {a b c : ℕ} :
     IsDershowitzMannaLT ({a, c} : Multiset ℕ) ({a, b, c} : Multiset ℕ) := by
-  unfold IsDershowitzMannaLT
-  refine
-    ⟨({a, c} : Multiset ℕ),
-      (∅ : Multiset ℕ),
-      ({b} : Multiset ℕ),
-      ?_, ?_, ?_, ?_⟩
-  · simp
-  · simp
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-    ac_rfl
-  · intro z hz
-    simp at hz
+  simpa [add_comm, add_left_comm, add_assoc] using
+    dm_of_replace_one {a, c} ∅ (a := b) (by simp)
 
 private lemma dm_pair_lt_triple_left {a b c : ℕ} :
     IsDershowitzMannaLT ({b, c} : Multiset ℕ) ({a, b, c} : Multiset ℕ) := by
-  unfold IsDershowitzMannaLT
-  refine
-    ⟨({b, c} : Multiset ℕ),
-      (∅ : Multiset ℕ),
-      ({a} : Multiset ℕ),
-      ?_, ?_, ?_, ?_⟩
-  · simp
-  · simp
-  · ext z
-    simp [Multiset.count_cons, Multiset.count_singleton]
-    ac_rfl
-  · intro z hz
-    simp at hz
+  change IsDershowitzMannaLT (b ::ₘ c ::ₘ 0) (a ::ₘ b ::ₘ c ::ₘ 0)
+  rw [Multiset.cons_swap a b]
+  simpa [add_comm, add_left_comm, add_assoc] using
+    dm_of_replace_one {b, c} ∅ (a := a) (by simp)
 
 lemma goal_lt_A₁ {x x' y : Game} (h : Game.birthday x' < Game.birthday x) :
     GoalLT (.A x' y) (.A x y) := by
