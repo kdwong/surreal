@@ -14,8 +14,12 @@
 \begin{proof}
   \leanok
   \uses{thm:conway-a,thm:game-mul-congr}
-  Conway A gives closure of the product.  Two-variable multiplicative congruence gives
-  independence of both chosen representatives.
+  If \(a=(a_0,h_a)\) and \(b=(b_0,h_b)\), Conway A applied to \(h_a,h_b\)
+  proves that \(a_0b_0\) is surreal, so it can be paired with that proof to
+  define \texttt{Surreal.mul}.  If either input representative is replaced by
+  an equivalent one, \texttt{Game.mul\_congr} applies to the two input
+  equivalences and the four stored surrealness proofs.  Its conclusion is
+  exactly the equivalence required for independence of both representatives.
 \end{proof}
 \begin{definition}[Multiplication on short surreal numbers]
   \label{def:surreal-number-mul}
@@ -36,8 +40,16 @@
 \begin{proof}
   \leanok
   \uses{thm:game-mul-laws,thm:game-mul-assoc,def:surreal-number-mul}
-  Induct out of the quotient.  Each assertion becomes its game-level counterpart, with
-  associativity supplied by the theorem for surreal games.
+  Each law is proved by \texttt{Quotient.inductionOn} (or its binary and
+  ternary variants), reducing the quotient variables to surreal
+  representatives.  Commutativity, the unit laws, and the zero laws then
+  follow by \texttt{Quotient.sound} from the corresponding game
+  equivalences.  For associativity, the stored surrealness proofs of the three
+  representatives discharge the hypotheses of
+  \texttt{Game.mul\_assoc\_of\_isSurreal}; its game equivalence becomes
+  equality of quotient classes.  These representative computations also show
+  directly that the multiplication defined by \texttt{Quotient.map\(_2\)} has
+  the claimed unit and absorbing element.
 \end{proof}
 
 \begin{theorem}[Distributivity on the quotient]
@@ -54,8 +66,12 @@
 \begin{proof}
   \leanok
   \uses{thm:game-distrib,def:surreal-number-mul,thm:quotient-mul-laws}
-  The left distributive law is the game-level equivalence after quotient induction.  The right
-  distributive law follows from the left law and commutativity.
+  For left distributivity, induct simultaneously on representatives of
+  \(a,b,c\).  Expanding quotient addition and multiplication leaves the two
+  games \(a_0(b_0+c_0)\) and \(a_0b_0+a_0c_0\), which are equivalent by
+  \texttt{Game.mul\_distrib}; \texttt{Quotient.sound} turns this into equality.
+  For right distributivity, commute \((a+b)c\) to \(c(a+b)\), apply the left
+  law, and commute \(ca\) and \(cb\) back to \(ac\) and \(bc\).
 \end{proof}
 
 \begin{theorem}[Commutative ring structure]
@@ -67,8 +83,12 @@
 \begin{proof}
   \leanok
   \uses{thm:ordered-add-group,thm:quotient-mul-laws,thm:quotient-distrib}
-  Combine the additive commutative group structure with the multiplicative identity,
-  associativity, commutativity, zero laws, and the two distributive laws.
+  Populate the fields of Mathlib's \texttt{CommRing} structure with the
+  previously constructed additive commutative group, the quotient
+  multiplication and unit, multiplicative associativity and commutativity,
+  and left distributivity.  The remaining zero and right-distributive laws are
+  the quotient theorems above.  No new induction is needed at this stage: the
+  instance is a record assembled from the proved laws.
 \end{proof}
 
 \section{Positive products and ordered-ring compatibility}
@@ -85,10 +105,25 @@
 \begin{proof}
   \leanok
   \uses{lem:birthday-options,thm:game-order-calculus,thm:between-options,thm:game-mul-laws,thm:conway-b,thm:conway-c}
-  Induct on the birthday of \(y\).  Positivity of \(y\) produces a left option \(y^L\) with
-  \(0\GameLe y^L\).  If \(y^L\GameEq0\), Conway B and the zero-product law give
-  \(xy^L\GameEq0\); otherwise the induction hypothesis gives \(0\GameLt xy^L\).  Conway C,
-  applied to \(0\GameLt x\), yields \(xy^L\GameLt xy\).  Transitivity now gives \(0\GameLt xy\).
+  First show that \(0\GameLt y\) forces a left option \(y^L\) with
+  \(0\GameLe y^L\).  If no left option had this property, the left clause in
+  the recursive definition would give \(y\GameLe0\), contradicting the
+  strict hypothesis.
+
+  Now induct well foundedly on \(\bd(y)\) and choose such a \(y^L\).  By
+  totality, either \(y^L\GameLe0\) or \(0\GameLt y^L\).  In the first case,
+  the two weak comparisons give \(y^L\GameEq0\).  Product commutativity,
+  Conway B, and the zero-product law then give \(xy^L\GameEq0\), hence
+  \(0\GameLe xy^L\).  In the second case, \(y^L\) is surreal and has smaller
+  birthday, so the induction hypothesis gives \(0\GameLt xy^L\), again
+  yielding \(0\GameLe xy^L\).
+
+  Apply Conway C to \(0\GameLt x\), with the common surreal factor \(y\) and
+  its left option \(y^L\).  After simplifying the products with zero, the
+  resulting \(C_L\) inequality is \(xy^L\GameLt xy\).  Composing it with
+  \(0\GameLe xy^L\) gives \(0\GameLt xy\).  In the Lean proof the final
+  negated reverse comparison is also discharged explicitly by this strict
+  chain.
 \end{proof}
 
 \begin{theorem}[Positive and nonnegative products on the quotient]
@@ -106,9 +141,18 @@
 \begin{proof}
   \leanok
   \uses{thm:ordered-add-group,def:surreal-number-mul,thm:quotient-mul-laws,thm:game-mul-pos}
-  Quotient induction reduces strict positivity to the game-level theorem.  For nonnegative
-  inputs, split each weak inequality into a strict inequality or equality; the strict-strict
-  case uses positivity, while the equality cases use the zero-product laws.
+  For strict positivity, induct on representatives of the two quotient
+  classes.  The quotient inequalities unfold to the game inequalities, so the
+  preceding game theorem proves the result directly and well-definedness turns
+  it back into a strict quotient inequality.
+
+  Suppose only \(0\leq a\) and \(0\leq b\).  Totality of the linear order
+  splits each comparison into strictness or equality.  If both are strict,
+  apply the strict positivity theorem and forget strictness.  If \(a=0\) or
+  \(b=0\), rewrite the product using the appropriate zero-product law.  This
+  exhausts the four cases and proves \(0\leq ab\).  The inequality
+  \(0\leq1\) is obtained from the representative games; the impossible
+  reverse strict alternative is excluded by the option \(0\) of \(1\).
 \end{proof}
 
 \begin{theorem}[Monotonicity of multiplication]
@@ -122,10 +166,19 @@
 \begin{proof}
   \leanok
   \uses{thm:ordered-add-group,thm:comm-ring,thm:quotient-mul-pos}
-  Rewrite \(b\leq c\) as \(0\leq c-b\), multiply this nonnegative difference by the
-  nonnegative factor, and use distributivity to recover the desired weak inequality.  The same
-  argument with \(0<c-b\) and positive-product closure gives strict monotonicity.  Commutativity
-  supplies the corresponding right-sided statements.
+  Assume \(b\leq c\) and \(0\leq a\).  The ordered additive group rewrites
+  the first hypothesis as \(0\leq c-b\).  Nonnegative-product closure gives
+  \(0\leq a(c-b)\), while distributivity and the ring identities rewrite this
+  product as \(ac-ab\).  The standard equivalence
+  \(0\leq ac-ab\Longleftrightarrow ab\leq ac\) yields weak monotonicity on
+  the left.  Commutativity of multiplication gives the corresponding
+  right-sided theorem.
+
+  If \(b<c\) and \(0<a\), use instead \(0<c-b\).  Strict positivity of a
+  product gives \(0<a(c-b)=ac-ab\), which is equivalent to \(ab<ac\).
+  Commutativity again supplies the right-sided result.  The four theorems are
+  then installed as Mathlib's weak and strict positive-multiplication
+  monotonicity mixins.
 \end{proof}
 
 \begin{theorem}[Ordered and strictly ordered ring structures]
@@ -139,9 +192,19 @@
 \begin{proof}
   \leanok
   \uses{thm:ordered-add-group,thm:comm-ring,thm:quotient-mul-pos,thm:quotient-mul-mono}
-  The four monotonicity results provide the multiplicative order mixins.  Additive cancellation
-  provides order reflection for addition.  Finally, \(0\neq1\) follows directly from the
-  recursive game order: the left option \(0\) of \(1\) prevents \(1\leq0\).
+  The weak positive-multiplication mixins just constructed, together with the
+  ordered additive commutative group and commutative ring structures, fill the
+  fields of \texttt{IsOrderedRing}.  For the strict structure, the two strict
+  multiplication mixins provide strict monotonicity.  Order reflection for
+  addition is proved explicitly: from \(c+a\leq c+b\), add \(-c\) to both
+  sides and simplify by associativity and inverse laws to obtain \(a\leq b\).
+
+  It remains to supply nontriviality.  At game level, \(0\) is the sole left
+  option of \(1\).  If \(1\GameLe0\), the left clause of this comparison would
+  require \(\neg(0\GameLe0)\), contradicting reflexivity.  Hence the quotient
+  classes of \(0\) and \(1\) are distinct.  Using these witnesses and the
+  additive reflection and strict multiplication fields constructs
+  \texttt{IsStrictOrderedRing}.
 \end{proof}
 
 \begin{corollary}[Main endpoint: a linear ordered commutative ring]
@@ -154,6 +217,9 @@
 \begin{proof}
   \leanok
   \uses{thm:ordered-add-group,thm:comm-ring,thm:ordered-ring}
-  Combine the linear order, commutative ring, and strictly ordered ring instances already
-  constructed on \(\NoShort\).
+  The linear order is the quotient order from the additive construction, the
+  commutative ring is the quotient algebra above, and the preceding theorem
+  supplies the ordered and strictly ordered compatibility structures.  Since
+  all are instances on the same type \(\NoShort\), Lean combines them without
+  any further quotient argument.
 \end{proof}

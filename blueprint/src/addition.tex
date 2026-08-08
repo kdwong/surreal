@@ -30,10 +30,28 @@
 \begin{proof}
   \leanok
   \uses{lem:birthday-options,def:game-inductions,thm:game-order-calculus,thm:option-extensionality,def:game-add}
-  The zero laws follow by birthday induction on option lists.  Commutativity is a two-game
-  birthday induction: match each sum option with the option obtained by swapping the factors,
-  then apply option extensionality.  Associativity is a nested three-game induction comparing
-  the two left-option lists and the two right-option lists literally.
+  For \(a+0=a\), perform well-founded induction on \(\bd(a)\), destruct
+  \(a=\{A^L\mid A^R\}\), and simplify the recursive definition.  The left
+  list of \(a+0\) is the map \(u\mapsto u+0\) over \(A^L\), and similarly on
+  the right.  The induction hypotheses identify every mapped entry literally
+  with \(u\), so congruence of list maps proves equality of the two game
+  trees.  The proof of \(0+a=a\) is identical.
+
+  For commutativity, induct on \(\bd(a)+\bd(b)\).  A left option of \(a+b\)
+  is either \(a^L+b\) or \(a+b^L\).  The smaller-pair induction hypothesis
+  makes it equivalent respectively to \(b+a^L\) or \(b^L+a\), which is a
+  left option of \(b+a\).  The two right-option cases are the same, and the
+  converse matching is obtained by swapping \(a,b\).  Option extensionality
+  then gives \(a+b\GameEq b+a\).
+
+  Associativity is stronger: it is literal tree equality.  Nested
+  well-founded inductions on \(a,b,c\) allow \texttt{Game.ext} to reduce the
+  claim to equality of left and right lists.  After expanding the two sums,
+  \texttt{map\_append}, \texttt{map\_map}, and associativity of list append
+  put the three option families in the same order.  On each family, the
+  relevant smaller-coordinate induction hypothesis identifies the entries
+  \((a'+b)+c\) and \(a'+(b+c)\), and similarly for options of \(b\) and
+  \(c\).
 \end{proof}
 \begin{theorem}[Translation and monotonicity]
   \label{thm:game-add-order}
@@ -53,10 +71,32 @@
 \begin{proof}
   \leanok
   \uses{def:game-order,def:game-inductions,thm:game-order-calculus,def:game-add,thm:game-add-laws}
-  Preservation and cancellation are proved simultaneously by induction on a triple of games.
-  General two-variable monotonicity follows by changing one variable at a time and using
-  commutativity and transitivity.  Cancellation rules out the reverse weak comparison in each
-  strict statement.
+  The central lemma proves both directions of
+  \(a\GameLe b\Longleftrightarrow a+c\GameLe b+c\) simultaneously by
+  induction on \(\bd(a)+\bd(b)+\bd(c)\).
+
+  For reflection, suppose \(a+c\GameLe b+c\).  If \(a^L\) is a left option
+  and \(b\GameLe a^L\), the induction hypothesis translates this to
+  \(b+c\GameLe a^L+c\).  Transitivity with the assumed comparison contradicts
+  the fact that \(a^L+c\) is a left option of \(a+c\).  A right option
+  \(b^R\) is treated dually, using \(b^R+c\) as a right option of \(b+c\).
+
+  For preservation, unfold both sums.  A left option of \(a+c\) is either
+  \(a^L+c\) or \(a+c^L\), and a right option of \(b+c\) is either
+  \(b^R+c\) or \(b+c^R\).  In the first-coordinate cases the induction
+  hypothesis translates a hypothetical forbidden comparison back to
+  \(b\GameLe a^L\) or \(b^R\GameLe a\), contradicting \(a\GameLe b\).
+  In the common-coordinate cases, recursive cancellation translates it to a
+  comparison of \(c\) with one of its own options, which contradicts the
+  corresponding clause of reflexivity \(c\GameLe c\).
+
+  To prove two-variable monotonicity, first change the first summand and then
+  the second; commutativity supplies the left-variable form, and transitivity
+  composes the two changes.  If one input comparison is strict, weak
+  monotonicity gives the forward comparison.  A reverse comparison of the
+  sums would cancel the unchanged summand and contradict the strict input.
+  Applying these arguments in both directions also proves compatibility with
+  \(\GameEq\).
 \end{proof}
 
 \begin{definition}[Negation]
@@ -85,10 +125,22 @@
 \begin{proof}
   \leanok
   \uses{def:game-order,def:game-inductions,def:game-neg,thm:game-order-calculus}
-  Induct on the sum of the two birthdays.  A left option of \(-b\) comes from a right option of
-  \(b\), while a right option of \(-a\) comes from a left option of \(a\).  Applying the
-  induction hypothesis to these smaller pairs turns the defining clauses into those for
-  \(a\GameLe b\).  The strict and equivalence statements follow by unfolding their definitions.
+  Prove the weak-order equivalence in both directions by induction on
+  \(\bd(a)+\bd(b)\).  A left option of \(-b\) has the form \(-b^R\), and a
+  right option of \(-a\) has the form \(-a^L\).  Thus, in the forward
+  direction, a hypothetical comparison
+  \(-a\GameLe -b^R\) is converted by the smaller-pair induction hypothesis to
+  \(b^R\GameLe a\), contradicting the right clause of \(a\GameLe b\).
+  Likewise, \(-a^L\GameLe-b\) converts to \(b\GameLe a^L\), contradicting
+  the left clause.  These are exactly the two clauses required for
+  \(-b\GameLe-a\).
+
+  Conversely, start from \(-b\GameLe-a\) and apply the same two recursive
+  equivalences to the option clauses for \(a\GameLe b\).  All recursive calls
+  decrease because an option has smaller birthday.  Applying the weak-order
+  equivalence to both components of \(\GameEq\) proves preservation of game
+  equivalence; applying it to the weak inequality and its negated reverse
+  proves the strict-order equivalence.
 \end{proof}
 
 \begin{theorem}[Additive inverses]
@@ -105,9 +157,20 @@
 \begin{proof}
   \leanok
   \uses{lem:birthday-options,thm:game-order-calculus,def:game-add,thm:game-add-laws,def:game-neg}
-  Induct on \(\bd(x)\).  Each possible option of \(x+(-x)\) is paired with a smaller game of
-  the form \(u+(-u)\); the induction hypothesis excludes exactly the forbidden comparisons
-  with zero.  The second identity follows from commutativity.
+  Induct on \(\bd(x)\) and prove both inequalities defining
+  \(x+(-x)\GameEq0\).  Since \(0\) has no options, one half of each unfolded
+  order statement is vacuous.  A left option of \(x+(-x)\) is either
+  \(x^L+(-x)\) or \(x+(-x^R)\).  In the first case, the corresponding right
+  option \(x^L+(-x^L)\) of \(x^L+(-x)\) is equivalent to zero by induction;
+  in the second, use the corresponding option \(x^R+(-x^R)\).  Therefore a
+  hypothetical comparison of zero with the given left option violates its
+  right-option clause.
+
+  Dually, every right option of \(x+(-x)\) contains an appropriate smaller
+  self-cancelling game as a left option.  The induction hypothesis then rules
+  out comparison of that right option with zero.  Hence
+  \(x+(-x)\GameEq0\).  Commutativity followed by this result gives
+  \((-x)+x\GameEq0\).
 \end{proof}
 
 \section{Closure and quotients}
@@ -122,10 +185,26 @@
 \begin{proof}
   \leanok
   \uses{thm:game-order-calculus,thm:between-options,thm:surreal-totality,def:surreal-representative,def:game-add,thm:game-add-order,def:game-neg,thm:game-neg-order}
-  For a sum, induct on the sum of birthdays.  Its options are surreal by induction, and each
-  left option is strictly below each right option by additive monotonicity and the corresponding
-  inequalities in the two factors.  For a negative, the two option lists are interchanged;
-  order reversal turns the original separation inequalities into the required ones.
+  For addition, use well-founded induction on the pair of birthdays.  Each
+  option of \(a+b\) changes exactly one coordinate to one of its options, so
+  it is surreal by the induction hypothesis.  For separation, choose a left
+  and a right option and split each membership according to its source.  This
+  gives four cases.  If both options change the first coordinate, use
+  \(a^L\GameLt a\GameLt a^R\) and strict additive monotonicity; if both change
+  the second, use the analogous inequalities for \(b\).  In either mixed
+  case, one coordinate comparison is strict and the other weak, so the two
+  mixed monotonicity lemmas again show that the chosen left option is strictly
+  below the chosen right option.  Strictness is exactly the required
+  noncomparison across the cut.
+
+  For negation, induct on the representative's birthday.  Its left options
+  are \(-a^R\) and its right options are \(-a^L\).  Original surreal
+  separation says \(\neg(a^R\GameLe a^L)\); order reversal turns a
+  hypothetical \(-a^L\GameLe-a^R\) back into this forbidden comparison.
+  Each negated option is surreal by the smaller-birthday induction hypothesis.
+  These separation and closure fields construct the required
+  \texttt{IsSurreal} values, after which the operations on representatives are
+  obtained by pairing the game operations with those proofs.
 \end{proof}
 
 \begin{definition}[Auxiliary quotient of all games]
@@ -141,9 +220,23 @@
 \begin{proof}
   \leanok
   \uses{thm:game-order-calculus,thm:game-add-laws,thm:game-add-order,thm:game-neg-order,thm:game-add-inverse}
-  Addition and negation descend because they respect \(\GameEq\).  Reflexivity, transitivity,
-  and antisymmetry descend to a partial order, and translation invariance is inherited from
-  additive monotonicity and cancellation.
+  Game equivalence is made into a \texttt{Setoid}, and
+  \texttt{Quotient.map\(_2\)} defines negation and addition.  Their
+  well-definedness obligations are exactly \texttt{Game.neg\_congr} and
+  \texttt{Game.add\_equal}.  Each additive group law is then proved by
+  quotient induction: zero and associativity use the literal game equalities,
+  while commutativity and inverse use \texttt{Quotient.sound} with the
+  corresponding game equivalences.
+
+  The order is defined by \texttt{Quotient.lift\(_2\)}.  If representatives
+  are replaced by equivalent games, the two components of those equivalences,
+  composed with transitivity, prove that the truth of \(a\GameLe b\) is
+  unchanged.  Reflexivity and transitivity therefore descend directly;
+  antisymmetry follows because inequalities in both directions are precisely
+  game equivalence, hence equality in the quotient.  Finally, translation
+  monotonicity descends from \texttt{Game.add\_le\_add\_right}, with
+  commutativity used to place the common summand in the convention required by
+  the ordered-additive-monoid instance.
 \end{proof}
 
 \begin{definition}[Short surreal numbers]
@@ -165,7 +258,19 @@
 \begin{proof}
   \leanok
   \uses{thm:surreal-totality,thm:game-add-laws,thm:game-add-order,thm:game-add-inverse,def:surreal-number}
-  The order is well defined under equivalence and is linear by totality for surreal
-  representatives.  The group laws descend from the game-level laws, and order compatibility
-  descends from additive monotonicity.
+  The construction repeats the preceding quotient argument on the subtype of
+  surreal representatives.  For order well-definedness, replace either
+  representative by an equivalent one and compose the appropriate weak
+  inequalities.  Quotient induction then supplies reflexivity and
+  transitivity; antisymmetry is \texttt{Quotient.sound}, and totality is the
+  game-level totality theorem applied to the representatives' surrealness
+  proofs.  This produces the linear order.
+
+  The additive group laws are again checked by quotient induction.  Literal
+  game equalities are promoted through \texttt{Subtype.ext}; laws stated only
+  up to \(\GameEq\) are promoted through \texttt{Quotient.sound}.  In
+  particular, the inverse law uses \texttt{Game.add\_neg}.  Finally, if
+  \(a\GameLe b\), two-variable game monotonicity applied to this comparison
+  and reflexivity of the common summand gives \(c+a\GameLe c+b\), which is
+  the compatibility axiom for the quotient order.
 \end{proof}

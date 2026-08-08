@@ -43,10 +43,29 @@
 \begin{proof}
   \leanok
   \uses{lem:birthday-options,def:game-inductions,thm:option-extensionality,thm:game-add-laws,thm:game-add-inverse,def:game-mul}
-  The zero and one identities are birthday inductions in which the recursive option lists
-  simplify.  For commutativity, induct on the sum of birthdays and match the four kinds of
-  product options after swapping the two games.  The induction hypotheses and the additive
-  laws identify each matching pair, so option extensionality finishes the proof.
+  In \(a0\), the second factor has no options.  Expanding the product therefore
+  leaves only flattened maps over empty lists, so simplification proves the
+  literal equality \(a0=0\); \(0a\GameEq0\) then follows by commutativity (or
+  by the symmetric simplification).
+
+  Commutativity is proved by well-founded induction on
+  \(\bd(a)+\bd(b)\).  Split an option according to the four constructors in
+  the product definition.  An \(LL\) option determined by \((a^L,b^L)\), for
+  example, is matched with the \(LL\) option determined by
+  \((b^L,a^L)\) after swapping the factors; \(RR\) behaves similarly, while
+  \(LR\) and \(RL\) are interchanged.  The three smaller product
+  commutativity hypotheses identify the three product terms in each
+  \(\mulopt\).  Compatibility of addition and negation with equivalence,
+  together with additive commutativity, then proves that the matched options
+  are equivalent.  Matching in both directions and for both option lists lets
+  option extensionality conclude \(ab\GameEq ba\).
+
+  Finally, prove the literal equality \(a1=a\) by induction on \(\bd(a)\).
+  Because \(1=\{0\mid\}\), expansion reduces the product's left and right
+  lists to maps of the smaller products \(a'1\); all additional zero-product
+  and additive-inverse terms simplify.  The induction hypotheses identify
+  these lists with the option lists of \(a\).  The law \(1a\GameEq a\) follows
+  by product commutativity and \(a1=a\).
 \end{proof}
 \begin{theorem}[Distributivity on games]
   \label{thm:game-distrib}
@@ -62,11 +81,26 @@
 \begin{proof}
   \leanok
   \uses{def:game-inductions,thm:option-extensionality,thm:game-add-laws,thm:game-add-order,def:game-quotient,def:game-mul,thm:game-mul-laws}
-  Induct on the birthday sum of \((a,b,c)\).  Every left or right option on one side is matched
-  by the corresponding option on the other.  Inside the auxiliary quotient of all games,
-  additive commutative-group identities normalize the \(\mulopt\) expressions, while the
-  induction hypotheses replace the smaller products.  Right distributivity follows from left
-  distributivity and product commutativity.
+  Prove \(a(b+c)\GameEq ab+ac\) by well-founded induction on
+  \(\bd(a)+\bd(b)+\bd(c)\).  Four matching lemmas treat, in each direction,
+  left and right options.  For an option of \(a(b+c)\), first split whether
+  it comes from an option of \(a\) or an option of \(b+c\), and in the latter
+  case split once more according to whether the option came from \(b\) or
+  \(c\).  The matching option of \(ab+ac\) changes the same coordinate in the
+  corresponding summand.  Conversely, an option of the sum changes either
+  \(ab\) or \(ac\), and expansion of that product determines the matching
+  option on the left.
+
+  After these membership splits, the remaining assertion is an equivalence
+  between two expanded \(\mulopt\) expressions.  Map the games to
+  \(\mathcal G/{\GameEq}\).  The three relevant smaller distributivity
+  hypotheses replace the recursively occurring products, and congruence of
+  \(\mulopt\) transports those replacements.  In the additive quotient,
+  \texttt{abel} normalizes the sums and negatives and proves equality; pulling
+  this equality back gives game equivalence.  Option extensionality applied to
+  the four matching lemmas completes left distributivity.  For right
+  distributivity, commute the outer product, apply the established left law,
+  and commute the two resulting products.
 \end{proof}
 
 \section{A simultaneous well-founded proof}
@@ -121,9 +155,22 @@
 \begin{proof}
   \leanok
   \uses{thm:game-add-order,def:game-quotient,def:cross-conditions}
-  Map the comparison to the ordered additive quotient of games.  Replace equivalent product
-  terms, add the negative cross term to the relevant strict inequality, and normalize the
-  additive expression.  This yields precisely the required \(\mulopt\)-versus-product bound.
+  We describe the \(LL\) case; the other three differ only by the placement
+  of left and right options.  The relevant \(C_L\) inequality is first mapped
+  to the ordered additive group \(\mathcal G/{\GameEq}\).  Multiplicative
+  congruence replaces those endpoint products whose factors are merely
+  equivalent.  Add to both sides the negative of the cross term appearing in
+  the \(LL\) product option.  Strict translation invariance preserves the
+  inequality, and \texttt{abel} reduces the left side to the class of the
+  \(\mulopt\) expression and the right side to the class of the target
+  product.  Reflection of strict order from the quotient gives
+  \(\mulopt(x^L,y;x,y^L)\GameLt xy\).
+
+  The \(RR\) proof uses \(C_R\) in the same orientation.  For \(LR\) and
+  \(RL\), the corresponding cross inequality is translated in the opposite
+  direction, producing \(xy\GameLt\mulopt(x',y;x,y')\).  Thus the four lemmas
+  give exactly the two lower bounds for left product options and the two upper
+  bounds for right product options.
 \end{proof}
 
 \begin{theorem}[Simultaneous Conway theorem]
@@ -143,12 +190,56 @@
 \begin{proof}
   \leanok
   \uses{thm:game-order-calculus,thm:option-extensionality,thm:between-options,thm:surreal-totality,thm:game-add-order,thm:game-mul-laws,def:dm-goals,def:cross-conditions,lem:mulopt-bounds}
-  Perform one well-founded induction on the Dershowitz--Manna measure of the current goal.
-  In the \(A\)-case, the four families of left/right product options are separated using lower
-  \(B\)- and \(C\)-goals, and their own surrealness follows from lower \(A\)-goals.  In the
-  \(B\)-case, the four terminal product-option bounds establish both weak comparisons.  In the
-  \(C\)-case, a bridge game supplied by strict comparison and the adjacent cross inequalities
-  reduce endpoint replacements to lower \(A\)-, \(B\)-, and \(C\)-goals.
+  The Lean proof performs one induction on \texttt{wfGoal}; its induction
+  hypothesis is available for every goal smaller in the Dershowitz--Manna
+  order.  The multiset lemmas in \texttt{Order.lean} justify not only replacing
+  one game by an option, but also replacing a two-birthday \(A\)-goal by a
+  three-birthday \(B\)- or \(C\)-goal when the extra birthdays are strictly
+  smaller than the one removed.  We treat the three constructors separately.
+
+  In case \(A(x,y)\), first prove that every product option is surreal.  Each
+  of its three product terms has at least one factor replaced by an option, so
+  lower \(A\)-goals prove those products surreal; closure under addition and
+  negation then proves the entire \(\mulopt\) expression surreal.  It remains
+  to separate an arbitrary left product option from an arbitrary right one.
+  There are four pairs of families: \(LL\) against \(LR\), \(LL\) against
+  \(RL\), \(RR\) against \(LR\), and \(RR\) against \(RL\).  In each pair,
+  apply trichotomy to the two options lying on the same side of one factor.
+  In either strict case, two lower \(C\)-goals give strict movement of the
+  relevant \(\mulopt\) slots, and strict transitivity separates the chosen
+  options.  In the equivalence case, a lower \(B\)-goal gives congruence of
+  the equal slot and one lower \(C\)-goal supplies the remaining strict step.
+  These four separation lemmas, together with option surrealness, assemble
+  \texttt{IsSurreal} for \(xy\).
+
+  In case \(B(x_1,x_2,y)\), prove \(x_1y\GameLe x_2y\) by unfolding the game
+  order.  A left option of \(x_1y\) is of type \(LL\) or \(RR\).  Lower
+  \(A\)-goals give surrealness of the products, lower \(C\)-goals give the
+  required cross conditions, and the corresponding terminal bound says that
+  the option is strictly below \(x_2y\); hence the forbidden reverse weak
+  comparison is impossible.  A right option of \(x_2y\) is of type \(LR\) or
+  \(RL\), and the other two terminal bounds place it strictly above
+  \(x_1y\).  This proves the first weak inequality.  For the reverse one,
+  swap \(x_1,x_2\), invoke the induction hypothesis for the smaller symmetric
+  context, and use symmetry of \(x_1\GameEq x_2\).  The two inequalities give
+  product equivalence.
+
+  In case \(C(x_1,x_2,y)\), the strict comparison
+  \(x_1\GameLt x_2\) supplies a bridge: either some right option \(x_1^R\)
+  satisfies \(x_1^R\GameLe x_2\), or some left option \(x_2^L\) satisfies
+  \(x_1\GameLe x_2^L\).  Otherwise the recursive order definition would give
+  \(x_2\GameLe x_1\), contradicting strictness.  In the first bridge case,
+  a lower \(A\)-goal gives the adjacent cross inequality between \(x_1\) and
+  \(x_1^R\).  Trichotomy compares \(x_1^R\) with \(x_2\): a strict comparison
+  composes this adjacent inequality with a lower \(C\)-goal; equivalence uses
+  a lower \(B\)-goal to replace the endpoint; the reverse strict case
+  contradicts \(x_1^R\GameLe x_2\).  The bridge through \(x_2^L\) is
+  symmetric.  The same construction is carried out for left and right options
+  of \(y\), proving every required \(C_L\) and \(C_R\) inequality.
+
+  In all three cases, every recursive invocation is accompanied in Lean by a
+  specific goal-lowering theorem, so the simultaneous argument closes by
+  well-founded induction rather than by mutual recursion assumed informally.
 \end{proof}
 
 \begin{theorem}[Conway A: closure of the product]
@@ -160,7 +251,9 @@
 \begin{proof}
   \leanok
   \uses{thm:abc-main}
-  Specialize the simultaneous theorem to the goal \(A(x,y)\).
+  Apply \texttt{ABC\_main} to the constructor \texttt{Goal.A} and supply the
+  two surrealness hypotheses.  The \texttt{A} branch of \texttt{Holds} is
+  definitionally the assertion that \(xy\) is surreal.
 \end{proof}
 
 \begin{theorem}[Conway B: product respects equivalence]
@@ -173,7 +266,9 @@
 \begin{proof}
   \leanok
   \uses{thm:abc-main}
-  Specialize the simultaneous theorem to the goal \(B(x_1,x_2,y)\).
+  Apply \texttt{ABC\_main} to \texttt{Goal.B}, supplying surrealness of the
+  three games and \(x_1\GameEq x_2\).  Unfolding the \texttt{B} branch of
+  \texttt{Holds} yields \(x_1y\GameEq x_2y\).
 \end{proof}
 
 \begin{theorem}[Conway C: strict cross inequalities]
@@ -186,7 +281,10 @@
 \begin{proof}
   \leanok
   \uses{thm:abc-main}
-  Specialize the simultaneous theorem to the goal \(C(x_1,x_2,y)\).
+  Apply \texttt{ABC\_main} to \texttt{Goal.C}, supplying surrealness and the
+  strict comparison.  The two fields of the resulting \texttt{C} branch of
+  \texttt{Holds} are precisely the universally quantified \(C_L\) and
+  \(C_R\) conditions.
 \end{proof}
 
 \section{Congruence and associativity}
@@ -203,8 +301,11 @@
 \begin{proof}
   \leanok
   \uses{thm:game-order-calculus,thm:game-mul-laws,thm:conway-b}
-  Conway B replaces the first factor.  Product commutativity, a second application of Conway B,
-  and transitivity replace the second factor.
+  Conway B applied directly to \(x_1\GameEq x_2\) gives
+  \(x_1y_1\GameEq x_2y_1\).  To replace the second factor, commute both
+  products, apply Conway B to \(y_1\GameEq y_2\) with common factor \(x_2\),
+  and commute back, obtaining \(x_2y_1\GameEq x_2y_2\).  Transitivity of game
+  equivalence composes these two replacements.
 \end{proof}
 
 \begin{theorem}[Associativity on surreal games]
@@ -219,9 +320,28 @@
 \begin{proof}
   \leanok
   \uses{def:game-inductions,thm:option-extensionality,thm:surreal-add-closure,thm:game-mul-laws,thm:game-distrib,thm:conway-a,thm:conway-b,thm:game-mul-congr}
-  Induct on the sum of the three birthdays and compare the option lists of the two products.
-  Each of the four left- and right-option families is matched across the two bracketings.
-  Distributivity normalizes the corresponding \(\mulopt\) expressions, Conway B supplies the
-  required replacements up to equivalence, and the induction hypothesis handles smaller
-  triples.  Option extensionality then proves equivalence of the two products.
+  The proof uses well-founded induction on
+  \(\bd(a)+\bd(b)+\bd(c)\), but packages a strengthened hypothesis:
+  associativity may be invoked for any triple whose coordinate birthdays are
+  bounded by those of \((a,b,c)\), provided at least one bound is strict.
+  Thus all seven nonempty ways of replacing coordinates by options are
+  available in a single step.
+
+  A preparatory quotient calculation expands a product option under either
+  bracketing.  It applies the seven smaller associativity equivalences, the
+  game-level distributive laws, the compatibility of products with
+  equivalence, and the corresponding formula for multiplication by a
+  negative.  After passing to \(\mathcal G/{\GameEq}\), \texttt{abel}
+  normalizes the resulting signed sum and proves the two expanded
+  \(\mulopt\) expressions equivalent.
+
+  Now split an option of \((ab)c\) into one of its four \(LL,RR,LR,RL\)
+  families, and then split the selected option of \(ab\) into its own four
+  families.  The preparatory rewrite identifies it with the corresponding
+  option of \(a(bc)\).  Four matching lemmas perform this enumeration for the
+  left and right lists in both directions; the sign of the two option choices
+  determines which family is used.  All products appearing in congruence
+  steps are surreal by Conway A, because \(a,b,c\) and their options are
+  surreal.  Hence option extensionality proves
+  \((ab)c\GameEq a(bc)\).
 \end{proof}
