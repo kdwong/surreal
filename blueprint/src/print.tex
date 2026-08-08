@@ -1,0 +1,20 @@
+% Printable entry point for the surreal-number blueprint.
+\documentclass[11pt]{report}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{expl3}
+\usepackage{amssymb,amsthm,mathtools}
+\usepackage[unicode,colorlinks=true,linkcolor=blue,urlcolor=magenta,citecolor=blue]{hyperref}
+\usepackage[warnings-off={mathtools-colon,mathtools-overbracket}]{unicode-math}
+
+\input{macros/common}
+\input{macros/print}
+
+\title{A Blueprint for Short Surreal Numbers in Lean}
+\author{The surreal Lean project}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\input{content}
+\end{document}

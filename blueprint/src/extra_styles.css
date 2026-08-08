@@ -1,0 +1,37 @@
+:root {
+  --surreal-ink: #172033;
+  --surreal-blue: #2d5b9f;
+  --surreal-gold: #b7791f;
+  --surreal-paper: #f7f8fb;
+}
+body {
+  color: var(--surreal-ink);
+}
+
+main {
+  max-width: 78rem;
+}
+
+h1, h2, h3 {
+  color: var(--surreal-blue);
+}
+
+div.definition_thmcontent,
+div.theorem_thmcontent,
+div.proposition_thmcontent,
+div.lemma_thmcontent,
+div.corollary_thmcontent {
+  border-left: .22rem solid var(--surreal-blue);
+  background: var(--surreal-paper);
+  padding: .8rem 1rem;
+  margin: 1rem 0;
+}
+
+div.proof_content {
+  border-left: .14rem solid var(--surreal-gold);
+  padding-left: 1rem;
+}
+
+code, .texttt {
+  overflow-wrap: anywhere;
+}

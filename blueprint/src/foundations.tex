@@ -1,0 +1,171 @@
+\chapter{Games, order, and surreal representatives}
+
+\section{Finite games and birthdays}
+
+\begin{definition}[Short combinatorial game]
+  \label{def:game}
+  \lean{Game,Game.left,Game.right,Game.zero,Game.one}
+  \leanok
+  A game is a finite rooted tree written \(x=\{X^L\mid X^R\}\), where the left- and
+  right-option collections \(X^L\) and \(X^R\) are finite lists of games.  The basic games are
+  \[
+    0=\{\,\mid\,\},\qquad 1=\{0\mid\,\}.
+  \]
+\end{definition}
+
+\begin{definition}[Birthday rank]
+  \label{def:birthday}
+  \lean{Game.birthday}
+  \leanok
+  \uses{def:game}
+  The rank \(\bd(x)\in\mathbb N\) is defined recursively by
+  \[
+    \bd\bigl(\{X^L\mid X^R\}\bigr)
+      = 1+\max\bigl(\{\bd(u):u\in X^L\}\cup
+                         \{\bd(v):v\in X^R\}\cup\{0\}\bigr).
+  \]
+  Thus this repository uses the convenient convention \(\bd(0)=1\).
+\end{definition}
+
+\begin{lemma}[Options have smaller birthday]
+  \label{lem:birthday-options}
+  \lean{Game.birthday_lt_of_mem_options,Game.birthday_lt_left,Game.birthday_lt_right}
+  \leanok
+  If \(u\in X^L\) or \(u\in X^R\), then \(\bd(u)<\bd(x)\).
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{def:birthday}
+  The birthday of an option occurs in the finite list whose maximum defines \(\bd(x)-1\).
+  It is therefore at most that maximum and strictly smaller after the final successor.
+\end{proof}
+
+\section{The recursive order}
+
+\begin{definition}[Game comparison and equivalence]
+  \label{def:game-order}
+  \lean{Game.le,Game.lt,Game.eq}
+  \leanok
+  \uses{def:game,def:birthday}
+  The relation \(x\GameLe y\) is defined recursively by
+  \[
+    x\GameLe y
+    \quad\Longleftrightarrow\quad
+    \bigl(\forall x^L\in X^L,\ \neg(y\GameLe x^L)\bigr)
+    \ \wedge\
+    \bigl(\forall y^R\in Y^R,\ \neg(y^R\GameLe x)\bigr).
+  \]
+  Strict comparison and game equivalence are
+  \[
+    x\GameLt y \Longleftrightarrow x\GameLe y\ \wedge\ \neg(y\GameLe x),
+    \qquad
+    x\GameEq y \Longleftrightarrow x\GameLe y\ \wedge\ y\GameLe x.
+  \]
+\end{definition}
+
+\begin{definition}[Well-founded induction schemes]
+  \label{def:game-inductions}
+  \lean{Game.wf_R,Game.wf_B,Game.wf_T,Game.wf_Q}
+  \leanok
+  \uses{def:birthday}
+  The development uses well-founded relations on one, two, three, and four games.  Their
+  measures are respectively a birthday and the sums of two, three, and four birthdays.
+\end{definition}
+
+\begin{theorem}[Order calculus for games]
+  \label{thm:game-order-calculus}
+  \lean{Game.le_congr,Game.le_trans,Game.eq_symm,Game.eq_trans,Game.lt_trans,Game.lt_of_lt_of_le,Game.lt_of_le_of_lt}
+  \leanok
+  The relation \(\GameLe\) is reflexive and transitive.  Consequently \(\GameEq\) is an
+  equivalence relation, \(\GameLt\) is transitive, and strict and weak inequalities compose in
+  either order.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:birthday-options,def:game-order,def:game-inductions}
+  Reflexivity is an induction on one birthday.  For transitivity, simultaneously compare a
+  triple \((x,y,z)\) and descend whenever an option of \(x\) or \(z\) appears.  The smaller
+  triple supplied by the birthday-sum relation converts any hypothetical forbidden comparison
+  into a contradiction with \(x\GameLe y\) or \(y\GameLe z\).  The remaining assertions follow
+  from the definitions of \(\GameEq\) and \(\GameLt\).
+\end{proof}
+
+\begin{theorem}[Equivalence from equivalent option lists]
+  \label{thm:option-extensionality}
+  \lean{Game.eq_of_equiv_options}
+  \leanok
+  Let \(a,b\) be games.  Suppose every left option of either game is equivalent to a left option
+  of the other, and likewise every right option is equivalent to a right option of the other.
+  Then \(a\GameEq b\).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:game-order,thm:game-order-calculus}
+  To prove \(a\GameLe b\), replace a hypothetical forbidden comparison with an equivalent
+  option of \(b\), then use transitivity and reflexivity to contradict the defining order
+  condition.  The same argument with \(a,b\) interchanged proves \(b\GameLe a\).
+\end{proof}
+
+\section{Surreal games}
+
+\begin{definition}[Surreal game]
+  \label{def:is-surreal}
+  \lean{IsSurreal,IsSurreal.isSurreal_left,IsSurreal.isSurreal_right,IsSurreal.isSurreal_zero,IsSurreal.isSurreal_one}
+  \leanok
+  \uses{def:game,def:game-order}
+  A game \(x=\{X^L\mid X^R\}\) is surreal when every option is surreal and no right option is
+  weakly below a left option:
+  \[
+    \forall x^L\in X^L\ \forall x^R\in X^R,
+      \quad \neg(x^R\GameLe x^L).
+  \]
+  The games \(0\) and \(1\) are surreal, and every option of a surreal game is surreal.
+\end{definition}
+
+\begin{theorem}[A surreal game lies between its options]
+  \label{thm:between-options}
+  \lean{IsSurreal.left_lt,IsSurreal.lt_right,IsSurreal.xL_x_xR}
+  \leanok
+  If \(x\) is surreal, then
+  \[
+    \forall x^L\in X^L,\quad x^L\GameLt x,
+    \qquad
+    \forall x^R\in X^R,\quad x\GameLt x^R.
+  \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:birthday-options,def:game-order,def:game-inductions,thm:game-order-calculus,def:is-surreal}
+  Induct on birthdays to prove weak comparison with each option.  The separation clause in
+  \texttt{IsSurreal} handles comparisons across the cut, while the induction hypothesis handles
+  options of an option.  Strictness follows because reflexivity forbids the reverse comparison.
+\end{proof}
+
+\begin{theorem}[Totality and trichotomy for surreal games]
+  \label{thm:surreal-totality}
+  \lean{IsSurreal.le_of_not_le,IsSurreal.totality,IsSurreal.trichotomy}
+  \leanok
+  If \(x\) and \(y\) are surreal, then
+  \[
+    x\GameLe y\ \vee\ y\GameLe x,
+  \]
+  and one of the three alternatives \(x\GameLt y\), \(x\GameEq y\), or
+  \(y\GameLt x\) holds.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:game-order,thm:game-order-calculus,thm:between-options}
+  If \(x\not\GameLe y\), unfolding the recursive definition produces either a left option of
+  \(x\) above \(y\) or a right option of \(y\) below \(x\).  The option inequalities and
+  transitivity then give \(y\GameLe x\).  Splitting on the reverse weak comparison yields
+  trichotomy.
+\end{proof}
+
+\begin{definition}[Surreal representatives]
+  \label{def:surreal-representative}
+  \lean{Surreal,Surreal.sr_zero,Surreal.sr_one,Surreal.leftOption,Surreal.rightOption}
+  \leanok
+  \uses{def:is-surreal}
+  The type \texttt{Surreal} consists of a game together with a proof that it is surreal.  It is
+  a type of representatives; equivalent game trees are not yet identified.
+\end{definition}

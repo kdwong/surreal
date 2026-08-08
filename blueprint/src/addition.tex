@@ -1,0 +1,171 @@
+\chapter{Addition, negation, and the additive quotient}
+
+\section{Operations on games}
+
+\begin{definition}[Recursive sum]
+  \label{def:game-add}
+  \lean{Game.add,add_left,add_right,mem_add_left_iff,mem_add_right_iff}
+  \leanok
+  \uses{def:game,def:birthday}
+  For games \(x=\{X^L\mid X^R\}\) and \(y=\{Y^L\mid Y^R\}\), define
+  \[
+    x+y=
+    \bigl\{\,x^L+y,\ x+y^L\ \bigm|\ x^R+y,\ x+y^R\,\bigr\},
+  \]
+  with one option for every member of the indicated finite lists.
+\end{definition}
+
+\begin{theorem}[Basic addition laws]
+  \label{thm:game-add-laws}
+  \lean{Game.add_zero',Game.zero_add',Game.add_zero,Game.zero_add,Game.add_comm,Game.add_assoc}
+  \leanok
+  For all games \(a,b,c\),
+  \[
+    a+0=a,\qquad 0+a=a,\qquad a+b\GameEq b+a,
+    \qquad (a+b)+c=a+(b+c).
+  \]
+  The zero and associativity identities hold as literal equalities of game trees; commutativity
+  is asserted up to game equivalence.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:birthday-options,def:game-inductions,thm:game-order-calculus,thm:option-extensionality,def:game-add}
+  The zero laws follow by birthday induction on option lists.  Commutativity is a two-game
+  birthday induction: match each sum option with the option obtained by swapping the factors,
+  then apply option extensionality.  Associativity is a nested three-game induction comparing
+  the two left-option lists and the two right-option lists literally.
+\end{proof}
+\begin{theorem}[Translation and monotonicity]
+  \label{thm:game-add-order}
+  \lean{Game.add_le_add_right,Game.add_right_cancel,Game.add_le_add,Game.add_equal,Game.add_lt_le,Game.add_le_lt,Game.add_lt_left_left,Game.add_lt_right_right}
+  \leanok
+  Addition preserves and reflects weak order in either variable.  In particular,
+  \[
+    a\GameLe b\quad\Longleftrightarrow\quad a+c\GameLe b+c,
+  \]
+  and
+  \[
+    a\GameLe c,\ b\GameLe d\Longrightarrow a+b\GameLe c+d.
+  \]
+  If either input comparison is strict and the other weak, the resulting comparison is strict.
+  Addition also respects \(\GameEq\).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:game-order,def:game-inductions,thm:game-order-calculus,def:game-add,thm:game-add-laws}
+  Preservation and cancellation are proved simultaneously by induction on a triple of games.
+  General two-variable monotonicity follows by changing one variable at a time and using
+  commutativity and transitivity.  Cancellation rules out the reverse weak comparison in each
+  strict statement.
+\end{proof}
+
+\begin{definition}[Negation]
+  \label{def:game-neg}
+  \lean{Game.neg,neg_left_def,neg_right_def,Game.neg_zero}
+  \leanok
+  \uses{def:game,def:birthday}
+  Negation interchanges the two option lists and recursively negates every option:
+  \[
+    -\{X^L\mid X^R\}=\{-X^R\mid -X^L\}.
+  \]
+\end{definition}
+
+\begin{theorem}[Negation reverses order]
+  \label{thm:game-neg-order}
+  \lean{Game.neg_le_neg,Game.neg_congr,Game.neg_lt_neg}
+  \leanok
+  For all games \(a,b\),
+  \[
+    a\GameLe b\Longleftrightarrow -b\GameLe-a,
+    \qquad
+    a\GameLt b\Longleftrightarrow -b\GameLt-a,
+  \]
+  and game equivalence is preserved by negation.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:game-order,def:game-inductions,def:game-neg,thm:game-order-calculus}
+  Induct on the sum of the two birthdays.  A left option of \(-b\) comes from a right option of
+  \(b\), while a right option of \(-a\) comes from a left option of \(a\).  Applying the
+  induction hypothesis to these smaller pairs turns the defining clauses into those for
+  \(a\GameLe b\).  The strict and equivalence statements follow by unfolding their definitions.
+\end{proof}
+
+\begin{theorem}[Additive inverses]
+  \label{thm:game-add-inverse}
+  \lean{Game.add_neg,Game.neg_add}
+  \leanok
+  Every game satisfies
+  \[
+    x+(-x)\GameEq0,
+    \qquad
+    (-x)+x\GameEq0.
+  \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:birthday-options,thm:game-order-calculus,def:game-add,thm:game-add-laws,def:game-neg}
+  Induct on \(\bd(x)\).  Each possible option of \(x+(-x)\) is paired with a smaller game of
+  the form \(u+(-u)\); the induction hypothesis excludes exactly the forbidden comparisons
+  with zero.  The second identity follows from commutativity.
+\end{proof}
+
+\section{Closure and quotients}
+
+\begin{theorem}[Surreal games are closed under addition and negation]
+  \label{thm:surreal-add-closure}
+  \lean{Surreal.add_isSurreal,Surreal.neg_isSurreal,Surreal.add,Surreal.neg}
+  \leanok
+  If \(a,b\) are surreal representatives, then the games \(a+b\) and \(-a\) are surreal.
+  Hence addition and negation define operations on the representative type \texttt{Surreal}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:game-order-calculus,thm:between-options,thm:surreal-totality,def:surreal-representative,def:game-add,thm:game-add-order,def:game-neg,thm:game-neg-order}
+  For a sum, induct on the sum of birthdays.  Its options are surreal by induction, and each
+  left option is strictly below each right option by additive monotonicity and the corresponding
+  inequalities in the two factors.  For a negative, the two option lists are interchanged;
+  order reversal turns the original separation inequalities into the required ones.
+\end{proof}
+
+\begin{definition}[Auxiliary quotient of all games]
+  \label{def:game-quotient}
+  \lean{Game.GameQ,Game.q,Game.instAddCommGroupGameQ,Game.instPartialOrderGameQ,Game.instIsOrderedAddMonoidGameQ}
+  \leanok
+  \uses{def:game-order,def:game-add,def:game-neg}
+  Let \(\mathcal G/{\GameEq}\) be the quotient of all finite games by game equivalence.  The
+  repository equips this quotient with a partially ordered additive commutative group
+  structure.  This auxiliary quotient is used for algebraic rearrangement in later product
+  proofs; totality is not asserted for arbitrary games.
+\end{definition}
+\begin{proof}
+  \leanok
+  \uses{thm:game-order-calculus,thm:game-add-laws,thm:game-add-order,thm:game-neg-order,thm:game-add-inverse}
+  Addition and negation descend because they respect \(\GameEq\).  Reflexivity, transitivity,
+  and antisymmetry descend to a partial order, and translation invariance is inherited from
+  additive monotonicity and cancellation.
+\end{proof}
+
+\begin{definition}[Short surreal numbers]
+  \label{def:surreal-number}
+  \lean{Surreal.SurrealNumber,Surreal.SurrealNumber.add,Surreal.SurrealNumber.neg}
+  \leanok
+  \uses{def:surreal-representative,thm:surreal-add-closure}
+  The type \(\NoShort\), called \texttt{SurrealNumber} in Lean, is the quotient of surreal
+  representatives by \(a\GameEq b\).  Addition, zero, one, and negation descend to this quotient.
+\end{definition}
+
+\begin{theorem}[Linear ordered additive commutative group]
+  \label{thm:ordered-add-group}
+  \lean{Surreal.instLinearOrderSurrealNumber,Surreal.instAddCommGroupSurrealNumber,Surreal.instIsOrderedAddMonoidSurrealNumber}
+  \leanok
+  The quotient \(\NoShort\) is a linearly ordered additive commutative group, and addition is
+  compatible with its order.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:surreal-totality,thm:game-add-laws,thm:game-add-order,thm:game-add-inverse,def:surreal-number}
+  The order is well defined under equivalence and is linear by totality for surreal
+  representatives.  The group laws descend from the game-level laws, and order compatibility
+  descends from additive monotonicity.
+\end{proof}

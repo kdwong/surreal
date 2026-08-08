@@ -1,0 +1,4 @@
+# Build the printable blueprint with XeLaTeX.
+$pdf_mode = 1;
+$pdflatex = 'xelatex -interaction=nonstopmode -synctex=1';
+@default_files = ('print.tex');
