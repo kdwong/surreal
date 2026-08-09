@@ -44,14 +44,46 @@
   converse matching is obtained by swapping \(a,b\).  Option extensionality
   then gives \(a+b\GameEq b+a\).
 
-  Associativity is stronger: it is literal tree equality.  Nested
-  well-founded inductions on \(a,b,c\) allow \texttt{Game.ext} to reduce the
-  claim to equality of left and right lists.  After expanding the two sums,
-  \texttt{map\_append}, \texttt{map\_map}, and associativity of list append
-  put the three option families in the same order.  On each family, the
-  relevant smaller-coordinate induction hypothesis identifies the entries
-  \((a'+b)+c\) and \(a'+(b+c)\), and similarly for options of \(b\) and
-  \(c\).
+  Associativity is stronger: it is literal equality of the two game trees.
+  The proof first inducts well foundedly on \(a\), while generalizing \(b,c\);
+  inside that induction it inducts on \(b\), while generalizing \(c\); finally
+  it inducts on \(c\).  Consequently the available induction hypotheses are
+  \[
+    \begin{array}{ll}
+      ((a^L+b)+c)=a^L+(b+c) & (a^L\in A^L),\\
+      ((a+b^L)+c)=a+(b^L+c) & (b^L\in B^L),\\
+      ((a+b)+c^L)=a+(b+c^L) & (c^L\in C^L),
+    \end{array}
+  \]
+  and the analogous three identities for right options.  Each recursive call
+  is legitimate because the option in the indicated coordinate has smaller
+  birthday; generalizing the later coordinates is what permits the unchanged
+  games in the other two positions.
+
+  Apply \texttt{Game.ext}.  For the left lists, expanding the definition of
+  addition twice gives
+  \[
+    \begin{aligned}
+      ((a+b)+c)^L
+       ={}&[\,(a^L+b)+c:a^L\in A^L\,]\\
+          &{}\mathbin{++}[\,(a+b^L)+c:b^L\in B^L\,]\\
+          &{}\mathbin{++}[\,(a+b)+c^L:c^L\in C^L\,],\\[2mm]
+      (a+(b+c))^L
+       ={}&[\,a^L+(b+c):a^L\in A^L\,]\\
+          &{}\mathbin{++}[\,a+(b^L+c):b^L\in B^L\,]\\
+          &{}\mathbin{++}[\,a+(b+c^L):c^L\in C^L\,].
+    \end{aligned}
+  \]
+  Thus the lists already contain the same three families in the same order;
+  only their entries differ.  The first, second, and third induction
+  hypotheses above give pointwise equality on \(A^L,B^L,C^L\), respectively.
+  The helper \texttt{list\_map\_congr} promotes each pointwise identity to an
+  equality of mapped lists, and \texttt{append\_map3\_congr} combines the
+  three equalities.  The simplifications \texttt{map\_append},
+  \texttt{map\_map}, and \texttt{append\_assoc} merely expose these displayed
+  normal forms.  Replacing \(A^L,B^L,C^L\) by \(A^R,B^R,C^R\) proves equality
+  of the right lists by the same three induction hypotheses.  Hence
+  \texttt{Game.ext} yields \(((a+b)+c)=a+(b+c)\) as a literal equality.
 \end{proof}
 \begin{theorem}[Translation and monotonicity]
   \label{thm:game-add-order}

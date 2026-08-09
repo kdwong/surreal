@@ -14,12 +14,23 @@
 \begin{proof}
   \leanok
   \uses{thm:conway-a,thm:game-mul-congr}
-  If \(a=(a_0,h_a)\) and \(b=(b_0,h_b)\), Conway A applied to \(h_a,h_b\)
-  proves that \(a_0b_0\) is surreal, so it can be paired with that proof to
-  define \texttt{Surreal.mul}.  If either input representative is replaced by
-  an equivalent one, \texttt{Game.mul\_congr} applies to the two input
-  equivalences and the four stored surrealness proofs.  Its conclusion is
-  exactly the equivalence required for independence of both representatives.
+  Unpack the two representatives as
+  \[
+    a=(a_0,h_a),\qquad b=(b_0,h_b),
+  \]
+  where \(a_0,b_0:\texttt{Game}\),
+  \(h_a:\texttt{IsSurreal}(a_0)\), and
+  \(h_b:\texttt{IsSurreal}(b_0)\).  Conway A applied to the explicitly named
+  proofs \(h_a,h_b\) proves \(\texttt{IsSurreal}(a_0b_0)\).  Pairing the game
+  \(a_0b_0\) with this proof defines \texttt{Surreal.mul}.
+
+  For alternative representatives
+  \(a'=(a_1,h_{a_1})\) and \(b'=(b_1,h_{b_1})\), assume the underlying
+  games satisfy \(a_0\GameEq a_1\) and \(b_0\GameEq b_1\).  Then
+  \texttt{Game.mul\_congr} is applied to these two equivalences and the four proofs
+  \(h_a,h_{a_1},h_b,h_{b_1}\).  It yields
+  \(a_0b_0\GameEq a_1b_1\), which is precisely independence of both chosen
+  representatives.
 \end{proof}
 \begin{definition}[Multiplication on short surreal numbers]
   \label{def:surreal-number-mul}
@@ -83,12 +94,13 @@
 \begin{proof}
   \leanok
   \uses{thm:ordered-add-group,thm:quotient-mul-laws,thm:quotient-distrib}
-  Populate the fields of Mathlib's \texttt{CommRing} structure with the
-  previously constructed additive commutative group, the quotient
-  multiplication and unit, multiplicative associativity and commutativity,
-  and left distributivity.  The remaining zero and right-distributive laws are
-  the quotient theorems above.  No new induction is needed at this stage: the
-  instance is a record assembled from the proved laws.
+  The additive commutative group is Theorem~\ref{thm:ordered-add-group}.
+  Definition~\ref{def:surreal-number-mul} supplies quotient multiplication,
+  while Theorem~\ref{thm:quotient-mul-laws} proves its associativity,
+  commutativity, unit laws, and zero laws.  The two distributive laws are
+  Theorem~\ref{thm:quotient-distrib}.  These results populate the fields of
+  Mathlib's \texttt{CommRing} structure.  No new induction is needed here: the
+  instance is the record assembled from those numbered results.
 \end{proof}
 
 \section{Positive products and ordered-ring compatibility}
