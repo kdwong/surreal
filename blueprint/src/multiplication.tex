@@ -6,7 +6,7 @@
   \label{def:game-mul}
   \lean{Game.mul,Game.mulOpt4,mem_mul_left,mem_mul_right}
   \leanok
-  \uses{def:game,def:birthday,def:game-add,def:game-neg}
+  \uses{def:game,def:birthday,lem:birthday-options,def:game-inductions,def:game-add,def:game-neg}
   Put
   \[
     \mulopt(x',y;x,y')=x'y+xy'-x'y'.
@@ -24,33 +24,39 @@
       \end{array}
     \right\},
   \]
-  with all choices of the displayed options.  The birthday-sum measure makes every recursive
-  call smaller.
+  with all choices of the displayed options.  By
+  Lemma~\ref{lem:birthday-options}, each selected option has smaller birthday
+  than its parent.  Hence the two-game induction relation of
+  Definition~\ref{def:game-inductions} decreases in every recursive call.
 \end{definition}
 
 \begin{theorem}[Zero, one, and commutativity for game multiplication]
   \label{thm:game-mul-laws}
-  \lean{Game.mul_zero,Game.zero_mul,Game.mul_comm,Game.mul_one,Game.one_mul}
+  \lean{Game.mul_zero_eq,Game.zero_mul_eq,Game.mul_zero,Game.zero_mul,Game.mul_comm,Game.mul_one_eq,Game.mul_one,Game.one_mul}
   \leanok
   For all games \(a,b\),
   \[
     a0\GameEq0,\qquad 0a\GameEq0,\qquad ab\GameEq ba,
     \qquad a1\GameEq a,\qquad 1a\GameEq a.
   \]
-  The repository also proves literal game-tree equalities for multiplication on the right by
-  zero and one.
+  In fact, multiplication by zero on either side and multiplication on the right by one
+  satisfy literal game-tree equalities.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:birthday-options,def:game-inductions,thm:option-extensionality,thm:game-add-laws,thm:game-add-inverse,def:game-mul}
-  In \(a0\), the second factor has no options.  Expanding the product therefore
-  leaves only flattened maps over empty lists, so simplification proves the
-  literal equality \(a0=0\); \(0a\GameEq0\) then follows by commutativity (or
-  by the symmetric simplification).
+  \uses{def:game,lem:birthday-options,def:game-inductions,thm:game-order-calculus,thm:option-extensionality,thm:game-add-laws,thm:game-add-order,def:game-neg,thm:game-neg-order,def:game-mul}
+  In \(a0\), the second factor has no options.  Expanding the recursive cut in
+  Definition~\ref{def:game-mul} therefore gives two empty option lists, so
+  \(a0=0\) as literal game trees.
+  The same direct expansion of \(0a\) has no option in any of the four
+  families, because the first factor has no options; hence \(0a=0\) literally
+  as well.
 
-  Commutativity is proved by well-founded induction on
-  \(\bd(a)+\bd(b)\).  Split an option according to the four constructors in
-  the product definition.  For a same-side example, the \(LL\) option of
+  For commutativity, use the two-game well-founded induction of
+  Definition~\ref{def:game-inductions}; every recursive pair is smaller by
+  Lemma~\ref{lem:birthday-options}.  Split an option according to the four
+  families in Definition~\ref{def:game-mul}.  For a same-side example, the
+  \(LL\) option of
   \(ab\) determined by \((a^L,b^L)\) is
   \[
     \mulopt(a^L,b;a,b^L)=a^Lb+ab^L-a^Lb^L.
@@ -62,9 +68,13 @@
   The induction hypotheses for the three smaller pairs
   \((a^L,b)\), \((a,b^L)\), and \((a^L,b^L)\) identify, respectively,
   \(a^Lb\GameEq ba^L\), \(ab^L\GameEq b^La\), and
-  \(a^Lb^L\GameEq b^La^L\).  Additive commutativity, addition congruence,
-  and negation congruence therefore make the two displayed options
-  equivalent.  The \(RR\) case is the identical calculation with
+  \(a^Lb^L\GameEq b^La^L\).  Additive commutativity is
+  Theorem~\ref{thm:game-add-laws}, compatibility of addition with
+  \(\GameEq\) is part of Theorem~\ref{thm:game-add-order}, and compatibility
+  of negation with \(\GameEq\) is part of
+  Theorem~\ref{thm:game-neg-order}.  These three results therefore make the
+  two displayed options equivalent.  The \(RR\) case is the identical
+  calculation with
   \(a^L,b^L\) replaced by \(a^R,b^R\):
   \[
     \mulopt(a^R,b;a,b^R)\GameEq\mulopt(b^R,a;b,a^R).
@@ -87,15 +97,24 @@
   \]
   so an \(RL\) option of \(ab\) matches an \(LR\) option of \(ba\).
   Repeating these matches from \(ba\) back to \(ab\), for both the left and
-  right option lists, supplies the four hypotheses of option extensionality
-  and proves \(ab\GameEq ba\).
+  right option lists, supplies the four hypotheses of
+  Theorem~\ref{thm:option-extensionality}; hence \(ab\GameEq ba\).  The two
+  literal zero identities already prove both displayed zero laws.
 
-  Finally, prove the literal equality \(a1=a\) by induction on \(\bd(a)\).
-  Because \(1=\{0\mid\}\), expansion reduces the product's left and right
-  lists to maps of the smaller products \(a'1\); all additional zero-product
-  and additive-inverse terms simplify.  The induction hypotheses identify
-  these lists with the option lists of \(a\).  The law \(1a\GameEq a\) follows
-  by product commutativity and \(a1=a\).
+  Finally, prove the literal equality \(a1=a\) by the one-game induction of
+  Definition~\ref{def:game-inductions}.  By Definition~\ref{def:game},
+  \(1=\{0\mid\}\).  Thus an \(LL\) option of \(a1\) is
+  \[
+    \mulopt(a^L,1;a,0)=a^L1+a0-a^L0,
+  \]
+  and an \(RL\) option is the same expression with \(a^R\) in place of
+  \(a^L\); the other two families are empty.  The induction hypothesis gives
+  \(a^L1=a^L\) and \(a^R1=a^R\), while the zero-product identity established
+  above, the additive zero laws in Theorem~\ref{thm:game-add-laws}, and the
+  identity \(-0=0\) in Definition~\ref{def:game-neg} reduce the displayed
+  expressions to \(a^L\) and \(a^R\).  Hence the left and right option lists of \(a1\) are
+  literally those of \(a\).  The commutativity conclusion already proved then
+  gives \(1a\GameEq a\).
 \end{proof}
 \begin{theorem}[Distributivity on games]
   \label{thm:game-distrib}
@@ -110,27 +129,66 @@
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{def:game-inductions,thm:option-extensionality,thm:game-add-laws,thm:game-add-order,def:game-quotient,def:game-mul,thm:game-mul-laws}
-  Prove \(a(b+c)\GameEq ab+ac\) by well-founded induction on
-  \(\bd(a)+\bd(b)+\bd(c)\).  Four matching lemmas treat, in each direction,
-  left and right options.  For an option of \(a(b+c)\), first split whether
-  it comes from an option of \(a\) or an option of \(b+c\), and in the latter
-  case split once more according to whether the option came from \(b\) or
-  \(c\).  The matching option of \(ab+ac\) changes the same coordinate in the
-  corresponding summand.  Conversely, an option of the sum changes either
-  \(ab\) or \(ac\), and expansion of that product determines the matching
-  option on the left.
+  \uses{def:game-inductions,lem:birthday-options,thm:game-order-calculus,thm:option-extensionality,def:game-add,thm:game-add-order,thm:game-neg-order,def:game-quotient,def:game-mul,thm:game-mul-laws}
+  Prove the first equivalence by the three-game well-founded induction of
+  Definition~\ref{def:game-inductions}.  Lemma~\ref{lem:birthday-options}
+  shows that every recursive triple is smaller.  For an option of
+  \(a(b+c)\), Definition~\ref{def:game-mul} first distinguishes whether the
+  changed coordinate is \(a\) or \(b+c\); in the second case,
+  Definition~\ref{def:game-add} distinguishes whether the changed coordinate
+  is \(b\) or \(c\).  The matching option of \(ab+ac\) changes the same
+  coordinate in the corresponding summand.  Conversely, an option of the sum
+  changes either \(ab\) or \(ac\), and Definition~\ref{def:game-mul}
+  determines the corresponding option on the left.  This gives four
+  left/right matching assertions, two in each direction.
 
-  After these membership splits, the remaining assertion is an equivalence
-  between two expanded \(\mulopt\) expressions.  Map the games to
-  \(\mathcal G/{\GameEq}\).  The three relevant smaller distributivity
-  hypotheses replace the recursively occurring products, and congruence of
-  \(\mulopt\) transports those replacements.  In the additive quotient,
-  \texttt{abel} normalizes the sums and negatives and proves equality; pulling
-  this equality back gives game equivalence.  Option extensionality applied to
-  the four matching lemmas completes left distributivity.  For right
-  distributivity, commute the outer product, apply the established left law,
-  and commute the two resulting products.
+  For example, let \(a^L\) and \(b^L\) be left options.  The corresponding
+  \(LL\) option on the left is
+  \[
+    L=\mulopt(a^L,b+c;a,b^L+c).
+  \]
+  The matching left option on the right is
+  \[
+    L'=\mulopt(a^L,b;a,b^L)+ac.
+  \]
+  The three smaller induction hypotheses give
+  \[
+    \begin{aligned}
+      a^L(b+c)&\GameEq a^Lb+a^Lc,\\
+      a(b^L+c)&\GameEq ab^L+ac,\\
+      a^L(b^L+c)&\GameEq a^Lb^L+a^Lc.
+    \end{aligned}
+  \]
+  Substitution in the definition of \(\mulopt\) gives
+  \[
+    L\GameEq
+      (a^Lb+a^Lc)+(ab^L+ac)-(a^Lb^L+a^Lc)
+      \GameEq \mulopt(a^L,b;a,b^L)+ac=L'.
+  \]
+  The cancellation in the second step takes place in the auxiliary ordered
+  additive quotient of Definition~\ref{def:game-quotient}.  Every remaining
+  membership branch uses one of the same two algebraic templates, according
+  as the changed summand is \(b\) or \(c\); reverse-direction branches use
+  symmetry of the resulting equivalence.  Left and right options are placed
+  as prescribed by Definition~\ref{def:game-mul}.  Compatibility with sums and negatives
+  follows from the quotient construction in
+  Definition~\ref{def:game-quotient}.  Commutativity and associativity of its
+  additive group put each pair of signed sums in the same form.  By the
+  quotient relation in
+  Definition~\ref{def:game-quotient}, equality of their classes is precisely
+  game equivalence.  The four matches now satisfy
+  Theorem~\ref{thm:option-extensionality}, proving
+  \(a(b+c)\GameEq ab+ac\).
+
+  Finally,
+  \[
+    (a+b)c\GameEq c(a+b)\GameEq ca+cb\GameEq ac+bc.
+  \]
+  The first equivalence uses product commutativity from
+  Theorem~\ref{thm:game-mul-laws}; the middle equivalence is the
+  left-distributive result just proved; and the last uses product
+  commutativity inside the two summands together with addition congruence from
+  Theorem~\ref{thm:game-add-order}.
 \end{proof}
 
 \section{A simultaneous well-founded proof}
@@ -139,7 +197,7 @@
   \label{def:dm-goals}
   \lean{Goal,μA,μB,μGoal,GoalLT,wfGoal}
   \leanok
-  \uses{def:birthday}
+  \uses{def:birthday,lem:birthday-options}
   Three kinds of induction goal are used:
   \[
     A(x,y),\qquad B(x_1,x_2,y),\qquad C(x_1,x_2,y).
@@ -160,21 +218,86 @@
   \(Y\).  Thus the common part \(X\) is left untouched, while the nonempty
   part \(Y\) is replaced by smaller data \(Z\).
 
-  Three consequences of this definition are used repeatedly.  First, one
-  birthday may be replaced by the smaller birthday of an option while all
-  other birthdays remain in \(X\).  Second, one birthday may be replaced by
-  two smaller option birthdays; this is what makes a three-variable \(B\)- or
-  \(C\)-goal smaller than a two-variable \(A\)-goal.  Conversely, a birthday
-  may simply be deleted by taking \(Z=\varnothing\), so the appropriate
-  two-variable \(A\)-goals are smaller than a \(B\)- or \(C\)-goal.  Third,
-  transitivity composes successive coordinate replacements, and the multiset
-  measure is insensitive to permuting the coordinates.  The lemmas
-  \texttt{goal\_lt\_A\(_1\)}, \texttt{goal\_lt\_B\(_i\)},
-  \texttt{goal\_lt\_C\(_i\)}, and the \texttt{from\_A}/\texttt{from\_B}
-  variants in \texttt{Order.lean} package exactly these moves.  Since
-  \(<\) on \(\mathbb N\) is well founded, its Dershowitz--Manna extension is
-  well founded; pulling it back along \(\mu_{\rm Goal}\) gives
-  \texttt{wfGoal}.
+  We record explicitly the multiset comparisons used below.  Set
+  \[
+    \mathcal X=\mu_A(x,y)=\{\bd(x),\bd(y)\}.
+  \]
+  If \(x^L\) is a left option of \(x\), then
+  Lemma~\ref{lem:birthday-options} gives \(\bd(x^L)<\bd(x)\), and
+  \[
+    \{\bd(x^L),\bd(y)\}<_{\rm DM}\mathcal X.
+  \]
+  In the notation of the definition, the common part is
+  \(X=\{\bd(y)\}\), the finite nonempty removed part is
+  \(Y=\{\bd(x)\}\), and the replacement is
+  \(Z=\{\bd(x^L)\}\).  Its only element is strictly below the removed element
+  \(\bd(x)\).  The identical choice changes any one coordinate of an
+  \(A\)-, \(B\)-, or \(C\)-measure to an option.
+
+  If \(x^L\) and \(x^R\) are respectively left and right options of \(x\),
+  then both have birthday below \(\bd(x)\), and for \(K=B,C\),
+  \[
+    \mu_K(x^L,x^R,y)
+      =\{\bd(x^L),\bd(x^R),\bd(y)\}
+      <_{\rm DM}\mathcal X.
+  \]
+  Here the common part is again \(X=\{\bd(y)\}\), the finite nonempty
+  removed submultiset is
+  \[
+    X_0=Y=\{\bd(x)\},
+  \]
+  and the replacement part is
+  \[
+    Y_0=Z=\{\bd(x^L),\bd(x^R)\}.
+  \]
+  Every element of \(Y_0\) is strictly below the element \(\bd(x)\) removed
+  in \(X_0\).  This replacement of one birthday by two smaller birthdays is
+  precisely what makes the indicated three-variable \(B\)- or \(C\)-measure
+  smaller than the two-variable \(A\)-measure.
+
+  Deletion is the special case with empty replacement:
+  \[
+    \{\bd(x),\bd(y)\}
+      <_{\rm DM}
+    \{\bd(x),\bd(y),\bd(z)\}.
+  \]
+  Take the common part \(X=\{\bd(x),\bd(y)\}\), the finite nonempty removed
+  part \(Y=\{\bd(z)\}\), and \(Z=\varnothing\).  The condition on elements of
+  \(Z\) is vacuous.  In particular,
+  \(\mu_A(x_1,y)<_{\rm DM}\mu_K(x_1,x_2,y)\) for \(K=B,C\).
+
+  A mixed decrease is the following explicit two-step comparison.  If
+  \(y^L\) is a left option of \(y\), then
+  \[
+    \mu_K(x^L,x^R,y^L)
+      <_{\rm DM}\mu_K(x^L,x^R,y)
+      <_{\rm DM}\mu_A(x,y)
+      \qquad(K=B,C).
+  \]
+  In the first step the common part is
+  \(X=\{\bd(x^L),\bd(x^R)\}\), the removed part is the nonempty multiset
+  \(Y=\{\bd(y)\}\), and \(Z=\{\bd(y^L)\}\); its element lies below
+  \(\bd(y)\).  The second step uses
+  \(X=\{\bd(y)\}\), \(Y=\{\bd(x)\}\), and
+  \(Z=\{\bd(x^L),\bd(x^R)\}\), as above.  Transitivity of
+  \(<_{\rm DM}\) gives the mixed decrease.
+
+  Finally, coordinate interchange does not change a multiset:
+  \[
+    \begin{aligned}
+      \mu_B(x_1,x_2,y)
+        &=\{\bd(x_1),\bd(x_2),\bd(y)\}
+          =\{\bd(x_2),\bd(x_1),\bd(y)\}
+          =\mu_B(x_2,x_1,y),\\
+      \mu_C(x_1,x_2,y)
+        &=\mu_C(x_2,x_1,y).
+    \end{aligned}
+  \]
+  This is equality of measures, not a recursive decrease; it permits the two
+  endpoints to be swapped while retaining the same collection of smaller
+  induction hypotheses.  Since \(<\) on \(\mathbb N\) is well founded, so is
+  its Dershowitz--Manna multiset extension, and its pullback by these measures
+  supports the simultaneous induction.
 \end{definition}
 
 \begin{definition}[Cross inequalities]
@@ -191,26 +314,95 @@
         x_1y^R+x_2y\GameLt x_1y+x_2y^R.
     \end{aligned}
   \]
-  The file \texttt{MulOpt.lean} also packages weak and strict four-product cross inequalities
-  so that endpoints can be transported or replaced algebraically.
+  For arbitrary games \(x_1,x_2,y_1,y_2\), define the weak and strict
+  four-product relations by
+  \[
+    \begin{aligned}
+      \operatorname{Cross}_{\GameLe}(x_1,x_2;y_1,y_2)&:\quad
+        x_1y_2+x_2y_1\GameLe x_1y_1+x_2y_2,\\
+      \operatorname{Cross}_{\GameLt}(x_1,x_2;y_1,y_2)&:\quad
+        x_1y_2+x_2y_1\GameLt x_1y_1+x_2y_2.
+    \end{aligned}
+  \]
+  Thus \(C_L(x_1,x_2;y,y^L)\) is
+  \(\operatorname{Cross}_{\GameLt}(x_1,x_2;y^L,y)\), while
+  \(C_R(x_1,x_2;y,y^R)\) is
+  \(\operatorname{Cross}_{\GameLt}(x_1,x_2;y,y^R)\).
 \end{definition}
+
+\begin{theorem}[Cross-inequality calculus]
+  \label{thm:cross-calculus}
+  \lean{MulCrossLt.swap,MulCrossLt.trans,MulCrossLt.congr_right,MulCrossLt.congr_left,mulOpt4_xslot_mono_le_of_cross,mulOpt4_xslot_antitone_le_of_cross,mulOpt4_yslot_mono_le_of_cross,mulOpt4_yslot_antitone_le_of_cross,mulOpt4_xslot_mono_lt_of_cross,mulOpt4_xslot_antitone_lt_of_cross,mulOpt4_yslot_mono_lt_of_cross,mulOpt4_yslot_antitone_lt_of_cross}
+  \leanok
+  Let \(\mathrel{\bowtie}\) denote either \(\GameLe\) or \(\GameLt\).  If
+  \(\operatorname{Cross}_{\bowtie}(a,c;d,e)\) holds, then
+  \[
+    \begin{aligned}
+      \mulopt(a,e;b,d)&\mathrel{\bowtie}\mulopt(c,e;b,d),&
+      \mulopt(c,d;b,e)&\mathrel{\bowtie}\mulopt(a,d;b,e),\\
+      \mulopt(a,b;c,d)&\mathrel{\bowtie}\mulopt(a,b;c,e),&
+      \mulopt(c,b;a,e)&\mathrel{\bowtie}\mulopt(c,b;a,d).
+    \end{aligned}
+  \]
+  For the strict relation, transposing the two pairs preserves the relation;
+  two relations with a common intermediate first coordinate compose; and an
+  endpoint may be replaced whenever its two products with \(d,e\) are
+  equivalent to the old endpoint products.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:game-add,thm:game-add-laws,def:game-mul,thm:game-mul-laws,def:game-quotient,def:cross-conditions}
+  Work in the ordered additive quotient \(\mathcal G/{\GameEq}\) of
+  Definition~\ref{def:game-quotient}, and write \(q(g)\) for the class of a
+  game.  The hypothesis is
+  \[
+    q(ae)+q(cd)\mathrel{\bowtie}q(ad)+q(ce).
+  \]
+  Adding the same class to both sides and rearranging the additive group gives,
+  respectively,
+  \[
+    \begin{aligned}
+      q(ae)+q(bd)-q(ad)&\mathrel{\bowtie}q(ce)+q(bd)-q(cd),\\
+      q(cd)+q(be)-q(ce)&\mathrel{\bowtie}q(ad)+q(be)-q(ae),\\
+      q(ab)+q(cd)-q(ad)&\mathrel{\bowtie}q(ab)+q(ce)-q(ae),\\
+      q(cb)+q(ae)-q(ce)&\mathrel{\bowtie}q(cb)+q(ad)-q(cd).
+    \end{aligned}
+  \]
+  By Definition~\ref{def:game-mul}, these are exactly the four displayed
+  product-option comparisons.  The argument works for both weak and strict
+  order because translation preserves both in the ordered additive group.
+
+  For the strict transpose rule, commute the factors using
+  Theorem~\ref{thm:game-mul-laws} and commute the two summands using
+  Theorem~\ref{thm:game-add-laws}.  Endpoint replacement follows by replacing
+  equal classes in the strict quotient inequality.  Finally, add two strict
+  cross inequalities having an intermediate endpoint; translating by the
+  negative of the two intermediate product classes cancels them and leaves the
+  strict cross inequality between the outer endpoints.  This proves the stated
+  congruence and transitivity rules.
+\end{proof}
 
 \begin{lemma}[Terminal product-option bounds]
   \label{lem:mulopt-bounds}
   \lean{mulOpt4_LL_lt_product,mulOpt4_RR_lt_product,product_lt_mulOpt4_LR,product_lt_mulOpt4_RL}
   \leanok
-  Assuming the appropriate multiplicative congruence and one of the conditions \(C_L,C_R\),
-  each left product option is strictly below the target product and each right product option
-  is strictly above it.  There are four lemmas, corresponding to the \(LL,RR,LR,RL\) option
-  configurations in the definition of multiplication.
+  Assuming the endpoint-product equivalence displayed in the relevant case
+  and one of the conditions \(C_L,C_R\), each left product option is strictly
+  below the target product and each right product option is strictly above
+  it.  There are four lemmas, corresponding to the \(LL,RR,LR,RL\) option
+  configurations in Definition~\ref{def:game-mul}.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{thm:game-add-order,def:game-quotient,def:cross-conditions}
+  \uses{def:game-mul,def:game-quotient,def:cross-conditions}
   All four proofs take place in the ordered additive group
-  \(\mathcal G/{\GameEq}\); write \(q(g)\) for the class of a game \(g\).
-  This permits cancellation and additive normalization even though the
-  corresponding game trees are not literally equal.
+  \(\mathcal G/{\GameEq}\) of Definition~\ref{def:game-quotient}; write
+  \(q(g)\) for the class of a game \(g\).  Translation by a common summand is
+  an order equivalence there, and equivalent games have equal classes.
+  Hence cancellation and ordinary additive-group rearrangement are available
+  even when the corresponding game trees are not literally equal.  We use
+  the product-option expression of Definition~\ref{def:game-mul} and the
+  cross inequalities of Definition~\ref{def:cross-conditions}.
 
   For the \(LL\) bound, assume
   \[
@@ -219,15 +411,15 @@
     C_L(a^L,b;y,y^L):
     a^Ly+by^L\GameLt a^Ly^L+by.
   \]
-  Map the strict inequality to the quotient and add
+  Pass the strict inequality to the quotient and add
   \(-q(a^Ly^L)\) to both sides.  Replace \(q(by^L)\) by \(q(ay^L)\) using
   the equivalence hypothesis.  The translated inequality is
   \[
     q(a^Ly)+q(ay^L)-q(a^Ly^L)<q(by),
   \]
   which is exactly
-  \(q(\mulopt(a^L,y;a,y^L))<q(by)\).  Reflection of quotient strict order
-  gives
+  \(q(\mulopt(a^L,y;a,y^L))<q(by)\).  By the quotient order in
+  Definition~\ref{def:game-quotient}, this is equivalent to
   \[
     \mulopt(a^L,y;a,y^L)\GameLt by.
   \]
@@ -270,15 +462,17 @@
       =q(\mulopt(b^R,y;b,y^L)),
   \]
   hence \(ay\GameLt\mulopt(b^R,y;b,y^L)\).  These are precisely the two
-  lower bounds for \(LL,RR\) left options and the two upper bounds for
-  \(LR,RL\) right options used in the \(B\)-case of the Conway induction.
+  upper bounds for the \(LL,RR\) left options and the two lower bounds for
+  the \(LR,RL\) right options used in the \(B\)-case of
+  Theorem~\ref{thm:abc-main}.
 \end{proof}
 
 \begin{theorem}[Simultaneous Conway theorem]
   \label{thm:abc-main}
   \lean{Conway.Holds,Conway.ABC_main}
   \leanok
-  The following assertions hold simultaneously for every well-formed input:
+  The following assertions hold simultaneously for all games satisfying the
+  displayed hypotheses:
   \begin{enumerate}
     \item \(A(x,y)\): if \(x,y\) are surreal, then \(xy\) is surreal;
     \item \(B(x_1,x_2,y)\): if \(x_1\GameEq x_2\) and all three games are surreal, then
@@ -290,141 +484,232 @@
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:game-order-calculus,thm:option-extensionality,thm:between-options,thm:surreal-totality,thm:game-add-order,thm:game-mul-laws,def:dm-goals,def:cross-conditions,lem:mulopt-bounds}
-  The Lean proof performs one induction on \texttt{wfGoal}; its induction
-  hypothesis is available for every goal smaller in the Dershowitz--Manna
-  order.  The multiset lemmas in \texttt{Order.lean} justify not only replacing
-  one game by an option, but also replacing a two-birthday \(A\)-goal by a
-  three-birthday \(B\)- or \(C\)-goal when the extra birthdays are strictly
-  smaller than the one removed.  We treat the three constructors separately.
+  \uses{def:game-order,def:is-surreal,def:game-mul,def:game-quotient,def:dm-goals,def:cross-conditions,thm:game-order-calculus,thm:between-options,thm:surreal-totality,thm:surreal-add-closure,thm:game-mul-laws,thm:cross-calculus,lem:mulopt-bounds}
+  Apply well-founded induction with the goal order of
+  Definition~\ref{def:dm-goals}.  The induction hypothesis is available for
+  every \(A\)-, \(B\)-, or \(C\)-assertion whose multiset measure is smaller.
+  The explicit multiset comparisons in that definition justify both replacing
+  a coordinate by an option and replacing one birthday by two smaller
+  birthdays.
 
-  In case \(A(x,y)\), first prove that every product option is surreal.  For
-  example, if \(x'\) and \(y'\) are options of \(x\) and \(y\), respectively,
-  then
+  Consider \(A(x,y)\).  By Definition~\ref{def:is-surreal}, it is enough to
+  prove that every option of \(xy\) is surreal and that every left option is
+  strictly below every right option.  Definition~\ref{def:game-mul} gives the
+  four option families.  If \(x'\) and \(y'\) are options of \(x\) and \(y\),
+  respectively, the corresponding option has the form
   \[
     \mulopt(x',y;x,y')=x'y+xy'-x'y'.
   \]
-  The lower goals \(A(x',y)\), \(A(x,y')\), and \(A(x',y')\) prove the three
-  displayed products surreal.  The first two are lower by replacing one
-  birthday, and the third by replacing both; addition and negation closure
-  then prove the whole \(\mulopt\) expression surreal.  This argument applies
-  to the \(LL,RR,LR,RL\) option families.
+  The smaller assertions \(A(x',y)\), \(A(x,y')\), and \(A(x',y')\) prove
+  that its three product terms are surreal.  Closure under addition and
+  negation, Theorem~\ref{thm:surreal-add-closure}, then proves the whole
+  expression surreal.
 
-  We now make the separation argument explicit.  Put
-  \(P(u,v)=\mulopt(u,y;x,v)\).  A left option of \(xy\) is
+  For separation put \(P(u,v)=\mulopt(u,y;x,v)\).  By
+  Definition~\ref{def:game-mul}, a left option of \(xy\) is
   \[
-    P(x^L,y^L)\quad(LL),
-    \qquad P(x^R,y^R)\quad(RR),
+    P(x^L,y^L)\quad(LL),\qquad P(x^R,y^R)\quad(RR),
   \]
-  whereas a right option is
+  and a right option is
   \[
-    P(x^L,y^R)\quad(LR),
-    \qquad P(x^R,y^L)\quad(RL).
+    P(x^L,y^R)\quad(LR),\qquad P(x^R,y^L)\quad(RL).
   \]
-  Consider first an \(LL\)-versus-\(LR\) pair
-  \(P(x^L_1,y^L)\) and \(P(x^L_2,y^R)\).  Trichotomy compares
-  \(x^L_1,x^L_2\), while surreal separation supplies
-  \(y^L\GameLt y^R\).
-  \begin{itemize}
-    \item If \(x^L_1\GameLt x^L_2\), lower \(C\)-goals give
-      \[
-        P(x^L_1,y^L)\GameLt P(x^L_2,y^L)
-          \GameLt P(x^L_2,y^R).
-      \]
-      The first step moves the \(x\)-slot; the second moves the \(y\)-slot.
-    \item If \(x^L_1\GameEq x^L_2\), first move the \(y\)-slot and then use
-      a lower \(B\)-goal in the \(x\)-slot:
-      \[
-        P(x^L_1,y^L)\GameLt P(x^L_1,y^R)
-          \GameLe P(x^L_2,y^R).
-      \]
-    \item If \(x^L_2\GameLt x^L_1\), move \(y^L\) to \(y^R\) first.  At a
-      right \(y\)-option the \(x\)-slot movement has the opposite orientation,
-      giving
-      \[
-        P(x^L_1,y^L)\GameLt P(x^L_1,y^R)
-          \GameLt P(x^L_2,y^R).
-      \]
-  \end{itemize}
+  Consider first \(P(x^L_1,y^L)\) and \(P(x^L_2,y^R)\).
+  Theorem~\ref{thm:surreal-totality} compares \(x^L_1\) and \(x^L_2\).
+  Also, Theorem~\ref{thm:between-options} and strict transitivity from
+  Theorem~\ref{thm:game-order-calculus} give
+  \(y^L\GameLt y\GameLt y^R\), hence \(y^L\GameLt y^R\).
+  The three possible comparisons of the two left options give
+  \[
+    \begin{array}{ll}
+    x^L_1\GameLt x^L_2:
+      &P(x^L_1,y^L)\GameLt P(x^L_2,y^L)
+         \GameLt P(x^L_2,y^R),\\[1mm]
+    x^L_1\GameEq x^L_2:
+      &P(x^L_1,y^L)\GameLt P(x^L_1,y^R)
+         \GameLe P(x^L_2,y^R),\\[1mm]
+    x^L_2\GameLt x^L_1:
+      &P(x^L_1,y^L)\GameLt P(x^L_1,y^R)
+         \GameLt P(x^L_2,y^R).
+    \end{array}
+  \]
+  In a strict branch, the two steps are the applicable smaller
+  \(C\)-assertions, converted into movement of the \(x\)- and \(y\)-slots by
+  the four implications in Theorem~\ref{thm:cross-calculus}.
+  In the equivalence branch, a smaller \(B\)-assertion replaces the equivalent
+  \(x\)-slot after the strict \(y\)-movement.  The direction of movement in a
+  slot reverses when the other selected option lies on the opposite side.
+  Theorem~\ref{thm:game-order-calculus} composes each displayed strict--strict
+  or strict--weak chain.
 
   For an \(LL\)-versus-\(RL\) pair, write the options as
   \(P(x^L,y^L_1)\) and \(P(x^R,y^L_2)\).  Here
-  \(x^L\GameLt x^R\) is fixed, and trichotomy is applied to
-  \(y^L_1,y^L_2\).  Its three branches produce, respectively,
+  \(x^L\GameLt x^R\) follows from
+  Theorem~\ref{thm:between-options}, and
+  Theorem~\ref{thm:surreal-totality} compares \(y^L_1,y^L_2\).  The same
+  argument gives the three cases
   \[
-    \begin{aligned}
-      P(x^L,y^L_1)&\GameLt P(x^L,y^L_2)
-                       \GameLt P(x^R,y^L_2),\\
-      P(x^L,y^L_1)&\GameLt P(x^R,y^L_1)
-                       \GameLe P(x^R,y^L_2),\\
-      P(x^L,y^L_1)&\GameLt P(x^R,y^L_1)
-                       \GameLt P(x^R,y^L_2).
-    \end{aligned}
+    \begin{array}{ll}
+      y^L_1\GameLt y^L_2:
+        &P(x^L,y^L_1)\GameLt P(x^L,y^L_2)
+          \GameLt P(x^R,y^L_2),\\[1mm]
+      y^L_1\GameEq y^L_2:
+        &P(x^L,y^L_1)\GameLt P(x^R,y^L_1)
+          \GameLe P(x^R,y^L_2),\\[1mm]
+      y^L_2\GameLt y^L_1:
+        &P(x^L,y^L_1)\GameLt P(x^R,y^L_1)
+          \GameLt P(x^R,y^L_2).
+    \end{array}
   \]
-  The middle branch uses a lower \(B\)-goal; the other steps use lower
-  \(C\)-goals.  The \(RR\)-versus-\(LR\) and
-  \(RR\)-versus-\(RL\) arguments are the right-option mirrors: the former
-  compares two \(y^R\)'s and uses \(x^L\GameLt x^R\), while the latter
-  compares two \(x^R\)'s and uses \(y^L\GameLt y^R\).  These four strict
-  separation results, together with the option-surrealness proof above, fill
-  the two fields of \texttt{IsSurreal} for \(xy\).
+  For completeness, consider an \(RR\)-versus-\(LR\) pair
+  \(P(x^R_1,y^R_1)\), \(P(x^L,y^R_2)\).  Here
+  \(x^L\GameLt x^R_1\) by Theorem~\ref{thm:between-options}.  Trichotomy for
+  \(y^R_1,y^R_2\) gives
+  \[
+    \begin{array}{ll}
+      y^R_1\GameLt y^R_2:
+        &P(x^R_1,y^R_1)\GameLt P(x^L,y^R_1)
+          \GameLt P(x^L,y^R_2),\\[1mm]
+      y^R_1\GameEq y^R_2:
+        &P(x^R_1,y^R_1)\GameLt P(x^L,y^R_1)
+          \GameLe P(x^L,y^R_2),\\[1mm]
+      y^R_2\GameLt y^R_1:
+        &P(x^R_1,y^R_1)\GameLt P(x^R_1,y^R_2)
+          \GameLt P(x^L,y^R_2).
+    \end{array}
+  \]
+  Finally, for an \(RR\)-versus-\(RL\) pair
+  \(P(x^R_1,y^R)\), \(P(x^R_2,y^L)\), we have
+  \(y^L\GameLt y^R\) by Theorem~\ref{thm:between-options}.  Trichotomy for
+  \(x^R_1,x^R_2\) gives
+  \[
+    \begin{array}{ll}
+      x^R_1\GameLt x^R_2:
+        &P(x^R_1,y^R)\GameLt P(x^R_1,y^L)
+          \GameLt P(x^R_2,y^L),\\[1mm]
+      x^R_1\GameEq x^R_2:
+        &P(x^R_1,y^R)\GameLt P(x^R_1,y^L)
+          \GameLe P(x^R_2,y^L),\\[1mm]
+      x^R_2\GameLt x^R_1:
+        &P(x^R_1,y^R)\GameLt P(x^R_2,y^R)
+          \GameLt P(x^R_2,y^L).
+    \end{array}
+  \]
+  As above, strict arrows are the slot-movement consequences of the smaller
+  \(C\)-assertions in Theorem~\ref{thm:cross-calculus}; weak arrows in the
+  middle branches come from the corresponding smaller \(B\)-assertions and
+  additive normalization of the product-option expression.  Thus every left
+  product option is strictly below every right product option.  Together with
+  option surrealness, this verifies the two conditions of
+  Definition~\ref{def:is-surreal} and proves \(A(x,y)\).
 
-  In case \(B(a,b,y)\), assume \(a\GameEq b\) and prove
-  \(ay\GameLe by\).  Unfolding the game order produces two universal clauses.
-  The left clause says that for every left option \(L\) of \(ay\), one must
-  prove \(\neg(by\GameLe L)\).  Splitting membership gives two cases.
-  \begin{itemize}
-    \item For \(L=\mulopt(a^L,y;a,y^L)\), a lower \(B\)-goal gives
-      \(ay^L\GameEq by^L\).  Since
-      \(a^L\GameLt a\GameLe b\), a lower \(C\)-goal gives
-      \(C_L(a^L,b;y,y^L)\).  The \(LL\) terminal bound therefore gives
-      \(L\GameLt by\), whose strictness contains
-      \(\neg(by\GameLe L)\).
-    \item For \(L=\mulopt(a^R,y;a,y^R)\), the lower \(B\)-goal gives
-      \(ay^R\GameEq by^R\).  From
-      \(b\GameLe a\GameLt a^R\), a lower \(C\)-goal gives
-      \(C_R(b,a^R;y,y^R)\).  The \(RR\) terminal bound again gives
-      \(L\GameLt by\).
-  \end{itemize}
+  Now consider \(B(a,b,y)\).  Assume \(a\GameEq b\).  By
+  Definition~\ref{def:game-order}, to prove \(ay\GameLe by\) one must rule out
+  \(by\GameLe L\) for every left option \(L\) of \(ay\), and rule out
+  \(R\GameLe ay\) for every right option \(R\) of \(by\).  Comparisons of a
+  surreal game with its options come from
+  Theorem~\ref{thm:between-options}; they are composed with the weak
+  inequalities contained in \(a\GameEq b\) by
+  Theorem~\ref{thm:game-order-calculus}.
 
-  The right clause of \(ay\GameLe by\) says that every right option \(R\) of
-  \(by\) must satisfy \(\neg(R\GameLe ay)\).  Again there are two cases.
-  \begin{itemize}
-    \item If \(R=\mulopt(b^L,y;b,y^R)\), the symmetric lower \(B\)-goal gives
-      \(by^R\GameEq ay^R\), and
-      \(b^L\GameLt b\GameLe a\) gives
-      \(C_R(b^L,a;y,y^R)\).  The \(LR\) terminal bound yields
-      \(ay\GameLt R\).
-    \item If \(R=\mulopt(b^R,y;b,y^L)\), use
-      \(by^L\GameEq ay^L\) and
-      \(a\GameLe b\GameLt b^R\) to obtain
-      \(C_L(a,b^R;y,y^L)\).  The \(RL\) bound again yields
-      \(ay\GameLt R\).
-  \end{itemize}
-  Thus both clauses of \(ay\GameLe by\) hold.  To obtain \(by\GameLe ay\),
-  apply this same one-sided argument with \(a,b\) interchanged and use
-  symmetry of \(a\GameEq b\).  This is not a recursive call at the unchanged
-  measure: \texttt{IHswap\_of\_IH} merely transports every already-available
-  lower-goal hypothesis across the identity
-  \(\mu_B(a,b,y)=\mu_B(b,a,y)\).  The two weak inequalities give
-  \(ay\GameEq by\).
+  There are two left-option cases.  If
+  \(L=\mulopt(a^L,y;a,y^L)\), the smaller assertion \(B(a,b,y^L)\) gives
+  \(ay^L\GameEq by^L\).  Since
+  \(a^L\GameLt a\GameLe b\), a smaller \(C(a^L,b,y)\)-assertion gives
+  \(C_L(a^L,b;y,y^L)\).  The \(LL\) part of
+  Lemma~\ref{lem:mulopt-bounds} yields \(L\GameLt by\), which, by
+  Definition~\ref{def:game-order}, excludes \(by\GameLe L\).
+  If \(L=\mulopt(a^R,y;a,y^R)\), use
+  \(B(a,b,y^R)\), the comparison
+  \(b\GameLe a\GameLt a^R\), and \(C(b,a^R,y)\).  The \(RR\) part of
+  Lemma~\ref{lem:mulopt-bounds} again gives \(L\GameLt by\).
 
-  In case \(C(x_1,x_2,y)\), the strict comparison
-  \(x_1\GameLt x_2\) supplies a bridge: either some right option \(x_1^R\)
-  satisfies \(x_1^R\GameLe x_2\), or some left option \(x_2^L\) satisfies
-  \(x_1\GameLe x_2^L\).  Otherwise the recursive order definition would give
-  \(x_2\GameLe x_1\), contradicting strictness.  In the first bridge case,
-  a lower \(A\)-goal gives the adjacent cross inequality between \(x_1\) and
-  \(x_1^R\).  Trichotomy compares \(x_1^R\) with \(x_2\): a strict comparison
-  composes this adjacent inequality with a lower \(C\)-goal; equivalence uses
-  a lower \(B\)-goal to replace the endpoint; the reverse strict case
-  contradicts \(x_1^R\GameLe x_2\).  The bridge through \(x_2^L\) is
-  symmetric.  The same construction is carried out for left and right options
-  of \(y\), proving every required \(C_L\) and \(C_R\) inequality.
+  There are likewise two right-option cases.  For
+  \(R=\mulopt(b^L,y;b,y^R)\), the smaller \(B(b,a,y^R)\)-assertion gives
+  \(by^R\GameEq ay^R\).  The comparison
+  \(b^L\GameLt b\GameLe a\) and the smaller \(C(b^L,a,y)\)-assertion give
+  \[
+    C_R(b^L,a;y,y^R).
+  \]
+  The \(LR\) part of
+  Lemma~\ref{lem:mulopt-bounds} yields \(ay\GameLt R\).  For
+  \(R=\mulopt(b^R,y;b,y^L)\), use
+  \(by^L\GameEq ay^L\) and
+  \(a\GameLe b\GameLt b^R\) to obtain
+  \(C_L(a,b^R;y,y^L)\); the \(RL\) part of the same lemma gives
+  \(ay\GameLt R\).  This proves \(ay\GameLe by\).
 
-  In all three cases, every recursive invocation is accompanied in Lean by a
-  specific goal-lowering theorem, so the simultaneous argument closes by
-  well-founded induction rather than by mutual recursion assumed informally.
+  Interchanging \(a\) and \(b\) gives \(by\GameLe ay\).  This does not invoke
+  the induction hypothesis at the unchanged measure: the equality
+  \[
+    \mu_B(a,b,y)=\mu_B(b,a,y)
+  \]
+  from Definition~\ref{def:dm-goals} identifies the two collections of
+  strictly smaller assertions, and symmetry of \(a\GameEq b\) permits the
+  same one-sided proof to be reused.  The two weak inequalities are exactly
+  \(ay\GameEq by\) by Definition~\ref{def:game-order}.
+
+  Finally consider \(C(x_1,x_2,y)\), with
+  \(x_1\GameLt x_2\).  Unfolding Definition~\ref{def:game-order} gives the
+  following bridge alternative: either a right option \(x_1^R\) satisfies
+  \(x_1^R\GameLe x_2\), or a left option \(x_2^L\) satisfies
+  \(x_1\GameLe x_2^L\).  Indeed, if neither existed, the two universal clauses
+  in that definition would give \(x_2\GameLe x_1\), contradicting
+  \(x_1\GameLt x_2\).
+
+  Suppose first that \(x_1^R\GameLe x_2\).  The smaller assertion
+  \(A(x_1,y)\) makes \(x_1y\) surreal.  Its product options are those of
+  Definition~\ref{def:game-mul}.  For each left option \(y^L\) of \(y\), the
+  \(RL\) product option lies above \(x_1y\), so
+  \[
+    x_1y\GameLt x_1^Ry+x_1y^L-x_1^Ry^L.
+  \]
+  Write \(q(g)\) for the class of \(g\) in the ordered additive quotient of
+  Definition~\ref{def:game-quotient}.  Adding \(q(x_1^Ry^L)\) gives
+  \[
+    q(x_1y)+q(x_1^Ry^L)<q(x_1^Ry)+q(x_1y^L).
+  \]
+  Reflection of strict order from the quotient gives
+  \(C_L(x_1,x_1^R;y,y^L)\).  Similarly, for a right option \(y^R\),
+  the \(RR\) product option lies below \(x_1y\):
+  \[
+    x_1^Ry+x_1y^R-x_1^Ry^R\GameLt x_1y.
+  \]
+  Adding \(q(x_1^Ry^R)\) and reflecting strict order gives
+  \(C_R(x_1,x_1^R;y,y^R)\).  These are the two adjacent conditions.
+  By Theorem~\ref{thm:surreal-totality}, either
+  \(x_1^R\GameLt x_2\), \(x_1^R\GameEq x_2\), or
+  \(x_2\GameLt x_1^R\).  In the first case a smaller
+  \(C(x_1^R,x_2,y)\)-assertion composes with the adjacent conditions by the
+  transitivity clause of Theorem~\ref{thm:cross-calculus}.  In the second case
+  the smaller \(B(x_1^R,x_2,y)\)-assertions, also applied with \(y^L\) and
+  \(y^R\), identify the two pairs of endpoint products; the congruence clause
+  of Theorem~\ref{thm:cross-calculus} then replaces \(x_1^R\) by \(x_2\).
+  The third
+  case contradicts \(x_1^R\GameLe x_2\).
+
+  If instead \(x_1\GameLe x_2^L\), the smaller assertion \(A(x_2,y)\) makes
+  \(x_2y\) surreal.  Its \(LL\) product option for \(y^L\) lies below it,
+  while its \(LR\) product option for \(y^R\) lies above it:
+  \[
+    x_2^Ly+x_2y^L-x_2^Ly^L\GameLt x_2y,
+    \qquad
+    x_2y\GameLt x_2^Ly+x_2y^R-x_2^Ly^R.
+  \]
+  Adding the corresponding cross-term classes in the ordered quotient gives
+  the adjacent conditions \(C_L(x_2^L,x_2;y,y^L)\) and
+  \(C_R(x_2^L,x_2;y,y^R)\).  A strict comparison
+  \(x_1\GameLt x_2^L\) is handled by a smaller \(C(x_1,x_2^L,y)\)-assertion,
+  equivalence by the corresponding smaller \(B\)-assertions, and the reverse
+  strict comparison contradicts the bridge inequality.  Here again,
+  composition and endpoint replacement are precisely the transitivity and
+  congruence clauses of Theorem~\ref{thm:cross-calculus}.  Performing the calculation for
+  every left and right option of \(y\) proves all the required \(C_L\) and
+  \(C_R\) conditions.
+
+  Every induction invocation above is justified by one of the explicit
+  multiset decreases in Definition~\ref{def:dm-goals}; well-founded induction
+  therefore proves the three assertions simultaneously.
 \end{proof}
 
 \begin{theorem}[Conway A: closure of the product]
@@ -436,9 +721,9 @@
 \begin{proof}
   \leanok
   \uses{thm:abc-main}
-  Apply \texttt{ABC\_main} to the constructor \texttt{Goal.A} and supply the
-  two surrealness hypotheses.  The \texttt{A} branch of \texttt{Holds} is
-  definitionally the assertion that \(xy\) is surreal.
+  Apply the \(A(x,y)\) clause of Theorem~\ref{thm:abc-main} to the two
+  surrealness hypotheses.  Its conclusion is precisely that \(xy\) is
+  surreal.
 \end{proof}
 
 \begin{theorem}[Conway B: product respects equivalence]
@@ -451,9 +736,9 @@
 \begin{proof}
   \leanok
   \uses{thm:abc-main}
-  Apply \texttt{ABC\_main} to \texttt{Goal.B}, supplying surrealness of the
-  three games and \(x_1\GameEq x_2\).  Unfolding the \texttt{B} branch of
-  \texttt{Holds} yields \(x_1y\GameEq x_2y\).
+  Apply the \(B(x_1,x_2,y)\) clause of Theorem~\ref{thm:abc-main}, with the
+  three surrealness hypotheses and \(x_1\GameEq x_2\).  The conclusion is
+  \(x_1y\GameEq x_2y\).
 \end{proof}
 
 \begin{theorem}[Conway C: strict cross inequalities]
@@ -466,10 +751,9 @@
 \begin{proof}
   \leanok
   \uses{thm:abc-main}
-  Apply \texttt{ABC\_main} to \texttt{Goal.C}, supplying surrealness and the
-  strict comparison.  The two fields of the resulting \texttt{C} branch of
-  \texttt{Holds} are precisely the universally quantified \(C_L\) and
-  \(C_R\) conditions.
+  Apply the \(C(x_1,x_2,y)\) clause of Theorem~\ref{thm:abc-main}, with the
+  three surrealness hypotheses and \(x_1\GameLt x_2\).  Its two conclusions
+  are precisely the required left and right cross inequalities.
 \end{proof}
 
 \section{Congruence and associativity}
@@ -486,11 +770,14 @@
 \begin{proof}
   \leanok
   \uses{thm:game-order-calculus,thm:game-mul-laws,thm:conway-b}
-  Conway B applied directly to \(x_1\GameEq x_2\) gives
-  \(x_1y_1\GameEq x_2y_1\).  To replace the second factor, commute both
-  products, apply Conway B to \(y_1\GameEq y_2\) with common factor \(x_2\),
-  and commute back, obtaining \(x_2y_1\GameEq x_2y_2\).  Transitivity of game
-  equivalence composes these two replacements.
+  Conway \(B\), Theorem~\ref{thm:conway-b}, applied to
+  \(x_1\GameEq x_2\) gives
+  \(x_1y_1\GameEq x_2y_1\).  To replace the second factor, use product
+  commutativity from Theorem~\ref{thm:game-mul-laws}, apply
+  Theorem~\ref{thm:conway-b} to \(y_1\GameEq y_2\) with common factor \(x_2\),
+  and commute back.  This gives
+  \(x_2y_1\GameEq x_2y_2\).  Transitivity of game equivalence in
+  Theorem~\ref{thm:game-order-calculus} composes the two replacements.
 \end{proof}
 
 \begin{theorem}[Associativity on surreal games]
@@ -504,55 +791,110 @@
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{def:game-inductions,thm:option-extensionality,thm:surreal-add-closure,thm:game-mul-laws,thm:game-distrib,thm:conway-a,thm:conway-b,thm:game-mul-congr}
-  The proof uses well-founded induction on
-  \(\bd(a)+\bd(b)+\bd(c)\), but packages a strengthened hypothesis:
-  associativity may be invoked for any triple whose coordinate birthdays are
-  bounded by those of \((a,b,c)\), provided at least one bound is strict.
-  Thus all seven nonempty ways of replacing coordinates by options are
-  available in a single step.
+  \uses{def:game-inductions,lem:birthday-options,def:game-mul,def:game-neg,def:game-quotient,def:is-surreal,thm:game-order-calculus,thm:option-extensionality,thm:game-neg-order,thm:game-mul-laws,thm:game-distrib}
+  Use the three-game well-founded induction of
+  Definition~\ref{def:game-inductions}.  Lemma~\ref{lem:birthday-options}
+  makes every option replacement smaller.  We strengthen the induction
+  statement as follows: associativity may be used for any triple whose three
+  birthdays are bounded by those of \((a,b,c)\), provided at least one bound
+  is strict.  Thus, if \(a',b',c'\) are chosen options, the induction
+  hypothesis contains all seven equivalences
+  \[
+    \begin{gathered}
+      (a'b)c\GameEq a'(bc),\qquad
+      (ab')c\GameEq a(b'c),\qquad
+      (ab)c'\GameEq a(bc'),\\
+      (a'b')c\GameEq a'(b'c),\qquad
+      (a'b)c'\GameEq a'(bc'),\qquad
+      (ab')c'\GameEq a(b'c'),\\
+      (a'b')c'\GameEq a'(b'c').
+    \end{gathered}
+  \]
 
-  A preparatory quotient calculation expands a product option under either
-  bracketing.  It applies the seven smaller associativity equivalences, the
-  game-level distributive laws, the compatibility of products with
-  equivalence, and the corresponding formula for multiplication by a
-  negative.  After passing to \(\mathcal G/{\GameEq}\), \texttt{abel}
-  normalizes the resulting signed sum and proves the two expanded
-  \(\mulopt\) expressions equivalent.
+  We first record the negation identity needed when a signed product-option
+  expression is expanded:
+  \[
+    u(-v)\GameEq-(uv).
+  \]
+  Prove it by the two-game induction of
+  Definition~\ref{def:game-inductions}.  By
+  Definition~\ref{def:game-neg}, the left options of \(-v\) are the
+  negatives of the right options of \(v\), and its right options are the
+  negatives of the left options of \(v\).  Hence an \(LL\) option of
+  \(u(-v)\) corresponds, after negation, to an \(LR\) option of \(uv\), and an
+  \(RR\) option corresponds to an \(RL\) option; the two mixed families
+  correspond in the reverse way.  In each family, the induction hypotheses
+  for \((u',v)\), \((u,v')\), and \((u',v')\) identify the corresponding
+  product classes.  Negation compatibility from
+  Theorem~\ref{thm:game-neg-order} identifies the negative terms, and
+  additive-group normalization in the quotient of
+  Definition~\ref{def:game-quotient} makes the two product-option classes
+  equal.  Matching the four
+  families in both directions and applying
+  Theorem~\ref{thm:option-extensionality} proves the identity.
+  Product commutativity from Theorem~\ref{thm:game-mul-laws}, together with
+  symmetry and transitivity from Theorem~\ref{thm:game-order-calculus} and
+  negation congruence from Theorem~\ref{thm:game-neg-order}, then gives the
+  companion identity \((-u)v\GameEq-(uv)\).
 
-  We illustrate the option matching in two sign patterns.  First choose an
-  \(LL\) option of \((ab)c\), and suppose its selected left option of \(ab\)
-  is itself of type \(LL\).  For
-  \(a^L\in A^L,b^L\in B^L,c^L\in C^L\), this option is
+  We next compare a nested product option under the two bracketings.  For
+  options \(a',b',c'\), expand
+  \[
+    \mulopt\bigl(\mulopt(a',b;a,b'),c;ab,c'\bigr).
+  \]
+  Distributivity from Theorem~\ref{thm:game-distrib} and the preceding
+  negation identity express its class in
+  \(\mathcal G/{\GameEq}\) as a signed sum of
+  \[
+    (a'b)c,\ (ab')c,\ (a'b')c,\ (ab)c',\
+    (a'b)c',\ (ab')c',\ (a'b')c'.
+  \]
+  Replace the seven full nested-product classes directly by the seven
+  strengthened induction hypotheses displayed above.  Expanding instead
+  \[
+    \mulopt\bigl(a',bc;a,\mulopt(b',c;b,c')\bigr)
+  \]
+  by the same distributive law gives the same seven signed terms, now already
+  written with the bracketing \(a(bc)\).  Associativity and commutativity in
+  the additive quotient of Definition~\ref{def:game-quotient} therefore give
+  \[
+    \mulopt\bigl(\mulopt(a',b;a,b'),c;ab,c'\bigr)
+      \GameEq
+    \mulopt\bigl(a',bc;a,\mulopt(b',c;b,c')\bigr).
+  \]
+
+  We now apply this calculation to the option families of
+  Definition~\ref{def:game-mul}.  First choose an \(LL\) option of \((ab)c\)
+  whose selected left option of \(ab\) is itself \(LL\).  For
+  \(a^L\in A^L,b^L\in B^L,c^L\in C^L\), it is
   \[
     L=\mulopt\bigl(\mulopt(a^L,b;a,b^L),c;ab,c^L\bigr).
   \]
-  On the other bracketing, \(\mulopt(b^L,c;b,c^L)\) is an \(LL\) left option
-  of \(bc\), so
+  The game \(\mulopt(b^L,c;b,c^L)\) is an \(LL\) left option of \(bc\), so
   \[
     L'=\mulopt\bigl(a^L,bc;a,\mulopt(b^L,c;b,c^L)\bigr)
   \]
-  is an \(LL\) left option of \(a(bc)\).  The preparatory seven-hypothesis
-  rewrite gives \(L\GameEq L'\).
+  is an \(LL\) left option of \(a(bc)\).  The preceding calculation with
+  \((a',b',c')=(a^L,b^L,c^L)\) gives \(L\GameEq L'\).
 
-  As a mixed example, choose an \(LR\) right option of \((ab)c\), again using
-  an \(LL\) left option of \(ab\).  With \(c^R\in C^R\), it is
+  For a mixed example, choose an \(LR\) right option of \((ab)c\), again
+  using an \(LL\) left option of \(ab\).  With \(c^R\in C^R\), it is
   \[
     R=\mulopt\bigl(\mulopt(a^L,b;a,b^L),c;ab,c^R\bigr).
   \]
-  Now \(\mulopt(b^L,c;b,c^R)\) is an \(LR\) right option of \(bc\), and hence
+  Now \(\mulopt(b^L,c;b,c^R)\) is an \(LR\) right option of \(bc\), and
   \[
     R'=\mulopt\bigl(a^L,bc;a,\mulopt(b^L,c;b,c^R)\bigr)
   \]
-  is an \(LR\) right option of \(a(bc)\).  The same rewrite, with
-  \((a^L,b^L,c^R)\), proves \(R\GameEq R'\).
+  is the corresponding \(LR\) right option of \(a(bc)\).  The calculation
+  with \((a',b',c')=(a^L,b^L,c^R)\) gives \(R\GameEq R'\).
 
-  The remaining branches are obtained by choosing \(a^R,b^R,c^L,c^R\) with
-  the signs prescribed by the outer and inner option families.  The forward
-  left- and right-option matching lemmas enumerate the four branches from
-  \((ab)c\) to \(a(bc)\); the two symmetric matching lemmas enumerate the
-  reverse direction.  All products required by the seven associativity hypotheses are
-  surreal by Conway A, since options of surreal games are surreal.  Therefore
-  the four matching lemmas satisfy option extensionality and yield
+  The remaining cases choose \(a^R,b^R,c^L,c^R\) according to the outer and
+  inner \(LL,RR,LR,RL\) families.  Reversing the calculation matches options
+  from \(a(bc)\) back to \((ab)c\).  Definition~\ref{def:is-surreal} shows
+  that every chosen option of \(a,b,c\) is surreal, so the seven strengthened
+  recursive associativity statements apply.  Thus the left and right option
+  lists match up to equivalence in both directions.
+  Theorem~\ref{thm:option-extensionality} yields
   \((ab)c\GameEq a(bc)\).
 \end{proof}

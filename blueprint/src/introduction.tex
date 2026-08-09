@@ -4,8 +4,8 @@ This blueprint records the mathematical dependency structure of the
 \href{https://github.com/kdwong/surreal}{surreal Lean repository}.  It follows the declarations
 and proofs in that development rather than presenting a separate textbook construction.
 
-The inductive type \texttt{Game} has finite lists of options, so every game tree in the
-development is finite.  Accordingly, the quotient constructed here is the ring of
+Every game considered here has finitely many options at each node and finite birthday.
+Accordingly, the quotient constructed here is the ring of
 \emph{short} surreal numbers, denoted in this document by \(\NoShort\).  This is the dyadic
 part of Conway's full class of surreal numbers.  No claim about proper-class-sized or
 transfinite birthdays is made.
@@ -31,6 +31,6 @@ graph uses dashed edges for dependencies occurring in a statement or constructio
 edges for proof dependencies.  The graph retains every declared edge, including transitively
 redundant ones, so the complete audited dependency path remains visible.
 
-All nodes marked as formalized were checked against the current local Lean environment.  A
-green node means that the named declaration exists; the prose proof explains the mathematical
-route actually used by the repository at the level relevant to this blueprint.
+All nodes marked as formalized were checked against the current local formal development.  A
+green node means that the corresponding theorem has been verified; the prose proof explains
+its mathematical argument and its place in the dependency path.

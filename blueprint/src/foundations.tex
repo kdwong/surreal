@@ -24,7 +24,7 @@
       = 1+\max\bigl(\{\bd(u):u\in X^L\}\cup
                          \{\bd(v):v\in X^R\}\cup\{0\}\bigr).
   \]
-  Thus this repository uses the convenient convention \(\bd(0)=1\).
+  Thus our convention is \(\bd(0)=1\).
 \end{definition}
 
 \begin{lemma}[Options have smaller birthday]
@@ -36,21 +36,17 @@
 \begin{proof}
   \leanok
   \uses{def:birthday}
-  Write \(x=\{X^L\mid X^R\}\), and let \(B\) be the list obtained by mapping
-  \(\bd\) over \(X^L\mathbin{++}X^R\).  Membership of an option \(u\) in either
-  option list first gives \(\bd(u)\in B\).  The auxiliary lemma
-  \texttt{le\_maximum\_getD\_of\_mem} proves
+  Write \(x=\{X^L\mid X^R\}\), and let \(B\) be the finite collection of
+  birthdays of all members of \(X^L\) and \(X^R\).  If \(u\) belongs to either
+  option collection, then \(\bd(u)\in B\); in particular, \(B\) is nonempty
+  and
   \[
-    \bd(u)\leq B.\operatorname{maximum}.\operatorname{getD}(0).
+    \bd(u)\leq \max B.
   \]
-  Its proof separates the two possible values of \texttt{List.maximum}.  The
-  \texttt{none} case would force \(B\) to be empty, contrary to the displayed
-  membership.  In the \texttt{some} case, the result is the usual bound by a
-  finite-list maximum, implemented by \texttt{List.le\_of\_mem\_argmax}.
-  Since the definition of \(\bd(x)\) is the successor of this maximum,
-  \texttt{Nat.lt\_succ\_of\_le} gives \(\bd(u)<\bd(x)\).  The separate left-
-  and right-option lemmas merely inject membership into
-  \(X^L\mathbin{++}X^R\) and invoke this argument.
+  By Definition~\ref{def:birthday}, \(\bd(x)=1+\max B\), where adjoining
+  \(0\) makes the same formula valid when there are no options.  Hence
+  \(\bd(u)<\bd(x)\).  The left- and right-option assertions are the two
+  specializations of this argument.
 \end{proof}
 
 \section{The recursive order}
@@ -59,7 +55,7 @@
   \label{def:game-order}
   \lean{Game.le,Game.lt,Game.eq}
   \leanok
-  \uses{def:game,def:birthday}
+  \uses{def:game,def:birthday,lem:birthday-options}
   The relation \(x\GameLe y\) is defined recursively by
   \[
     x\GameLe y
@@ -78,7 +74,7 @@
 
 \begin{definition}[Well-founded induction schemes]
   \label{def:game-inductions}
-  \lean{Game.wf_R,Game.wf_B,Game.wf_T,Game.wf_Q}
+  \lean{Game.R,Game.B,Game.T,Game.Q,Game.wf_R,Game.wf_B,Game.wf_T,Game.wf_Q}
   \leanok
   \uses{def:birthday}
   The development uses well-founded relations on one, two, three, and four games.  Their
@@ -87,7 +83,7 @@
 
 \begin{theorem}[Order calculus for games]
   \label{thm:game-order-calculus}
-  \lean{Game.le_congr,Game.le_trans,Game.eq_symm,Game.eq_trans,Game.lt_trans,Game.lt_of_lt_of_le,Game.lt_of_le_of_lt}
+  \lean{Game.le_congr,Game.eq_congr,Game.le_trans',Game.le_trans,Game.eq_symm,Game.eq_trans,Game.lt_trans,Game.lt_of_lt_of_le,Game.lt_of_le_of_lt}
   \leanok
   The relation \(\GameLe\) is reflexive and transitive.  Consequently \(\GameEq\) is an
   equivalence relation, \(\GameLt\) is transitive, and strict and weak inequalities compose in
@@ -96,31 +92,38 @@
 \begin{proof}
   \leanok
   \uses{lem:birthday-options,def:game-order,def:game-inductions}
-  For reflexivity, use well-founded induction on \(\bd(x)\) and unfold
-  \(x\GameLe x\).  If \(x^L\) is a left option and one had
-  \(x\GameLe x^L\), then the left-option clause of this very comparison would
-  say \(\neg(x^L\GameLe x^L)\).  The induction hypothesis gives
-  \(x^L\GameLe x^L\), because \(\bd(x^L)<\bd(x)\), a contradiction.  The
-  right-option clause is identical with the roles reversed.  This is the Lean
-  proof \texttt{Game.le\_congr}.
+  For reflexivity, use the one-game induction scheme of
+  Definition~\ref{def:game-inductions}.  Suppose reflexivity is known for all
+  games of birthday smaller than \(\bd(x)\), and unfold the comparison in
+  Definition~\ref{def:game-order}.  If \(x^L\) is a left option and
+  \(x\GameLe x^L\), then the left-option clause of this last comparison says
+  \(\neg(x^L\GameLe x^L)\).  On the other hand,
+  Lemma~\ref{lem:birthday-options} gives \(\bd(x^L)<\bd(x)\), so the induction
+  hypothesis gives \(x^L\GameLe x^L\), a contradiction.  If \(x^R\) is a
+  right option and \(x^R\GameLe x\), the right-option clause similarly says
+  \(\neg(x^R\GameLe x^R)\), again contradicting the induction hypothesis.
+  Thus \(x\GameLe x\).
 
-  For transitivity, prove the strengthened statement for a triple
-  \((a,b,c)\) by induction on
-  \(\bd(a)+\bd(b)+\bd(c)\).  Assume \(a\GameLe b\) and \(b\GameLe c\).
-  To check the left clause of \(a\GameLe c\), let \(a^L\) be a left option and
-  suppose \(c\GameLe a^L\).  The smaller triple \((b,c,a^L)\) gives
-  \(b\GameLe a^L\), contradicting the left clause of \(a\GameLe b\).
-  To check the right clause, let \(c^R\) be a right option and suppose
-  \(c^R\GameLe a\).  Induction on the smaller triple \((c^R,a,b)\) gives
-  \(c^R\GameLe b\), contradicting the right clause of \(b\GameLe c\).
-  The birthday inequalities for the displayed options are exactly what proves
-  that both recursive calls decrease the triple measure.
+  For transitivity, use the three-game induction scheme of
+  Definition~\ref{def:game-inductions}.  Assume \(a\GameLe b\) and
+  \(b\GameLe c\), and induct on
+  \(\bd(a)+\bd(b)+\bd(c)\).  If \(a^L\) is a left option and
+  \(c\GameLe a^L\), then the induction hypothesis applied to the triple
+  \((b,c,a^L)\) gives \(b\GameLe a^L\).  This contradicts the left-option
+  clause of \(a\GameLe b\) in Definition~\ref{def:game-order}.  Similarly, if
+  \(c^R\) is a right option and \(c^R\GameLe a\), the induction hypothesis for
+  \((c^R,a,b)\) gives \(c^R\GameLe b\), contradicting the right-option clause
+  of \(b\GameLe c\).  Both recursive calls decrease because
+  Lemma~\ref{lem:birthday-options} replaces one coordinate by an option of
+  smaller birthday.  Hence \(a\GameLe c\).
 
-  Symmetry and transitivity of \(\GameEq\) now follow by composing its two weak
-  inequalities.  For strict transitivity, compose the forward weak
-  inequalities; a reverse weak inequality would, by weak transitivity,
-  contradict one of the strict hypotheses.  The two mixed strict--weak laws
-  are proved by the same single contradiction.
+  The remaining assertions follow directly from the definitions in
+  Definition~\ref{def:game-order}.  Symmetry and transitivity of \(\GameEq\)
+  are obtained by composing the two weak inequalities in the appropriate
+  directions.  For strict transitivity, compose the forward weak inequalities.
+  If the reverse weak inequality held, transitivity would contradict one of
+  the two strict hypotheses.  The mixed strict--weak laws follow from the same
+  argument.
 \end{proof}
 
 \begin{theorem}[Equivalence from equivalent option lists]
@@ -134,20 +137,23 @@
 \begin{proof}
   \leanok
   \uses{def:game-order,thm:game-order-calculus}
-  We first prove the one-sided comparison \(a\GameLe b\).  Let \(a^L\) be a
-  left option of \(a\), and suppose for contradiction that
-  \(b\GameLe a^L\).  By the left-option matching hypothesis choose a left
-  option \(b^L\) of \(b\) with \(a^L\GameEq b^L\).  Its forward weak
-  inequality and transitivity give \(b\GameLe b^L\), contradicting the
-  defining left clause of \(b\GameLe b\).  Here reflexivity supplies
-  \(b\GameLe b\).
+  We first verify the two clauses of Definition~\ref{def:game-order} for
+  \(a\GameLe b\).  Let \(a^L\) be a left option of \(a\), and suppose that
+  \(b\GameLe a^L\).  Choose a left option \(b^L\) of \(b\) such that
+  \(a^L\GameEq b^L\).  The forward inequality in this equivalence and
+  transitivity from Theorem~\ref{thm:game-order-calculus} give
+  \(b\GameLe b^L\).  This is impossible: reflexivity from the same theorem
+  gives \(b\GameLe b\), whose left-option clause forbids
+  \(b\GameLe b^L\).
 
-  Similarly, if \(b^R\) is a right option of \(b\) and
-  \(b^R\GameLe a\), choose a matching right option \(a^R\) of \(a\).
-  Transitivity gives \(a^R\GameLe a\), contradicting the right clause of
-  \(a\GameLe a\).  These two contradictions establish \(a\GameLe b\).
-  Applying the same one-sided argument after interchanging \(a\) and \(b\)
-  establishes \(b\GameLe a\), hence \(a\GameEq b\).
+  Next let \(b^R\) be a right option of \(b\), and suppose
+  \(b^R\GameLe a\).  Choose a right option \(a^R\) of \(a\) such that
+  \(b^R\GameEq a^R\).  The reverse inequality \(a^R\GameLe b^R\) in this
+  equivalence and transitivity
+  give \(a^R\GameLe a\), contrary to the right-option clause of the reflexive
+  comparison \(a\GameLe a\).  Thus \(a\GameLe b\).  Interchanging \(a\) and
+  \(b\) proves \(b\GameLe a\), and Definition~\ref{def:game-order} then gives
+  \(a\GameEq b\).
 \end{proof}
 
 \section{Surreal games}
@@ -156,7 +162,7 @@
   \label{def:is-surreal}
   \lean{IsSurreal,IsSurreal.isSurreal_left,IsSurreal.isSurreal_right,IsSurreal.isSurreal_zero,IsSurreal.isSurreal_one}
   \leanok
-  \uses{def:game,def:game-order}
+  \uses{def:game,def:birthday,lem:birthday-options,def:game-order}
   A game \(x=\{X^L\mid X^R\}\) is surreal when every option is surreal and no right option is
   weakly below a left option:
   \[
@@ -180,22 +186,26 @@
 \begin{proof}
   \leanok
   \uses{lem:birthday-options,def:game-order,def:game-inductions,thm:game-order-calculus,def:is-surreal}
-  We spell out the left-option case; the right-option case is its mirror.
-  First prove \(x^L\GameLe x\) by well-founded induction on \(\bd(x)\).
-  For a left option \(z\) of \(x^L\), suppose \(x\GameLe z\).  The induction
-  hypothesis, applied inside the surreal option \(x^L\), gives
-  \(z\GameLe x^L\).  But the left-option clause of \(x\GameLe z\) together
-  with \(x^L\in X^L\) forbids precisely this comparison.  For a right option
-  \(x^R\) of \(x\), the required noncomparison
-  \(\neg(x^R\GameLe x^L)\) is exactly the separation field in the proof that
-  \(x\) is surreal.  Thus both recursive clauses of \(x^L\GameLe x\) hold.
+  We prove the assertion for left options; the right-option proof is its
+  mirror.  Use the one-game induction scheme of
+  Definition~\ref{def:game-inductions}.  Let \(x\) be surreal, and let
+  \(x^L\) be a left option.  By Definition~\ref{def:is-surreal}, \(x^L\) is
+  itself surreal.  We verify the two clauses of
+  Definition~\ref{def:game-order} for \(x^L\GameLe x\).
 
-  The comparison is strict because the reverse inequality
-  \(x\GameLe x^L\) would use its left-option clause to assert
-  \(\neg(x^L\GameLe x^L)\), contradicting reflexivity.  Dually, induction
-  proves \(x\GameLe x^R\), and the right-option clause rules out
-  \(x^R\GameLe x\).  Combining the two statements gives
-  \(x^L\GameLt x\GameLt x^R\).
+  Let \(z\) be a left option of \(x^L\), and suppose \(x\GameLe z\).  Since
+  \(\bd(x^L)<\bd(x)\) by Lemma~\ref{lem:birthday-options}, the induction
+  hypothesis applied to the surreal game \(x^L\) gives \(z\GameLe x^L\).
+  But the left-option clause of \(x\GameLe z\), applied to the option \(x^L\)
+  of \(x\), forbids \(z\GameLe x^L\).  Next let \(x^R\) be a right option of
+  \(x\).  The separation condition in Definition~\ref{def:is-surreal} is
+  precisely \(\neg(x^R\GameLe x^L)\).  Hence \(x^L\GameLe x\).
+
+  It remains to exclude the reverse comparison.  If \(x\GameLe x^L\), its
+  left-option clause gives \(\neg(x^L\GameLe x^L)\), contradicting
+  reflexivity from Theorem~\ref{thm:game-order-calculus}.  Thus
+  \(x^L\GameLt x\) by Definition~\ref{def:game-order}.  The mirrored argument
+  proves \(x\GameLt x^R\) for every right option \(x^R\).
 \end{proof}
 
 \begin{theorem}[Totality and trichotomy for surreal games]
@@ -211,27 +221,51 @@
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{def:game-order,thm:game-order-calculus,thm:between-options}
-  Assume \(\neg(x\GameLe y)\).  Unfolding \(\GameLe\), pushing the negation
-  through its conjunction and universal quantifiers, gives one of two
-  witnesses.
-  Either there is a left option \(x^L\) with \(y\GameLe x^L\), or there is a
-  right option \(y^R\) with \(y^R\GameLe x\).  In the first case the
-  between-options theorem gives \(x^L\GameLe x\), so transitivity yields
-  \(y\GameLe x\).  In the second case it gives
-  \(y\GameLe y^R\), and transitivity again yields \(y\GameLe x\).  Thus
-  failure of \(x\GameLe y\) always implies the reverse weak comparison.
+  \uses{def:game-order,def:is-surreal,thm:game-order-calculus,thm:between-options}
+  Suppose \(\neg(x\GameLe y)\).  Negating the two universal clauses in
+  Definition~\ref{def:game-order} produces one of two witnesses: either there
+  is a left option \(x^L\) such that \(y\GameLe x^L\), or there is a right
+  option \(y^R\) such that \(y^R\GameLe x\).  In the first case,
+  Theorem~\ref{thm:between-options} gives \(x^L\GameLe x\); in the second it
+  gives \(y\GameLe y^R\).  Transitivity from
+  Theorem~\ref{thm:game-order-calculus} therefore yields \(y\GameLe x\) in
+  either case.  Hence
+  \[
+    \neg(x\GameLe y)\quad\Longrightarrow\quad y\GameLe x,
+  \]
+  which proves totality.
 
-  Totality follows by deciding \(x\GameLe y\).  To obtain trichotomy, first
-  use totality and then decide the reverse comparison: two weak comparisons
-  give \(x\GameEq y\); exactly one gives the corresponding strict comparison.
+  For trichotomy, choose a direction supplied by totality and then distinguish
+  whether the reverse weak comparison also holds.  If both hold, then
+  \(x\GameEq y\); if exactly one holds, then the corresponding comparison is
+  strict.  These are precisely the definitions in
+  Definition~\ref{def:game-order}.
 \end{proof}
 
 \begin{definition}[Surreal representatives]
   \label{def:surreal-representative}
   \lean{Surreal,Surreal.sr_zero,Surreal.sr_one,Surreal.leftOption,Surreal.rightOption}
   \leanok
-  \uses{def:is-surreal}
-  The type \texttt{Surreal} consists of a game together with a proof that it is surreal.  It is
-  a type of representatives; equivalent game trees are not yet identified.
+  \uses{def:game,def:is-surreal}
+  A surreal representative is a game together with a proof that it is surreal.  The surreal
+  games \(0\) and \(1\) therefore give canonical representatives.  If \(x\) is a surreal
+  representative, then each left or right option of its underlying game, equipped with the
+  inherited surrealness assertion from Definition~\ref{def:is-surreal}, is again a surreal
+  representative.  Equivalent game trees are not yet identified.
+\end{definition}
+
+\begin{definition}[Pair induction for surreal representatives]
+  \label{def:surreal-pair-induction}
+  \lean{Surreal.BiSurreal,Surreal.U,Surreal.wf_U,Surreal.U_left₁,Surreal.U_left₂,Surreal.U_right₁,Surreal.U_right₂}
+  \leanok
+  \uses{def:birthday,lem:birthday-options,def:surreal-representative}
+  Order pairs \((a,b)\) of surreal representatives by
+  \[
+    (a',b')\mathrel{\vartriangleleft}(a,b)
+      \quad\Longleftrightarrow\quad
+    \bd(a')+\bd(b')<\bd(a)+\bd(b),
+  \]
+  where the birthday of a representative means the birthday of its underlying game.
+  This relation is well founded.  Replacing either coordinate by any left or right option
+  produces a smaller pair, by Lemma~\ref{lem:birthday-options}.
 \end{definition}

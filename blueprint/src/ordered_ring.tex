@@ -13,23 +13,25 @@
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:conway-a,thm:game-mul-congr}
-  Unpack the two representatives as
+  \uses{def:surreal-representative,def:is-surreal,def:game-mul,def:game-order,thm:conway-a,thm:game-mul-congr}
+  By Definition~\ref{def:surreal-representative}, write
   \[
     a=(a_0,h_a),\qquad b=(b_0,h_b),
   \]
-  where \(a_0,b_0:\texttt{Game}\),
-  \(h_a:\texttt{IsSurreal}(a_0)\), and
-  \(h_b:\texttt{IsSurreal}(b_0)\).  Conway A applied to the explicitly named
-  proofs \(h_a,h_b\) proves \(\texttt{IsSurreal}(a_0b_0)\).  Pairing the game
-  \(a_0b_0\) with this proof defines \texttt{Surreal.mul}.
+  where \(a_0,b_0\) are short games and \(h_a,h_b\) witness that they satisfy
+  Definition~\ref{def:is-surreal}.  Theorem~\ref{thm:conway-a} shows that the
+  product \(a_0b_0\), formed as in Definition~\ref{def:game-mul}, is again
+  surreal.  Hence \((a_0b_0,h_{ab})\) is a surreal representative, where
+  \(h_{ab}\) denotes the resulting witness.
 
   For alternative representatives
   \(a'=(a_1,h_{a_1})\) and \(b'=(b_1,h_{b_1})\), assume the underlying
-  games satisfy \(a_0\GameEq a_1\) and \(b_0\GameEq b_1\).  Then
-  \texttt{Game.mul\_congr} is applied to these two equivalences and the four proofs
-  \(h_a,h_{a_1},h_b,h_{b_1}\).  It yields
-  \(a_0b_0\GameEq a_1b_1\), which is precisely independence of both chosen
+  games satisfy \(a_0\GameEq a_1\) and \(b_0\GameEq b_1\) in the sense of
+  Definition~\ref{def:game-order}.  Theorem~\ref{thm:game-mul-congr} then gives
+  \[
+    a_0b_0\GameEq a_1b_1.
+  \]
+  Thus the equivalence class of the product is independent of both chosen
   representatives.
 \end{proof}
 \begin{definition}[Multiplication on short surreal numbers]
@@ -50,17 +52,24 @@
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:game-mul-laws,thm:game-mul-assoc,def:surreal-number-mul}
-  Each law is proved by \texttt{Quotient.inductionOn} (or its binary and
-  ternary variants), reducing the quotient variables to surreal
-  representatives.  Commutativity, the unit laws, and the zero laws then
-  follow by \texttt{Quotient.sound} from the corresponding game
-  equivalences.  For associativity, the stored surrealness proofs of the three
-  representatives discharge the hypotheses of
-  \texttt{Game.mul\_assoc\_of\_isSurreal}; its game equivalence becomes
-  equality of quotient classes.  These representative computations also show
-  directly that the multiplication defined by \texttt{Quotient.map\(_2\)} has
-  the claimed unit and absorbing element.
+  \uses{def:surreal-number,def:surreal-number-mul,thm:game-mul-laws,thm:game-mul-assoc}
+  By Definition~\ref{def:surreal-number}, choose surreal representatives
+  \(a_0,b_0,c_0\) for three arbitrary classes.  Definition~\ref{def:surreal-number-mul}
+  identifies their products with the classes of the corresponding game
+  products.  The commutativity, unit, and zero equivalences of
+  Theorem~\ref{thm:game-mul-laws} therefore give
+  \[
+    [a_0b_0]=[b_0a_0],\qquad [1\cdot a_0]=[a_0]=[a_0\cdot1],
+    \qquad [0\cdot a_0]=[0]=[a_0\cdot0].
+  \]
+  Likewise, Theorem~\ref{thm:game-mul-assoc}, applied to the surreal games
+  \(a_0,b_0,c_0\), gives
+  \[
+    [(a_0b_0)c_0]=[a_0(b_0c_0)].
+  \]
+  Equality of each displayed pair of classes follows precisely because the
+  representative games are equivalent.  Since the representatives were
+  arbitrary, all the asserted laws hold on \(\NoShort\).
 \end{proof}
 
 \begin{theorem}[Distributivity on the quotient]
@@ -76,13 +85,24 @@
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:game-distrib,def:surreal-number-mul,thm:quotient-mul-laws}
-  For left distributivity, induct simultaneously on representatives of
-  \(a,b,c\).  Expanding quotient addition and multiplication leaves the two
-  games \(a_0(b_0+c_0)\) and \(a_0b_0+a_0c_0\), which are equivalent by
-  \texttt{Game.mul\_distrib}; \texttt{Quotient.sound} turns this into equality.
-  For right distributivity, commute \((a+b)c\) to \(c(a+b)\), apply the left
-  law, and commute \(ca\) and \(cb\) back to \(ac\) and \(bc\).
+  \uses{def:surreal-number,thm:game-distrib,def:surreal-number-mul,thm:quotient-mul-laws}
+  Choose surreal representatives \(a_0,b_0,c_0\) as permitted by
+  Definition~\ref{def:surreal-number}.  By
+  Definition~\ref{def:surreal-number-mul}, left distributivity reduces to the
+  equivalence
+  \[
+    a_0(b_0+c_0)\GameEq a_0b_0+a_0c_0,
+  \]
+  which is Theorem~\ref{thm:game-distrib}.  Equivalent representatives define
+  the same class, so this proves \(a(b+c)=ab+ac\).
+
+  For right distributivity, use the commutativity in
+  Theorem~\ref{thm:quotient-mul-laws} to write
+  \[
+    (a+b)c=c(a+b)=ca+cb=ac+bc,
+  \]
+  where the middle equality is the left distributive law just proved and the
+  last equality again uses commutativity.
 \end{proof}
 
 \begin{theorem}[Commutative ring structure]
@@ -93,14 +113,14 @@
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:ordered-add-group,thm:quotient-mul-laws,thm:quotient-distrib}
-  The additive commutative group is Theorem~\ref{thm:ordered-add-group}.
-  Definition~\ref{def:surreal-number-mul} supplies quotient multiplication,
-  while Theorem~\ref{thm:quotient-mul-laws} proves its associativity,
-  commutativity, unit laws, and zero laws.  The two distributive laws are
-  Theorem~\ref{thm:quotient-distrib}.  These results populate the fields of
-  Mathlib's \texttt{CommRing} structure.  No new induction is needed here: the
-  instance is the record assembled from those numbered results.
+  \uses{thm:ordered-add-group,def:surreal-number-mul,thm:quotient-mul-laws,thm:quotient-distrib}
+  Theorem~\ref{thm:ordered-add-group} supplies the additive commutative group,
+  including associativity, commutativity, the zero element, and additive
+  inverses.  Definition~\ref{def:surreal-number-mul} supplies multiplication.
+  Its associativity, commutativity, identity element, and zero laws are exactly
+  Theorem~\ref{thm:quotient-mul-laws}, while both distributive axioms are
+  Theorem~\ref{thm:quotient-distrib}.  These are precisely the axioms of a
+  commutative ring.
 \end{proof}
 
 \section{Positive products and ordered-ring compatibility}
@@ -116,26 +136,33 @@
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:birthday-options,thm:game-order-calculus,thm:between-options,thm:game-mul-laws,thm:conway-b,thm:conway-c}
+  \uses{def:game,def:game-order,def:game-inductions,lem:birthday-options,def:is-surreal,def:cross-conditions,thm:game-order-calculus,thm:game-add-laws,thm:game-mul-laws,thm:conway-b,thm:conway-c}
   First show that \(0\GameLt y\) forces a left option \(y^L\) with
   \(0\GameLe y^L\).  If no left option had this property, the left clause in
-  the recursive definition would give \(y\GameLe0\), contradicting the
-  strict hypothesis.
+  Definition~\ref{def:game-order} would give \(y\GameLe0\); the other clause
+  is vacuous because \(0\) has no right options.  This contradicts the strict
+  hypothesis.
 
-  Now induct well foundedly on \(\bd(y)\) and choose such a \(y^L\).  By
-  totality, either \(y^L\GameLe0\) or \(0\GameLt y^L\).  In the first case,
-  the two weak comparisons give \(y^L\GameEq0\).  Product commutativity,
-  Conway B, and the zero-product law then give \(xy^L\GameEq0\), hence
-  \(0\GameLe xy^L\).  In the second case, \(y^L\) is surreal and has smaller
-  birthday, so the induction hypothesis gives \(0\GameLt xy^L\), again
-  yielding \(0\GameLe xy^L\).
+  Proceed by the well-founded scheme of
+  Definition~\ref{def:game-inductions}, using
+  Lemma~\ref{lem:birthday-options}, and choose such a \(y^L\).  By
+  Definition~\ref{def:is-surreal}, the option \(y^L\) is surreal.  Split according as
+  \(y^L\GameLe0\).  If it does, then the two weak comparisons give
+  \(y^L\GameEq0\).  Theorem~\ref{thm:conway-b}, together with the
+  commutativity and zero-product laws in Theorem~\ref{thm:game-mul-laws}, gives
+  \(xy^L\GameEq0\), hence \(0\GameLe xy^L\).  Otherwise
+  Definition~\ref{def:game-order}, together with the already known comparison
+  \(0\GameLe y^L\), gives \(0\GameLt y^L\).  Since \(y^L\) has smaller birthday, the induction
+  hypothesis gives \(0\GameLt xy^L\), and therefore again
+  \(0\GameLe xy^L\).
 
-  Apply Conway C to \(0\GameLt x\), with the common surreal factor \(y\) and
-  its left option \(y^L\).  After simplifying the products with zero, the
-  resulting \(C_L\) inequality is \(xy^L\GameLt xy\).  Composing it with
-  \(0\GameLe xy^L\) gives \(0\GameLt xy\).  In the Lean proof the final
-  negated reverse comparison is also discharged explicitly by this strict
-  chain.
+  Apply Theorem~\ref{thm:conway-c} to \(0\GameLt x\), with common surreal
+  factor \(y\) and left option \(y^L\).  Simplifying its left cross inequality
+  by the zero-product laws of Theorem~\ref{thm:game-mul-laws} and the zero-sum
+  laws of Theorem~\ref{thm:game-add-laws} yields
+  \(xy^L\GameLt xy\).  The mixed transitivity assertion of
+  Theorem~\ref{thm:game-order-calculus}, applied to
+  \(0\GameLe xy^L\GameLt xy\), proves \(0\GameLt xy\).
 \end{proof}
 
 \begin{theorem}[Positive and nonnegative products on the quotient]
@@ -152,19 +179,24 @@
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:ordered-add-group,def:surreal-number-mul,thm:quotient-mul-laws,thm:game-mul-pos}
-  For strict positivity, induct on representatives of the two quotient
-  classes.  The quotient inequalities unfold to the game inequalities, so the
-  preceding game theorem proves the result directly and well-definedness turns
-  it back into a strict quotient inequality.
+  \uses{def:game,def:game-order,def:surreal-number,thm:ordered-add-group,def:surreal-number-mul,thm:quotient-mul-laws,thm:game-mul-pos}
+  For strict positivity, choose surreal representatives \(a_0,b_0\) of the
+  two classes using Definition~\ref{def:surreal-number}.  The hypotheses become
+  \(0\GameLt a_0\) and \(0\GameLt b_0\).  By
+  Theorem~\ref{thm:game-mul-pos}, \(0\GameLt a_0b_0\); passing to equivalence
+  classes and using Definition~\ref{def:surreal-number-mul} gives \(0<ab\).
 
-  Suppose only \(0\leq a\) and \(0\leq b\).  Totality of the linear order
-  splits each comparison into strictness or equality.  If both are strict,
-  apply the strict positivity theorem and forget strictness.  If \(a=0\) or
-  \(b=0\), rewrite the product using the appropriate zero-product law.  This
-  exhausts the four cases and proves \(0\leq ab\).  The inequality
-  \(0\leq1\) is obtained from the representative games; the impossible
-  reverse strict alternative is excluded by the option \(0\) of \(1\).
+  Suppose only \(0\leq a\) and \(0\leq b\).  The linear order of
+  Theorem~\ref{thm:ordered-add-group} splits each weak comparison into a strict
+  inequality or equality.  If both inequalities are strict, the first part of
+  this theorem gives \(0<ab\), hence \(0\leq ab\).  If \(a=0\) or \(b=0\),
+  the appropriate zero-product law in Theorem~\ref{thm:quotient-mul-laws}
+  gives \(ab=0\).  These cases prove nonnegative-product closure.
+
+  Finally, Definitions~\ref{def:game} and~\ref{def:game-order} show directly
+  that \(0\GameLe1\): the left-option condition for \(0\) and the right-option
+  condition for \(1\) are both vacuous.  Hence their equivalence classes
+  satisfy \(0\leq1\).
 \end{proof}
 
 \begin{theorem}[Monotonicity of multiplication]
@@ -178,60 +210,75 @@
 \begin{proof}
   \leanok
   \uses{thm:ordered-add-group,thm:comm-ring,thm:quotient-mul-pos}
-  Assume \(b\leq c\) and \(0\leq a\).  The ordered additive group rewrites
-  the first hypothesis as \(0\leq c-b\).  Nonnegative-product closure gives
-  \(0\leq a(c-b)\), while distributivity and the ring identities rewrite this
-  product as \(ac-ab\).  The standard equivalence
+  Assume \(b\leq c\) and \(0\leq a\).  By
+  Theorem~\ref{thm:ordered-add-group}, the first hypothesis is equivalent to
+  \(0\leq c-b\).  The nonnegative-product assertion of
+  Theorem~\ref{thm:quotient-mul-pos} gives \(0\leq a(c-b)\), while the ring
+  laws of Theorem~\ref{thm:comm-ring} give \(a(c-b)=ac-ab\).  The ordered
+  additive group equivalence
   \(0\leq ac-ab\Longleftrightarrow ab\leq ac\) yields weak monotonicity on
-  the left.  Commutativity of multiplication gives the corresponding
-  right-sided theorem.
+  the left.  For the right-sided assertion, suppose \(a\leq b\) and
+  \(0\leq c\).  Then \(0\leq b-a\), so
+  \[
+    0\leq(b-a)c=bc-ac,
+  \]
+  and hence \(ac\leq bc\).
 
   If \(b<c\) and \(0<a\), use instead \(0<c-b\).  Strict positivity of a
-  product gives \(0<a(c-b)=ac-ab\), which is equivalent to \(ab<ac\).
-  Commutativity again supplies the right-sided result.  The four theorems are
-  then installed as Mathlib's weak and strict positive-multiplication
-  monotonicity mixins.
+  product, again by Theorem~\ref{thm:quotient-mul-pos}, gives
+  \(0<a(c-b)=ac-ab\), which Theorem~\ref{thm:ordered-add-group} identifies
+  with \(ab<ac\).  Similarly, \(a<b\) and \(0<c\) imply
+  \[
+    0<(b-a)c=bc-ac,
+  \]
+  and hence \(ac<bc\).  These four implications give the four weak and strict,
+  left- and right-sided multiplication-order compatibilities asserted in the
+  theorem.
 \end{proof}
 
-\begin{theorem}[Ordered and strictly ordered ring structures]
+\begin{theorem}[Ordered- and strictly ordered-ring compatibility]
   \label{thm:ordered-ring}
   \lean{Surreal.instIsOrderedRingSurrealNumber,Surreal.instIsStrictOrderedRingSurrealNumber}
   \leanok
-  The ring \(\NoShort\) satisfies Mathlib's ordered-ring and strictly-ordered-ring compatibility
-  axioms.  In particular it is nontrivial, addition reflects order, nonnegative multiplication
-  is monotone, and positive multiplication is strictly monotone.
+  The ring \(\NoShort\) is nontrivial; addition reflects order, multiplication by a
+  nonnegative element preserves weak inequalities, and multiplication by a positive element
+  preserves strict inequalities, on either side.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:ordered-add-group,thm:comm-ring,thm:quotient-mul-pos,thm:quotient-mul-mono}
-  The weak positive-multiplication mixins just constructed, together with the
-  ordered additive commutative group and commutative ring structures, fill the
-  fields of \texttt{IsOrderedRing}.  For the strict structure, the two strict
-  multiplication mixins provide strict monotonicity.  Order reflection for
-  addition is proved explicitly: from \(c+a\leq c+b\), add \(-c\) to both
-  sides and simplify by associativity and inverse laws to obtain \(a\leq b\).
+  \uses{def:game,def:game-order,def:surreal-number,thm:game-order-calculus,thm:ordered-add-group,thm:comm-ring,thm:quotient-mul-mono}
+  Theorem~\ref{thm:ordered-add-group} gives translation invariance of the
+  order, Theorem~\ref{thm:comm-ring} gives the commutative ring laws, and the
+  weak and strict multiplication compatibility assertions are
+  Theorem~\ref{thm:quotient-mul-mono}.  In particular, if
+  \(c+a\leq c+b\), translating both sides by \(-c\) and simplifying with the
+  additive group laws of Theorem~\ref{thm:ordered-add-group} gives
+  \(a\leq b\).  Thus addition reflects order as required.
 
   It remains to supply nontriviality.  At game level, \(0\) is the sole left
-  option of \(1\).  If \(1\GameLe0\), the left clause of this comparison would
-  require \(\neg(0\GameLe0)\), contradicting reflexivity.  Hence the quotient
-  classes of \(0\) and \(1\) are distinct.  Using these witnesses and the
-  additive reflection and strict multiplication fields constructs
-  \texttt{IsStrictOrderedRing}.
+  option of \(1\) by Definition~\ref{def:game}.  If \(1\GameLe0\), the left
+  clause of Definition~\ref{def:game-order} would require
+  \(\neg(0\GameLe0)\), contradicting the reflexivity assertion of
+  Theorem~\ref{thm:game-order-calculus}.  Therefore \(0\) and \(1\) are not
+  equivalent, so their classes in Definition~\ref{def:surreal-number} are
+  distinct.  Order reflection and the weak and strict multiplication
+  inequalities above establish all the claimed ordered-ring
+  compatibility axioms.
 \end{proof}
 
 \begin{corollary}[Main endpoint: a linear ordered commutative ring]
   \label{thm:main-endpoint}
   \lean{Surreal.instLinearOrderSurrealNumber,Surreal.instCommRingSurrealNumber,Surreal.instIsStrictOrderedRingSurrealNumber}
   \leanok
-  The short surreal numbers constructed in the repository form a linear ordered commutative
-  ring.
+  The short surreal numbers constructed above form a linear ordered commutative ring.
 \end{corollary}
 \begin{proof}
   \leanok
   \uses{thm:ordered-add-group,thm:comm-ring,thm:ordered-ring}
-  The linear order is the quotient order from the additive construction, the
-  commutative ring is the quotient algebra above, and the preceding theorem
-  supplies the ordered and strictly ordered compatibility structures.  Since
-  all are instances on the same type \(\NoShort\), Lean combines them without
-  any further quotient argument.
+  By Theorem~\ref{thm:ordered-add-group}, \(\NoShort\) is a linear ordered
+  additive commutative group.  By Theorem~\ref{thm:comm-ring}, \(\NoShort\) is
+  a commutative ring.
+  Theorem~\ref{thm:ordered-ring} proves compatibility of these algebraic
+  operations with the linear order.  Hence \(\NoShort\) is a linear ordered
+  commutative ring.
 \end{proof}
