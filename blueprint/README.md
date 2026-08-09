@@ -3,6 +3,9 @@
 This directory contains the `leanblueprint` source for the mathematical dependency graph of
 the project. The generated HTML and PDF are intentionally ignored by Git.
 
+The current published version is available at
+<https://kdwong.github.io/surreal/blueprint/>.
+
 ## Local web build on PowerShell
 
 From the repository root:

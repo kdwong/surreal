@@ -52,42 +52,42 @@ instance : Mul SurrealNumber where
 theorem SurrealNumber.mul_comm (a b : SurrealNumber) : a * b = b * a := by
   refine Quotient.inductionOn₂ a b ?_
   intro a b
-  apply Quotient.sound
+  apply SurrealNumber.sound_val
   change Game.eq (a.val.mul b.val) (b.val.mul a.val)
   exact Game.mul_comm
 
 theorem SurrealNumber.mul_assoc (a b c : SurrealNumber) : a * b * c = a * (b * c) := by
   refine Quotient.inductionOn₃ a b c ?_
   intro a b c
-  apply Quotient.sound
+  apply SurrealNumber.sound_val
   change Game.eq ((a.val.mul b.val).mul c.val) (a.val.mul (b.val.mul c.val))
   exact Game.mul_assoc_of_isSurreal a.property b.property c.property
 
 theorem SurrealNumber.one_mul (a : SurrealNumber) : 1 * a = a := by
   refine Quotient.inductionOn a ?_
   intro a
-  apply Quotient.sound
+  apply SurrealNumber.sound_val
   change Game.eq (Game.one.mul a.val) a.val
   exact Game.one_mul
 
 theorem SurrealNumber.mul_one (a : SurrealNumber) : a * 1 = a := by
   refine Quotient.inductionOn a ?_
   intro a
-  apply Quotient.sound
+  apply SurrealNumber.sound_val
   change Game.eq (a.val.mul Game.one) a.val
   exact Game.mul_one
 
 theorem SurrealNumber.zero_mul (a : SurrealNumber) : 0 * a = 0 := by
   refine Quotient.inductionOn a ?_
   intro a
-  apply Quotient.sound
+  apply SurrealNumber.sound_val
   change Game.eq (Game.zero.mul a.val) Game.zero
   exact Game.zero_mul a.val
 
 theorem SurrealNumber.mul_zero (a : SurrealNumber) : a * 0 = 0 := by
   refine Quotient.inductionOn a ?_
   intro a
-  apply Quotient.sound
+  apply SurrealNumber.sound_val
   change Game.eq (a.val.mul Game.zero) Game.zero
   exact Game.mul_zero a.val
 
@@ -98,7 +98,7 @@ theorem SurrealNumber.left_distrib (a b c : SurrealNumber) :
     a * (b + c) = a * b + a * c := by
   refine Quotient.inductionOn₃ a b c ?_
   intro a b c
-  apply Quotient.sound
+  apply SurrealNumber.sound_val
   change
     Game.eq
       (a.val.mul (b.val.add c.val))
@@ -117,23 +117,7 @@ theorem SurrealNumber.right_distrib (a b c : SurrealNumber) :
 /-! ## Commutative ring structure -/
 
 noncomputable instance : CommRing SurrealNumber where
-  add_assoc := by
-    intro a b c
-    exact add_assoc a b c
-  add_comm := by
-    intro a b
-    exact add_comm a b
-  zero_add := by
-    intro a
-    exact zero_add a
-  add_zero := by
-    intro a
-    exact add_zero a
-  neg_add_cancel := by
-    intro a
-    exact neg_add_cancel a
-  nsmul := nsmulRec
-  zsmul := zsmulRec
+  __ := inferInstanceAs (AddCommGroup SurrealNumber)
   mul_assoc := SurrealNumber.mul_assoc
   mul_comm := SurrealNumber.mul_comm
   one_mul := SurrealNumber.one_mul
@@ -200,20 +184,7 @@ theorem Game.mul_pos_of_isSurreal {x y : Game}
     Conway.conway_C (x1 := Game.zero) (x2 := x) (y := y) IsSurreal.isSurreal_zero sx sy hx
   have hCL := hC.1 yL hyL
   have hxyL_lt_xy : Game.lt (x ⊗ yL) (x ⊗ y) := by
-    have hCL' : Game.lt (Game.add Game.zero (x ⊗ yL)) (Game.add Game.zero (x ⊗ y)) := by
-      simpa [CLeft, Game.mulOpt4, Game.zero_mul_eq, Game.add_zero, Game.neg_zero]
-        using hCL
-    have hL : Game.eq (x ⊗ yL) (Game.add Game.zero (x ⊗ yL)) := by
-      exact Game.eq_symm (Game.zero_add (a := x ⊗ yL))
-    have hR : Game.eq (x ⊗ y) (Game.add Game.zero (x ⊗ y)) := by
-      exact Game.eq_symm (Game.zero_add (a := x ⊗ y))
-    constructor
-    · exact Game.le_trans
-        ⟨hL.1, Game.le_trans ⟨hCL'.1, hR.2⟩⟩
-    · intro hcontra
-      exact hCL'.2
-        (Game.le_trans
-          ⟨hR.2, Game.le_trans ⟨hcontra, hL.1⟩⟩)
+    simpa only [CLeft, MulCrossLt, Game.zero_mul_eq, Game.zero_add'] using hCL
   constructor
   · exact Game.le_trans ⟨h0le_xyL, hxyL_lt_xy.1⟩
   · intro hxy_le_zero
@@ -293,49 +264,25 @@ noncomputable instance SurrealNumber.instPosMulMono :
     PosMulMono SurrealNumber where
   mul_le_mul_of_nonneg_left := by
     intro a ha b c hbc
-    have hdiff : 0 ≤ c - b := by
-      exact _root_.sub_nonneg.mpr hbc
-    have hprod : 0 ≤ a * (c - b) := by
-      exact SurrealNumber.mul_nonneg ha hdiff
-    have hprod' : 0 ≤ a * c - a * b := by
-      simpa [mul_sub] using hprod
-    exact _root_.sub_nonneg.mp hprod'
+    exact SurrealNumber.mul_le_mul_of_nonneg_left' ha hbc
 
 noncomputable instance SurrealNumber.instMulPosMono :
     MulPosMono SurrealNumber where
   mul_le_mul_of_nonneg_right := by
     intro c hc a b hab
-    have hdiff : 0 ≤ b - a := by
-      exact _root_.sub_nonneg.mpr hab
-    have hprod : 0 ≤ (b - a) * c := by
-      exact SurrealNumber.mul_nonneg hdiff hc
-    have hprod' : 0 ≤ b * c - a * c := by
-      simpa [sub_mul] using hprod
-    exact _root_.sub_nonneg.mp hprod'
+    exact SurrealNumber.mul_le_mul_of_nonneg_right' hc hab
 
 noncomputable instance SurrealNumber.instPosMulStrictMono :
     PosMulStrictMono SurrealNumber where
   mul_lt_mul_of_pos_left := by
     intro a ha b c hbc
-    have hdiff : 0 < c - b := by
-      exact _root_.sub_pos.mpr hbc
-    have hprod : 0 < a * (c - b) := by
-      exact SurrealNumber.mul_pos ha hdiff
-    have hprod' : 0 < a * c - a * b := by
-      simpa [mul_sub] using hprod
-    exact _root_.sub_pos.mp hprod'
+    exact SurrealNumber.mul_lt_mul_of_pos_left' ha hbc
 
 noncomputable instance SurrealNumber.instMulPosStrictMono :
     MulPosStrictMono SurrealNumber where
   mul_lt_mul_of_pos_right := by
     intro c hc a b hab
-    have hdiff : 0 < b - a := by
-      exact _root_.sub_pos.mpr hab
-    have hprod : 0 < (b - a) * c := by
-      exact SurrealNumber.mul_pos hdiff hc
-    have hprod' : 0 < b * c - a * c := by
-      simpa [sub_mul] using hprod
-    exact _root_.sub_pos.mp hprod'
+    exact SurrealNumber.mul_lt_mul_of_pos_right' hc hab
 
 noncomputable instance : IsOrderedRing SurrealNumber where
   __ := inferInstanceAs (IsOrderedAddMonoid SurrealNumber)

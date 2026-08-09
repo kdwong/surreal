@@ -32,24 +32,17 @@ lemma isSurreal_right {g : Game} (hg : IsSurreal g) {r : Game} (hr : r ∈ g.rig
   unfold IsSurreal at hg
   exact hg.2.2 r hr
 
+lemma isSurreal_option {g o : Game} (hg : IsSurreal g) (ho : Game.IsOption o g) :
+    IsSurreal o := by
+  exact ho.elim (isSurreal_left hg) (isSurreal_right hg)
+
 lemma isSurreal_zero : IsSurreal Game.zero := by
-  unfold IsSurreal
-  constructor
-  · simp [Game.zero, Game.left, Game.right]
-  · constructor
-    · simp [Game.zero, Game.left]
-    · simp [Game.zero, Game.right]
+  rw [IsSurreal]
+  simp [Game.zero, Game.left, Game.right]
 
 lemma isSurreal_one : IsSurreal Game.one := by
-  unfold IsSurreal
-  constructor
-  · simp [Game.one, Game.left, Game.right]
-  · constructor
-    · intro g hg
-      simp [Game.one, Game.left] at hg
-      rw [hg]
-      exact isSurreal_zero
-    · simp [Game.one, Game.right]
+  rw [IsSurreal]
+  simp [Game.one, Game.left, Game.right, isSurreal_zero]
 
 /-! ## xL < x < xR
 If x = {xl ∈ XL | xr ∈ XR} is surreal, then xl < x and x < xr.
@@ -60,47 +53,47 @@ private lemma not_le_of_mem_left_right {g : Game} (hg : IsSurreal g)
   unfold IsSurreal at hg
   exact hg.1 l hl r hr
 
-private lemma options_left_le {x : Game} (hx : IsSurreal x) :
-    ∀ xL ∈ x.left, Game.le xL x := by
+private theorem options_lt {x : Game} (hx : IsSurreal x) :
+    (∀ xL ∈ x.left, Game.lt xL x) ∧
+    (∀ xR ∈ x.right, Game.lt x xR) := by
   revert hx
   apply Game.wf_R.induction x
-  intro y IH hy yL hyL
-  unfold Game.le
-  constructor
-  · intro yLL hyLL hy_le_yLL
-    have hyL_sur : IsSurreal yL := isSurreal_left hy hyL
-    have hrec : ∀ z ∈ yL.left, Game.le z yL :=
-      IH yL (Game.birthday_lt_left hyL) hyL_sur
-    exact (Game.not_ge_left_of_le hy_le_yLL hyL) (hrec yLL hyLL)
-  · intro yR hyR
-    exact not_le_of_mem_left_right hy hyL hyR
-
-private lemma options_right_le {x : Game} (hx : IsSurreal x) :
-    ∀ xR ∈ x.right, Game.le x xR := by
-  revert hx
-  apply Game.wf_R.induction x
-  intro y IH hy yR hyR
-  unfold Game.le
+  intro y IH hy
   constructor
   · intro yL hyL
-    exact not_le_of_mem_left_right hy hyL hyR
-  · intro yRR hyRR hyRR_le_y
-    have hyR_sur : IsSurreal yR := isSurreal_right hy hyR
-    have hrec : ∀ z ∈ yR.right, Game.le yR z :=
-      IH yR (Game.birthday_lt_right hyR) hyR_sur
-    exact (Game.not_le_right_of_le hyRR_le_y hyR) (hrec yRR hyRR)
+    constructor
+    · unfold Game.le
+      constructor
+      · intro yLL hyLL hy_le_yLL
+        exact (Game.not_ge_left_of_le hy_le_yLL hyL)
+          ((IH yL (Game.birthday_lt_left hyL)
+            (isSurreal_left hy hyL)).1 yLL hyLL).1
+      · intro yR hyR
+        exact not_le_of_mem_left_right hy hyL hyR
+    · exact Game.not_ge_left_of_le Game.le_congr hyL
+  · intro yR hyR
+    constructor
+    · unfold Game.le
+      constructor
+      · intro yL hyL
+        exact not_le_of_mem_left_right hy hyL hyR
+      · intro yRR hyRR hyRR_le_y
+        exact (Game.not_le_right_of_le hyRR_le_y hyR)
+          ((IH yR (Game.birthday_lt_right hyR)
+            (isSurreal_right hy hyR)).2 yRR hyRR).1
+    · exact Game.not_le_right_of_le Game.le_congr hyR
 
 theorem left_lt {x xL : Game} (hx : IsSurreal x) (hxL : xL ∈ x.left) :
     Game.lt xL x := by
-  exact ⟨(options_left_le hx) xL hxL, Game.not_ge_left_of_le Game.le_congr hxL⟩
+  exact (options_lt hx).1 xL hxL
 
 theorem lt_right {x xR : Game} (hx : IsSurreal x) (hxR : xR ∈ x.right) :
     Game.lt x xR := by
-  exact ⟨(options_right_le hx) xR hxR, Game.not_le_right_of_le Game.le_congr hxR⟩
+  exact (options_lt hx).2 xR hxR
 
 theorem xL_x_xR {x : Game} (hx : IsSurreal x) :
     (∀ xL ∈ x.left, Game.lt xL x) ∧ (∀ xR ∈ x.right, Game.lt x xR) := by
-  exact ⟨fun xL hxL => left_lt hx hxL, fun xR hxR => lt_right hx hxR⟩
+  exact options_lt hx
 
 theorem le_of_not_le {x y : Game} (hx : IsSurreal x) (hy : IsSurreal y)
   (h : ¬ (Game.le x y)) : Game.le y x := by
@@ -203,29 +196,16 @@ theorem U_right₂ {a b : Surreal} {br : Game} (hbr : br ∈ b.val.right) :
 /-! ## Basic order lemmas -/
 
 theorem le_congr {x : Surreal} : x ≼ x := by
-  unfold le
-  apply Game.le_congr
+  exact Game.le_congr
 
 theorem le_trans {x y z : Surreal} : (x ≼ y) ∧ (y ≼ z) → (x ≼ z) := by
-  unfold le
   exact Game.le_trans
 
 theorem eq_symm {x y : Surreal} : (x ∼ y) → (y ∼ x) := by
-  unfold eq
   exact Game.eq_symm
 
 theorem lt_trans {x y z : Surreal} : (x ≺ y) ∧ (y ≺ z) → (x ≺ z) := by
-  intro h
-  unfold lt
-  constructor
-  · apply le_trans
-    exact ⟨h.1.1, h.2.1⟩
-  · intro h_contra
-    have h_z_le_y : z ≼ y := by
-      apply le_trans
-      exact ⟨h_contra, h.1.1⟩
-    have h_z_not_le_y := h.2.2
-    contradiction
+  exact Game.lt_trans
 
 /-! ## xL < x < xR
 From there, we have totality and trichotomy for surreal numbers.
@@ -256,14 +236,7 @@ theorem trichotomy {x y : Surreal} : (x ≺ y) ∨ (x ∼ y) ∨ (y ≺ x) :=
   IsSurreal.trichotomy x.property y.property
 
 theorem not_le_iff_lt {x y : Surreal} : (x ≺ y) ↔ ¬(y ≼ x) := by
-  constructor
-  · intro h_lt
-    unfold lt at h_lt
-    exact h_lt.2
-  · intro h_not_le
-    unfold lt
-    constructor
-    · exact (totality).resolve_left h_not_le
-    · exact h_not_le
+  rw [lt]
+  exact ⟨And.right, fun h => ⟨totality.resolve_left h, h⟩⟩
 
 end Surreal

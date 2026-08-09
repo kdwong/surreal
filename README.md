@@ -9,5 +9,6 @@ They document the actual Lean proof path from finite games and the recursive ord
 simultaneous Conway A/B/C induction to the linear ordered commutative ring structure on short
 surreal numbers.
 
-For a local build, follow [`blueprint/README.md`](blueprint/README.md). The web build includes an
+Read the [published web blueprint](https://kdwong.github.io/surreal/blueprint/) or follow
+[`blueprint/README.md`](blueprint/README.md) for a local build. The web build includes an
 interactive dependency graph and links each formalized item to its Lean declaration.

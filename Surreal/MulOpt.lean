@@ -16,20 +16,22 @@ local notation:70 x " ⊗ " y => Game.mul x y
 
 abbrev M (a Y X b : Game) : Game := Game.mulOpt4 a Y X b
 
-def CLeft (x1 x2 y yL : Game) : Prop :=
-  ((x1 ⊗ y) ⊕ (x2 ⊗ yL)) ≺ ((x1 ⊗ yL) ⊕ (x2 ⊗ y))
-
-def CRight (x1 x2 y yR : Game) : Prop :=
-  ((x1 ⊗ yR) ⊕ (x2 ⊗ y)) ≺ ((x1 ⊗ y) ⊕ (x2 ⊗ yR))
-
-
-/-! ### Public bookkeeping lemmas -/
-
 def MulCrossLe (x1 x2 y1 y2 : Game) : Prop :=
   ((x1 ⊗ y2) ⊕ (x2 ⊗ y1)) ≼ ((x1 ⊗ y1) ⊕ (x2 ⊗ y2))
 
 def MulCrossLt (x1 x2 y1 y2 : Game) : Prop :=
   ((x1 ⊗ y2) ⊕ (x2 ⊗ y1)) ≺ ((x1 ⊗ y1) ⊕ (x2 ⊗ y2))
+
+/-! The two Conway C conditions are the corresponding strict cross relations. -/
+
+abbrev CLeft (x1 x2 y yL : Game) : Prop :=
+  ((x1 ⊗ y) ⊕ (x2 ⊗ yL)) ≺ ((x1 ⊗ yL) ⊕ (x2 ⊗ y))
+
+abbrev CRight (x1 x2 y yR : Game) : Prop :=
+  ((x1 ⊗ yR) ⊕ (x2 ⊗ y)) ≺ ((x1 ⊗ y) ⊕ (x2 ⊗ yR))
+
+
+/-! ### Public bookkeeping lemmas -/
 
 @[simp] theorem game_q_le {a b : Game} : q a ≤ q b ↔ a ≼ b := by
   rfl
@@ -106,116 +108,107 @@ lemma MulCrossLt.congr_left {x1 xm x2 y1 y2 : Game}
   have hEq2q := game_q_equiv.mpr hEq2
   simpa only [q_add, hEq1q, hEq2q] using hq
 
+private lemma mulCrossLe_q {a c d e : Game}
+    (h : MulCrossLe a c d e) :
+    q (a ⊗ e) + q (c ⊗ d) ≤ q (a ⊗ d) + q (c ⊗ e) := by
+  simpa only [q_add] using (game_q_le.mpr h)
+
+private lemma mulCrossLt_q {a c d e : Game}
+    (h : MulCrossLt a c d e) :
+    q (a ⊗ e) + q (c ⊗ d) < q (a ⊗ d) + q (c ⊗ e) := by
+  simpa only [q_add] using (game_q_lt.mpr h)
+
+private lemma mulOpt4_xslot_mono_q
+    {r : GameQ → GameQ → Prop}
+    {a b c d e : Game}
+    (hq : r (q (a ⊗ e) + q (c ⊗ d)) (q (a ⊗ d) + q (c ⊗ e)))
+    (add_right : ∀ {x y}, r x y → ∀ z, r (x + z) (y + z)) :
+    r (q (M a e b d)) (q (M c e b d)) := by
+  simp only [M, Game.mulOpt4, q_add, q_neg]
+  convert
+    add_right hq ((-q (a ⊗ d) + q (b ⊗ d)) + -q (c ⊗ d))
+    using 1 <;> abel
+
+private lemma mulOpt4_xslot_antitone_q
+    {r : GameQ → GameQ → Prop}
+    {a b c d e : Game}
+    (hq : r (q (a ⊗ e) + q (c ⊗ d)) (q (a ⊗ d) + q (c ⊗ e)))
+    (add_right : ∀ {x y}, r x y → ∀ z, r (x + z) (y + z)) :
+    r (q (M c d b e)) (q (M a d b e)) := by
+  simp only [M, Game.mulOpt4, q_add, q_neg]
+  convert
+    add_right hq ((q (b ⊗ e) + -q (c ⊗ e)) + -q (a ⊗ e))
+    using 1 <;> abel
+
+private lemma mulOpt4_yslot_mono_q
+    {r : GameQ → GameQ → Prop}
+    {a b c d e : Game}
+    (hq : r (q (a ⊗ e) + q (c ⊗ d)) (q (a ⊗ d) + q (c ⊗ e)))
+    (add_right : ∀ {x y}, r x y → ∀ z, r (x + z) (y + z)) :
+    r (q (M a b c d)) (q (M a b c e)) := by
+  simp only [M, Game.mulOpt4, q_add, q_neg]
+  convert
+    add_right hq ((q (a ⊗ b) + -q (a ⊗ d)) + -q (a ⊗ e))
+    using 1 <;> abel
+
+private lemma mulOpt4_yslot_antitone_q
+    {r : GameQ → GameQ → Prop}
+    {a b c d e : Game}
+    (hq : r (q (a ⊗ e) + q (c ⊗ d)) (q (a ⊗ d) + q (c ⊗ e)))
+    (add_right : ∀ {x y}, r x y → ∀ z, r (x + z) (y + z)) :
+    r (q (M c b a e)) (q (M c b a d)) := by
+  simp only [M, Game.mulOpt4, q_add, q_neg]
+  convert
+    add_right hq ((q (c ⊗ b) + -q (c ⊗ e)) + -q (c ⊗ d))
+    using 1 <;> abel
+
 lemma mulOpt4_xslot_mono_le_of_cross {a b c d e : Game}
     (h : MulCrossLe a c d e) :
     M a e b d ≼ M c e b d := by
-  simp [M, Game.mulOpt4]
-  rw [MulCrossLe] at h
-  have hq : q (a ⊗ e) + q (c ⊗ d) ≤ q (a ⊗ d) + q (c ⊗ e) := by
-    simpa using (game_q_le.mpr h)
-  apply game_q_le.mp
-  simp only [q_add, q_neg]
-  convert
-    (_root_.add_le_add_right hq
-      ((-q (a ⊗ d) + q (b ⊗ d)) + -q (c ⊗ d)))
-    using 1 <;> abel
+  exact game_q_le.mp <|
+    mulOpt4_xslot_mono_q (mulCrossLe_q h) _root_.add_le_add_right
 
 lemma mulOpt4_xslot_antitone_le_of_cross {a b c d e : Game}
     (h : MulCrossLe a c d e) :
     M c d b e ≼ M a d b e := by
-  simp [M, Game.mulOpt4]
-  rw [MulCrossLe] at h
-  have hq : q (a ⊗ e) + q (c ⊗ d) ≤ q (a ⊗ d) + q (c ⊗ e) := by
-    simpa using (game_q_le.mpr h)
-  apply game_q_le.mp
-  simp only [q_add, q_neg]
-  convert
-    (_root_.add_le_add_right hq
-      ((q (b ⊗ e) + -q (c ⊗ e)) + -q (a ⊗ e)))
-    using 1 <;> abel
+  exact game_q_le.mp <|
+    mulOpt4_xslot_antitone_q (mulCrossLe_q h) _root_.add_le_add_right
 
 lemma mulOpt4_yslot_mono_lt_of_cross {a b c d e : Game}
     (h : MulCrossLt a c d e) :
     M a b c d ≺ M a b c e := by
-  simp [M, Game.mulOpt4]
-  rw [MulCrossLt] at h
-  have hq : q (a ⊗ e) + q (c ⊗ d) < q (a ⊗ d) + q (c ⊗ e) := by
-    simpa using (game_q_lt.mpr h)
-  apply game_q_lt.mp
-  simp only [q_add, q_neg]
-  convert
-    (_root_.add_lt_add_right hq
-      ((q (a ⊗ b) + -q (a ⊗ d)) + -q (a ⊗ e)))
-    using 1 <;> abel
+  exact game_q_lt.mp <|
+    mulOpt4_yslot_mono_q (mulCrossLt_q h) _root_.add_lt_add_right
 
 lemma mulOpt4_xslot_mono_lt_of_cross {a b c d e : Game}
     (h : MulCrossLt a c d e) :
     M a e b d ≺ M c e b d := by
-  simp [M, Game.mulOpt4]
-  rw [MulCrossLt] at h
-  have hq : q (a ⊗ e) + q (c ⊗ d) < q (a ⊗ d) + q (c ⊗ e) := by
-    simpa using (game_q_lt.mpr h)
-  apply game_q_lt.mp
-  simp only [q_add, q_neg]
-  convert
-    (_root_.add_lt_add_right hq
-      ((-q (a ⊗ d) + q (b ⊗ d)) + -q (c ⊗ d)))
-    using 1 <;> abel
+  exact game_q_lt.mp <|
+    mulOpt4_xslot_mono_q (mulCrossLt_q h) _root_.add_lt_add_right
 
 lemma mulOpt4_xslot_antitone_lt_of_cross {a b c d e : Game}
     (h : MulCrossLt a c d e) :
     M c d b e ≺ M a d b e := by
-  simp [M, Game.mulOpt4]
-  rw [MulCrossLt] at h
-  have hq : q (a ⊗ e) + q (c ⊗ d) < q (a ⊗ d) + q (c ⊗ e) := by
-    simpa using (game_q_lt.mpr h)
-  apply game_q_lt.mp
-  simp only [q_add, q_neg]
-  convert
-    (_root_.add_lt_add_right hq
-      ((q (b ⊗ e) + -q (c ⊗ e)) + -q (a ⊗ e)))
-    using 1 <;> abel
+  exact game_q_lt.mp <|
+    mulOpt4_xslot_antitone_q (mulCrossLt_q h) _root_.add_lt_add_right
 
 lemma mulOpt4_yslot_mono_le_of_cross {a b c d e : Game}
     (h : MulCrossLe a c d e) :
     M a b c d ≼ M a b c e := by
-  simp [M, Game.mulOpt4]
-  rw [MulCrossLe] at h
-  have hq : q (a ⊗ e) + q (c ⊗ d) ≤ q (a ⊗ d) + q (c ⊗ e) := by
-    simpa using (game_q_le.mpr h)
-  apply game_q_le.mp
-  simp only [q_add, q_neg]
-  convert
-    (_root_.add_le_add_right hq
-      ((q (a ⊗ b) + -q (a ⊗ d)) + -q (a ⊗ e)))
-    using 1 <;> abel
+  exact game_q_le.mp <|
+    mulOpt4_yslot_mono_q (mulCrossLe_q h) _root_.add_le_add_right
 
 lemma mulOpt4_yslot_antitone_le_of_cross {a b c d e : Game}
     (h : MulCrossLe a c d e) :
     M c b a e ≼ M c b a d := by
-  simp [M, Game.mulOpt4]
-  rw [MulCrossLe] at h
-  have hq : q (a ⊗ e) + q (c ⊗ d) ≤ q (a ⊗ d) + q (c ⊗ e) := by
-    simpa using (game_q_le.mpr h)
-  apply game_q_le.mp
-  simp only [q_add, q_neg]
-  convert
-    (_root_.add_le_add_right hq
-      ((q (c ⊗ b) + -q (c ⊗ e)) + -q (c ⊗ d)))
-    using 1 <;> abel
+  exact game_q_le.mp <|
+    mulOpt4_yslot_antitone_q (mulCrossLe_q h) _root_.add_le_add_right
 
 lemma mulOpt4_yslot_antitone_lt_of_cross {a b c d e : Game}
     (h : MulCrossLt a c d e) :
     M c b a e ≺ M c b a d := by
-  simp [M, Game.mulOpt4]
-  rw [MulCrossLt] at h
-  have hq : q (a ⊗ e) + q (c ⊗ d) < q (a ⊗ d) + q (c ⊗ e) := by
-    simpa using (game_q_lt.mpr h)
-  apply game_q_lt.mp
-  simp only [q_add, q_neg]
-  convert
-    (_root_.add_lt_add_right hq ((q (c ⊗ b) + -q (c ⊗ e)) + -q (c ⊗ d)))
-    using 1 <;> abel
+  exact game_q_lt.mp <|
+    mulOpt4_yslot_antitone_q (mulCrossLt_q h) _root_.add_lt_add_right
 
 
 /-! ### Some basic facts -/
@@ -228,9 +221,8 @@ lemma adjacentC_left_of_A
     (∀ yR ∈ y.right, CRight xL x y yR) := by
   constructor
   · intro yL hyL
-    have hmem : M xL y x yL ∈ (x ⊗ y).left := by
-      rw [mem_mul_left]
-      exact Or.inl ⟨xL, hxL, yL, hyL, rfl⟩
+    have hmem : M xL y x yL ∈ (x ⊗ y).left :=
+      mem_mul_left_ll hxL hyL
     have hlt : M xL y x yL ≺ x ⊗ y :=
       IsSurreal.left_lt hxy hmem
     unfold CLeft
@@ -240,9 +232,8 @@ lemma adjacentC_left_of_A
     convert hq' using 1 <;>
       simp [M, Game.mulOpt4, q_add, q_neg]; abel
   · intro yR hyR
-    have hmem : M xL y x yR ∈ (x ⊗ y).right := by
-      rw [mem_mul_right]
-      exact Or.inl ⟨xL, hxL, yR, hyR, rfl⟩
+    have hmem : M xL y x yR ∈ (x ⊗ y).right :=
+      mem_mul_right_lr hxL hyR
     have hlt : (x ⊗ y) ≺ M xL y x yR :=
       IsSurreal.lt_right hxy hmem
     unfold CRight
@@ -260,9 +251,8 @@ lemma adjacentC_right_of_A
     (∀ yR ∈ y.right, CRight x xR y yR) := by
   constructor
   · intro yL hyL
-    have hmem : M xR y x yL ∈ (x ⊗ y).right := by
-      rw [mem_mul_right]
-      exact Or.inr ⟨xR, hxR, yL, hyL, rfl⟩
+    have hmem : M xR y x yL ∈ (x ⊗ y).right :=
+      mem_mul_right_rl hxR hyL
     have hlt : (x ⊗ y) ≺ M xR y x yL :=
       IsSurreal.lt_right hxy hmem
     unfold CLeft
@@ -272,9 +262,8 @@ lemma adjacentC_right_of_A
     convert hq' using 1;
       simp [M, Game.mulOpt4, q_add, q_neg]; abel
   · intro yR hyR
-    have hmem : M xR y x yR ∈ (x ⊗ y).left := by
-      rw [mem_mul_left]
-      exact Or.inr ⟨xR, hxR, yR, hyR, rfl⟩
+    have hmem : M xR y x yR ∈ (x ⊗ y).left :=
+      mem_mul_left_rr hxR hyR
     have hlt : M xR y x yR ≺ x ⊗ y :=
       IsSurreal.left_lt hxy hmem
     unfold CRight
@@ -359,8 +348,7 @@ lemma MulCrossLt_of_CLeft_y
     {xL x yL yR : Game}
     (h : CLeft yL yR x xL) :
     MulCrossLt xL x yL yR := by
-  apply MulCrossLt.swap
-  simpa [CLeft, MulCrossLt] using h
+  exact MulCrossLt.swap h
 
 /-- Move from a left `y`-option to a right `y`-option. -/
 lemma mulOpt4_move_y_left_to_right
@@ -375,26 +363,21 @@ lemma mulOpt4_move_x_left_to_right
     {xL xR y x yL : Game}
     (h : CLeft xL xR y yL) :
     M xL y x yL ≺ M xR y x yL := by
-  have hcross : MulCrossLt xL xR yL y := by
-    simpa [CLeft, MulCrossLt] using h
-  exact mulOpt4_xslot_mono_lt_of_cross hcross
+  exact mulOpt4_xslot_mono_lt_of_cross h
 
 /-- Move from a right `x`-option to a smaller `x`-option, keeping a right `y`-option fixed. -/
 lemma mulOpt4_move_x_right_to_left
     {xL xR y x yR : Game}
     (h : CRight xL xR y yR) :
     M xR y x yR ≺ M xL y x yR := by
-  have hcross : MulCrossLt xL xR y yR := by
-    simpa [CRight, MulCrossLt] using h
-  exact mulOpt4_xslot_antitone_lt_of_cross hcross
+  exact mulOpt4_xslot_antitone_lt_of_cross h
 
 /-- Move from a right `y`-option to a left `y`-option. -/
 lemma MulCrossLt_of_CRight_y
     {xR x yL yR : Game}
     (h : CRight yL yR x xR) :
     MulCrossLt x xR yL yR := by
-  apply MulCrossLt.swap
-  simpa [CRight, MulCrossLt] using h
+  exact MulCrossLt.swap h
 
 lemma mulOpt4_move_y_right_to_left
     {xR y x yL yR : Game}
@@ -404,6 +387,20 @@ lemma mulOpt4_move_y_right_to_left
     (MulCrossLt_of_CRight_y h)
 
 /-! #### Algebraic branch-closing lemmas -/
+
+private lemma add_add_neg_lt_right
+    {p q r s : GameQ} (h : p + q < r + s) :
+    (p + q) + (-r) < s := by
+  have h' := _root_.add_lt_add_right h (-r)
+  convert h' using 1
+  all_goals abel
+
+private lemma left_lt_add_add_neg
+    {p q r s : GameQ} (h : p + q < r + s) :
+    p < (r + s) + (-q) := by
+  have h' := _root_.add_lt_add_right h (-q)
+  convert h' using 1
+  all_goals abel
 
 lemma mulOpt4_LL_lt_product
     {a aL b y yL : Game}
@@ -415,10 +412,9 @@ lemma mulOpt4_LL_lt_product
   have hq := game_q_lt.mpr hC
   have hBq : q (a ⊗ yL) = q (b ⊗ yL) := game_q_equiv.mpr hB
   simp only [q_add] at hq
-  have hq' :=
-    _root_.add_lt_add_right hq (-(q (aL ⊗ yL)))
-  convert hq' using 1 <;>
-    simp [M, Game.mulOpt4, q_add, q_neg, hBq]
+  have hq' := add_add_neg_lt_right hq
+  convert hq' using 1
+  all_goals simp [M, Game.mulOpt4, q_add, q_neg, hBq]
 
 lemma mulOpt4_RR_lt_product
     {a aR b y yR : Game}
@@ -430,10 +426,16 @@ lemma mulOpt4_RR_lt_product
   have hq := game_q_lt.mpr hC
   have hBq : q (a ⊗ yR) = q (b ⊗ yR) := game_q_equiv.mpr hB
   simp only [q_add] at hq
-  have hq' :=
-    _root_.add_lt_add_right hq (-(q (aR ⊗ yR)))
-  convert hq' using 1 <;>
-    simp [M, Game.mulOpt4, q_add, q_neg, hBq]; abel
+  have hq0 :
+      q (aR ⊗ y) + q (b ⊗ yR) < q (aR ⊗ yR) + q (b ⊗ y) := by
+    calc
+      q (aR ⊗ y) + q (b ⊗ yR) = q (b ⊗ yR) + q (aR ⊗ y) :=
+        _root_.add_comm _ _
+      _ < q (b ⊗ y) + q (aR ⊗ yR) := hq
+      _ = q (aR ⊗ yR) + q (b ⊗ y) := _root_.add_comm _ _
+  have hq' := add_add_neg_lt_right hq0
+  convert hq' using 1
+  all_goals simp [M, Game.mulOpt4, q_add, q_neg, hBq]
 
 lemma product_lt_mulOpt4_LR
     {a b bL y yR : Game}
@@ -445,10 +447,15 @@ lemma product_lt_mulOpt4_LR
   have hq := game_q_lt.mpr hC
   have hBq : q (b ⊗ yR) = q (a ⊗ yR) := game_q_equiv.mpr hB
   simp only [q_add] at hq
-  have hq' :=
-    _root_.add_lt_add_right hq (-(q (bL ⊗ yR)))
-  convert hq' using 1 <;>
-    simp [M, Game.mulOpt4, q_add, q_neg, hBq]
+  have hq0 :
+      q (a ⊗ y) + q (bL ⊗ yR) < q (bL ⊗ y) + q (a ⊗ yR) := by
+    calc
+      q (a ⊗ y) + q (bL ⊗ yR) = q (bL ⊗ yR) + q (a ⊗ y) :=
+        _root_.add_comm _ _
+      _ < q (bL ⊗ y) + q (a ⊗ yR) := hq
+  have hq' := left_lt_add_add_neg hq0
+  convert hq' using 1
+  all_goals simp [M, Game.mulOpt4, q_add, q_neg, hBq]
 
 lemma product_lt_mulOpt4_RL
     {a b bR y yL : Game}
@@ -460,7 +467,11 @@ lemma product_lt_mulOpt4_RL
   have hq := game_q_lt.mpr hC
   have hBq : q (b ⊗ yL) = q (a ⊗ yL) := game_q_equiv.mpr hB
   simp only [q_add] at hq
-  have hq' :=
-    _root_.add_lt_add_right hq (-(q (bR ⊗ yL)))
-  convert hq' using 1 <;>
-    simp [M, Game.mulOpt4, q_add, q_neg, hBq]; abel
+  have hq0 :
+      q (a ⊗ y) + q (bR ⊗ yL) < q (bR ⊗ y) + q (a ⊗ yL) := by
+    calc
+      q (a ⊗ y) + q (bR ⊗ yL) < q (a ⊗ yL) + q (bR ⊗ y) := hq
+      _ = q (bR ⊗ y) + q (a ⊗ yL) := _root_.add_comm _ _
+  have hq' := left_lt_add_add_neg hq0
+  convert hq' using 1
+  all_goals simp [M, Game.mulOpt4, q_add, q_neg, hBq]

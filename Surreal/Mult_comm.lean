@@ -7,9 +7,13 @@ import Surreal.Surreal
 import Surreal.Addition
 
 
-/-- ## Definition of a ⊗ b
-left elements are al of the form (al ⊗ b) ⊕ (a ⊗ bl) ⊕ (al ⊗ bl).neg
-right elements are all of the form (al ⊗ br) ⊕ (a ⊗ br) ⊕ (al ⊗ br).neg
+/-- ## Definition of `x ⊗ y`
+
+The left options are the `LL` and `RR` families
+`xL ⊗ y + x ⊗ yL - xL ⊗ yL` and
+`xR ⊗ y + x ⊗ yR - xR ⊗ yR`.  The right options are the `LR` and `RL`
+families `xL ⊗ y + x ⊗ yR - xL ⊗ yR` and
+`xR ⊗ y + x ⊗ yL - xR ⊗ yL`.
 -/
 
 def flatten {α : Type} : List (List α) → List α
@@ -23,42 +27,6 @@ def flatten {α : Type} : List (List α) → List α
       simp [flatten]
   | cons xs xss ih =>
       simp [flatten, List.mem_append, ih]
-
-private lemma birthday_add_lt_left₁ {x y xl : Game} (hxl : xl ∈ x.left) :
-    xl.birthday + y.birthday < x.birthday + y.birthday := by
-  exact add_lt_add_right (Game.birthday_lt_left hxl) _
-
-private lemma birthday_add_lt_right₁ {x y xr : Game} (hxr : xr ∈ x.right) :
-    xr.birthday + y.birthday < x.birthday + y.birthday := by
-  exact add_lt_add_right (Game.birthday_lt_right hxr) _
-
-private lemma birthday_add_lt_left₂ {x y yl : Game} (hyl : yl ∈ y.left) :
-    x.birthday + yl.birthday < x.birthday + y.birthday := by
-  exact add_lt_add_left (Game.birthday_lt_left hyl) _
-
-private lemma birthday_add_lt_right₂ {x y yr : Game} (hyr : yr ∈ y.right) :
-    x.birthday + yr.birthday < x.birthday + y.birthday := by
-  exact add_lt_add_left (Game.birthday_lt_right hyr) _
-
-private lemma birthday_add_lt_left_left {x y xl yl : Game}
-    (hxl : xl ∈ x.left) (hyl : yl ∈ y.left) :
-    xl.birthday + yl.birthday < x.birthday + y.birthday := by
-  exact add_lt_add (Game.birthday_lt_left hxl) (Game.birthday_lt_left hyl)
-
-private lemma birthday_add_lt_left_right {x y xl yr : Game}
-    (hxl : xl ∈ x.left) (hyr : yr ∈ y.right) :
-    xl.birthday + yr.birthday < x.birthday + y.birthday := by
-  exact add_lt_add (Game.birthday_lt_left hxl) (Game.birthday_lt_right hyr)
-
-private lemma birthday_add_lt_right_left {x y xr yl : Game}
-    (hxr : xr ∈ x.right) (hyl : yl ∈ y.left) :
-    xr.birthday + yl.birthday < x.birthday + y.birthday := by
-  exact add_lt_add (Game.birthday_lt_right hxr) (Game.birthday_lt_left hyl)
-
-private lemma birthday_add_lt_right_right {x y xr yr : Game}
-    (hxr : xr ∈ x.right) (hyr : yr ∈ y.right) :
-    xr.birthday + yr.birthday < x.birthday + y.birthday := by
-  exact add_lt_add (Game.birthday_lt_right hxr) (Game.birthday_lt_right hyr)
 
 def Game.mul : Game → Game → Game
   | x, y =>
@@ -97,38 +65,46 @@ def Game.mul : Game → Game → Game
       Game.mk L R
   termination_by x y => Game.birthday x + Game.birthday y
   decreasing_by
-    · simpa [_hy] using
-        birthday_add_lt_left₁ (x := Game.mk XL XR) (y := y)
-          (xl := xl) (by simpa [Game.left] using _hxl)
-    · simpa [_hx] using
-        birthday_add_lt_left₂ (x := x) (y := Game.mk YL YR)
-          (yl := yl) (by simpa [Game.left] using _hyl)
-    · exact birthday_add_lt_left_left (x := Game.mk XL XR) (y := Game.mk YL YR)
-        (xl := xl) (yl := yl) (by simpa [Game.left] using _hxl) (by simpa [Game.left] using _hyl)
-    · simpa [_hy] using
-        birthday_add_lt_right₁ (x := Game.mk XL XR) (y := y)
-          (xr := xr) (by simpa [Game.right] using _hxr)
-    · simpa [_hx] using
-        birthday_add_lt_right₂ (x := x) (y := Game.mk YL YR)
-          (yr := yr) (by simpa [Game.right] using _hyr)
-    · exact birthday_add_lt_right_right (x := Game.mk XL XR) (y := Game.mk YL YR)
-        (xr := xr) (yr := yr) (by simpa [Game.right] using _hxr) (by simpa [Game.right] using _hyr)
-    · simpa [_hy] using
-        birthday_add_lt_left₁ (x := Game.mk XL XR) (y := y)
-          (xl := xl) (by simpa [Game.left] using _hxl)
-    · simpa [_hx] using
-        birthday_add_lt_right₂ (x := x) (y := Game.mk YL YR)
-          (yr := yr) (by simpa [Game.right] using _hyr)
-    · exact birthday_add_lt_left_right (x := Game.mk XL XR) (y := Game.mk YL YR)
-        (xl := xl) (yr := yr) (by simpa [Game.left] using _hxl) (by simpa [Game.right] using _hyr)
-    · simpa [_hy] using
-        birthday_add_lt_right₁ (x := Game.mk XL XR) (y := y)
-          (xr := xr) (by simpa [Game.right] using _hxr)
-    · simpa [_hx] using
-        birthday_add_lt_left₂ (x := x) (y := Game.mk YL YR)
-          (yl := yl) (by simpa [Game.left] using _hyl)
-    · exact birthday_add_lt_right_left (x := Game.mk XL XR) (y := Game.mk YL YR)
-          (xr := xr) (yl := yl) (by simpa [Game.right] using _hxr) (by simpa [Game.left] using _hyl)
+    · simpa [_hy, Game.B] using
+        (Game.B_of_left_mem_fst (x := Game.mk XL XR) (y := y)
+          (xl := xl) (by simpa [Game.left] using _hxl))
+    · simpa [_hx, Game.B] using
+        (Game.B_of_left_mem_snd (x := x) (y := Game.mk YL YR)
+          (yl := yl) (by simpa [Game.left] using _hyl))
+    · simpa [Game.B] using
+        (Game.B_of_left_left (a := Game.mk XL XR) (b := Game.mk YL YR)
+          (aL := xl) (bL := yl)
+          (by simpa [Game.left] using _hxl) (by simpa [Game.left] using _hyl))
+    · simpa [_hy, Game.B] using
+        (Game.B_of_right_mem_fst (x := Game.mk XL XR) (y := y)
+          (xr := xr) (by simpa [Game.right] using _hxr))
+    · simpa [_hx, Game.B] using
+        (Game.B_of_right_mem_snd (x := x) (y := Game.mk YL YR)
+          (yr := yr) (by simpa [Game.right] using _hyr))
+    · simpa [Game.B] using
+        (Game.B_of_right_right (a := Game.mk XL XR) (b := Game.mk YL YR)
+          (aR := xr) (bR := yr)
+          (by simpa [Game.right] using _hxr) (by simpa [Game.right] using _hyr))
+    · simpa [_hy, Game.B] using
+        (Game.B_of_left_mem_fst (x := Game.mk XL XR) (y := y)
+          (xl := xl) (by simpa [Game.left] using _hxl))
+    · simpa [_hx, Game.B] using
+        (Game.B_of_right_mem_snd (x := x) (y := Game.mk YL YR)
+          (yr := yr) (by simpa [Game.right] using _hyr))
+    · simpa [Game.B] using
+        (Game.B_of_left_right (a := Game.mk XL XR) (b := Game.mk YL YR)
+          (aL := xl) (bR := yr)
+          (by simpa [Game.left] using _hxl) (by simpa [Game.right] using _hyr))
+    · simpa [_hy, Game.B] using
+        (Game.B_of_right_mem_fst (x := Game.mk XL XR) (y := y)
+          (xr := xr) (by simpa [Game.right] using _hxr))
+    · simpa [_hx, Game.B] using
+        (Game.B_of_left_mem_snd (x := x) (y := Game.mk YL YR)
+          (yl := yl) (by simpa [Game.left] using _hyl))
+    · simpa [Game.B] using
+        (Game.B_of_right_left (a := Game.mk XL XR) (b := Game.mk YL YR)
+          (aR := xr) (bL := yl)
+          (by simpa [Game.right] using _hxr) (by simpa [Game.left] using _hyl))
 
 open Game
 
@@ -236,24 +212,16 @@ lemma flatten_replicate_nil {α} (n : Nat) : flatten (List.replicate n ([] : Lis
     simp [List.replicate, flatten, ih]
 
 lemma Game.mul_zero_eq (a : Game) : (a ⊗ zero) = zero := by
-  apply wf_R.induction a
-  intro x IH
-  rw [zero]
-  unfold mul
-  match hx : x with
+  cases a with
   | mk XL XR =>
-    simp
-    simp [flatten_replicate_nil]
+      rw [zero]
+      simp [mul, flatten_replicate_nil]
 
 lemma Game.zero_mul_eq (a : Game) : (zero ⊗ a) = zero := by
-  apply wf_R.induction a
-  intro x IH
-  rw [zero]
-  unfold mul
-  match hx : x with
+  cases a with
   | mk XL XR =>
-    simp
-    rfl
+      rw [zero]
+      simp [mul, flatten]
 
 theorem Game.mul_zero (a : Game) : (a ⊗ zero) ∼ zero := by
   exact Game.eq_of_eq (Game.mul_zero_eq a)
@@ -272,26 +240,6 @@ private lemma Game.mulOpt4_comm (x y xl yl : Game)
   · exact Game.eq_trans ⟨Game.add_comm, Game.add_equal ⟨hxy, hxl⟩⟩
   · exact (Game.neg_congr).mp (Game.eq_symm hxlyl)
 
-private lemma mem_mul_left_of_left_left {a b aL bL : Game}
-    (haL : aL ∈ a.left) (hbL : bL ∈ b.left) : Game.mulOpt4 aL b a bL ∈ (a ⊗ b).left := by
-  rw [Game.mulOpt4, mem_mul_left]
-  exact Or.inl ⟨aL, haL, bL, hbL, rfl⟩
-
-private lemma mem_mul_left_of_right_right {a b aR bR : Game}
-    (haR : aR ∈ a.right) (hbR : bR ∈ b.right) : Game.mulOpt4 aR b a bR ∈ (a ⊗ b).left := by
-  rw [Game.mulOpt4, mem_mul_left]
-  exact Or.inr ⟨aR, haR, bR, hbR, rfl⟩
-
-private lemma mem_mul_right_of_left_right {a b aL bR : Game}
-    (haL : aL ∈ a.left) (hbR : bR ∈ b.right) : Game.mulOpt4 aL b a bR ∈ (a ⊗ b).right := by
-  rw [Game.mulOpt4, mem_mul_right]
-  exact Or.inl ⟨aL, haL, bR, hbR, rfl⟩
-
-private lemma mem_mul_right_of_right_left {a b aR bL : Game}
-    (haR : aR ∈ a.right) (hbL : bL ∈ b.left) : Game.mulOpt4 aR b a bL ∈ (a ⊗ b).right := by
-  rw [Game.mulOpt4, mem_mul_right]
-  exact Or.inr ⟨aR, haR, bL, hbL, rfl⟩
-
 private abbrev MulCommIH (a b : Game) : Prop :=
   ∀ x : BiGame, B x ⟨a, b⟩ → (x.a ⊗ x.b) ∼ (x.b ⊗ x.a)
 
@@ -304,12 +252,12 @@ private lemma left_option_mul_comm {a b g : Game}
     (hg : g ∈ (a ⊗ b).left) : ∃ g' ∈ (b ⊗ a).left, eq g g' := by
   rw [mem_mul_left] at hg
   rcases hg with ⟨aL, haL, bL, hbL, rfl⟩ | ⟨aR, haR, bR, hbR, rfl⟩
-  · refine ⟨_, mem_mul_left_of_left_left (a := b) (b := a) hbL haL, ?_⟩
+  · refine ⟨_, mem_mul_left_ll (a := b) (b := a) hbL haL, ?_⟩
     exact Game.mulOpt4_comm a b aL bL
       (IH ⟨a, bL⟩ (Game.B_of_left_mem_snd hbL))
       (IH ⟨aL, b⟩ (Game.B_of_left_mem_fst haL))
       (IH ⟨aL, bL⟩ (Game.B_of_left_left haL hbL))
-  · refine ⟨_, mem_mul_left_of_right_right (a := b) (b := a) hbR haR, ?_⟩
+  · refine ⟨_, mem_mul_left_rr (a := b) (b := a) hbR haR, ?_⟩
     exact Game.mulOpt4_comm a b aR bR
       (IH ⟨a, bR⟩ (Game.B_of_right_mem_snd hbR))
       (IH ⟨aR, b⟩ (Game.B_of_right_mem_fst haR))
@@ -320,12 +268,12 @@ private lemma right_option_mul_comm {a b g : Game}
     (hg : g ∈ (a ⊗ b).right) : ∃ g' ∈ (b ⊗ a).right, g ∼ g' := by
   rw [mem_mul_right] at hg
   rcases hg with ⟨aL, haL, bR, hbR, rfl⟩ | ⟨aR, haR, bL, hbL, rfl⟩
-  · refine ⟨_, mem_mul_right_of_right_left (a := b) (b := a) hbR haL, ?_⟩
+  · refine ⟨_, mem_mul_right_rl (a := b) (b := a) hbR haL, ?_⟩
     exact Game.mulOpt4_comm a b aL bR
       (IH ⟨a, bR⟩ (Game.B_of_right_mem_snd hbR))
       (IH ⟨aL, b⟩ (Game.B_of_left_mem_fst haL))
       (IH ⟨aL, bR⟩ (Game.B_of_left_right haL hbR))
-  · refine ⟨_, mem_mul_right_of_left_right (a := b) (b := a) hbL haR, ?_⟩
+  · refine ⟨_, mem_mul_right_lr (a := b) (b := a) hbL haR, ?_⟩
     exact Game.mulOpt4_comm a b aR bL
       (IH ⟨a, bL⟩ (Game.B_of_left_mem_snd hbL))
       (IH ⟨aR, b⟩ (Game.B_of_right_mem_fst haR))

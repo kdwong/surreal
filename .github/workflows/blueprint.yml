@@ -43,7 +43,9 @@ jobs:
         with:
           build: true
 
-      - name: Compile and publish blueprint and API documentation
+      - name: Compile and publish blueprint
         uses: leanprover-community/docgen-action@deed0cdc44dd8e5de07a300773eb751d33e32fc8
         with:
           blueprint: true
+          api-docs: false
+          build-page: false

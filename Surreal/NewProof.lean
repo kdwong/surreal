@@ -203,16 +203,6 @@ private lemma A_option_isSurreal_right
 
 /-! ### Four branch-family lemmas -/
 
-private lemma birthday_lt_of_mem_option {x x' : Game}
-    (h : x' ∈ x.left ∨ x' ∈ x.right) :
-    Game.birthday x' < Game.birthday x := by
-  exact h.elim Game.birthday_lt_left Game.birthday_lt_right
-
-private lemma isSurreal_of_mem_option {x x' : Game}
-    (sx : IsSurreal x) (h : x' ∈ x.left ∨ x' ∈ x.right) :
-    IsSurreal x' := by
-  exact h.elim (IsSurreal.isSurreal_left sx) (IsSurreal.isSurreal_right sx)
-
 private lemma AContext.c_x
     {x y x₁ x₂ : Game} (ctx : AContext x y)
     (hx₁ : x₁ ∈ x.left ∨ x₁ ∈ x.right)
@@ -220,8 +210,8 @@ private lemma AContext.c_x
     (h : x₁ ≺ x₂) :
     CConditions x₁ x₂ y := by
   exact (ctx.ih (.C x₁ x₂ y)
-    (goal_lt_C_from_A (birthday_lt_of_mem_option hx₁) (birthday_lt_of_mem_option hx₂)))
-    (isSurreal_of_mem_option ctx.sx hx₁) (isSurreal_of_mem_option ctx.sx hx₂) ctx.sy h
+    (goal_lt_C_from_A (Game.birthday_lt_of_isOption hx₁) (Game.birthday_lt_of_isOption hx₂)))
+    (IsSurreal.isSurreal_option ctx.sx hx₁) (IsSurreal.isSurreal_option ctx.sx hx₂) ctx.sy h
 
 private lemma AContext.c_y
     {x y y₁ y₂ : Game} (ctx : AContext x y)
@@ -230,8 +220,8 @@ private lemma AContext.c_y
     (h : y₁ ≺ y₂) :
     CConditions y₁ y₂ x := by
   exact (ctx.ih (.C y₁ y₂ x)
-    (goal_lt_C_from_A' (birthday_lt_of_mem_option hy₁) (birthday_lt_of_mem_option hy₂)))
-    (isSurreal_of_mem_option ctx.sy hy₁) (isSurreal_of_mem_option ctx.sy hy₂) ctx.sx h
+    (goal_lt_C_from_A' (Game.birthday_lt_of_isOption hy₁) (Game.birthday_lt_of_isOption hy₂)))
+    (IsSurreal.isSurreal_option ctx.sy hy₁) (IsSurreal.isSurreal_option ctx.sy hy₂) ctx.sx h
 
 private lemma AContext.b_x
     {x y x₁ x₂ : Game} (ctx : AContext x y)
@@ -240,8 +230,8 @@ private lemma AContext.b_x
     (h : x₁ ∼ x₂) :
     (x₁ ⊗ y) ∼ (x₂ ⊗ y) := by
   exact (ctx.ih (.B x₁ x₂ y)
-    (goal_lt_B_from_A (birthday_lt_of_mem_option hx₁) (birthday_lt_of_mem_option hx₂)))
-    (isSurreal_of_mem_option ctx.sx hx₁) (isSurreal_of_mem_option ctx.sx hx₂) ctx.sy h
+    (goal_lt_B_from_A (Game.birthday_lt_of_isOption hx₁) (Game.birthday_lt_of_isOption hx₂)))
+    (IsSurreal.isSurreal_option ctx.sx hx₁) (IsSurreal.isSurreal_option ctx.sx hx₂) ctx.sy h
 
 private lemma AContext.b_x_option
     {x y x₁ x₂ y' : Game} (ctx : AContext x y)
@@ -252,12 +242,12 @@ private lemma AContext.b_x_option
     (x₁ ⊗ y') ∼ (x₂ ⊗ y') := by
   exact (ctx.ih (.B x₁ x₂ y')
     (goal_lt_B_from_A_mixed
-      (birthday_lt_of_mem_option hx₁)
-      (birthday_lt_of_mem_option hx₂)
-      (birthday_lt_of_mem_option hy')))
-    (isSurreal_of_mem_option ctx.sx hx₁)
-    (isSurreal_of_mem_option ctx.sx hx₂)
-    (isSurreal_of_mem_option ctx.sy hy') h
+      (Game.birthday_lt_of_isOption hx₁)
+      (Game.birthday_lt_of_isOption hx₂)
+      (Game.birthday_lt_of_isOption hy')))
+    (IsSurreal.isSurreal_option ctx.sx hx₁)
+    (IsSurreal.isSurreal_option ctx.sx hx₂)
+    (IsSurreal.isSurreal_option ctx.sy hy') h
 
 private lemma AContext.b_y
     {x y y₁ y₂ : Game} (ctx : AContext x y)
@@ -266,8 +256,8 @@ private lemma AContext.b_y
     (h : y₁ ∼ y₂) :
     (y₁ ⊗ x) ∼ (y₂ ⊗ x) := by
   exact (ctx.ih (.B y₁ y₂ x)
-    (goal_lt_B_from_A' (birthday_lt_of_mem_option hy₁) (birthday_lt_of_mem_option hy₂)))
-    (isSurreal_of_mem_option ctx.sy hy₁) (isSurreal_of_mem_option ctx.sy hy₂) ctx.sx h
+    (goal_lt_B_from_A' (Game.birthday_lt_of_isOption hy₁) (Game.birthday_lt_of_isOption hy₂)))
+    (IsSurreal.isSurreal_option ctx.sy hy₁) (IsSurreal.isSurreal_option ctx.sy hy₂) ctx.sx h
 
 private lemma AContext.b_y_option
     {x y y₁ y₂ x' : Game} (ctx : AContext x y)
@@ -278,14 +268,14 @@ private lemma AContext.b_y_option
     (y₁ ⊗ x') ∼ (y₂ ⊗ x') := by
   exact (ctx.ih (.B y₁ y₂ x')
     (goal_lt_B_from_A_mixed'
-      (birthday_lt_of_mem_option hy₁)
-      (birthday_lt_of_mem_option hy₂)
-      (birthday_lt_of_mem_option hx')))
-    (isSurreal_of_mem_option ctx.sy hy₁)
-    (isSurreal_of_mem_option ctx.sy hy₂)
-    (isSurreal_of_mem_option ctx.sx hx') h
+      (Game.birthday_lt_of_isOption hy₁)
+      (Game.birthday_lt_of_isOption hy₂)
+      (Game.birthday_lt_of_isOption hx')))
+    (IsSurreal.isSurreal_option ctx.sy hy₁)
+    (IsSurreal.isSurreal_option ctx.sy hy₂)
+    (IsSurreal.isSurreal_option ctx.sx hx') h
 
-/-- Family LL: `(xL₁,yL)` versus `(xL₂,yR)`. -/
+/-- Family `LL` versus `LR`: `(xL₁,yL)` versus `(xL₂,yR)`. -/
 private lemma A_left_lt_right_LL
     {x y : Game} (ctx : AContext x y)
     {xL₁ xL₂ yL yR : Game}
@@ -293,8 +283,8 @@ private lemma A_left_lt_right_LL
     (hyL : yL ∈ y.left) (hyR : yR ∈ y.right) :
     M xL₁ y x yL ≺ M xL₂ y x yR := by
   rcases trichotomy_game
-      (isSurreal_of_mem_option ctx.sx (Or.inl hxL₁))
-      (isSurreal_of_mem_option ctx.sx (Or.inl hxL₂)) with hlt | heq | hgt
+      (IsSurreal.isSurreal_option ctx.sx (Or.inl hxL₁))
+      (IsSurreal.isSurreal_option ctx.sx (Or.inl hxL₂)) with hlt | heq | hgt
   · exact Game.lt_trans ⟨
       mulOpt4_move_x_left_to_right ((ctx.c_x (Or.inl hxL₁) (Or.inl hxL₂) hlt).1 yL hyL),
       mulOpt4_move_y_left_to_right
@@ -310,7 +300,7 @@ private lemma A_left_lt_right_LL
         ((ctx.c_y (Or.inl hyL) (Or.inr hyR) (left_lt_right_game ctx.sy hyL hyR)).1 xL₁ hxL₁),
       mulOpt4_move_x_right_to_left ((ctx.c_x (Or.inl hxL₂) (Or.inl hxL₁) hgt).2 yR hyR)⟩
 
-/-- Family LR: `(xL,yL₁)` versus `(xR,yL₂)`. -/
+/-- Family `LL` versus `RL`: `(xL,yL₁)` versus `(xR,yL₂)`. -/
 private lemma A_left_lt_right_LR
     {x y : Game} (ctx : AContext x y)
     {xL xR yL₁ yL₂ : Game}
@@ -318,8 +308,8 @@ private lemma A_left_lt_right_LR
     (hyL₁ : yL₁ ∈ y.left) (hyL₂ : yL₂ ∈ y.left) :
     M xL y x yL₁ ≺ M xR y x yL₂ := by
   rcases trichotomy_game
-      (isSurreal_of_mem_option ctx.sy (Or.inl hyL₁))
-      (isSurreal_of_mem_option ctx.sy (Or.inl hyL₂)) with hlt | heq | hgt
+      (IsSurreal.isSurreal_option ctx.sy (Or.inl hyL₁))
+      (IsSurreal.isSurreal_option ctx.sy (Or.inl hyL₂)) with hlt | heq | hgt
   · exact Game.lt_trans ⟨
       mulOpt4_move_y_left_to_right ((ctx.c_y (Or.inl hyL₁) (Or.inl hyL₂) hlt).1 xL hxL),
       mulOpt4_move_x_left_to_right
@@ -339,7 +329,7 @@ private lemma A_left_lt_right_LR
 
 
 
-/-- Family RL: `(xR₁,yR₁)` versus `(xL₂,yR₂)`. -/
+/-- Family `RR` versus `LR`: `(xR₁,yR₁)` versus `(xL₂,yR₂)`. -/
 private lemma A_left_lt_right_RL
     {x y : Game} (ctx : AContext x y)
     {xR₁ xL₂ yR₁ yR₂ : Game}
@@ -347,8 +337,8 @@ private lemma A_left_lt_right_RL
     (hyR₁ : yR₁ ∈ y.right) (hyR₂ : yR₂ ∈ y.right) :
     M xR₁ y x yR₁ ≺ M xL₂ y x yR₂ := by
   rcases trichotomy_game
-      (isSurreal_of_mem_option ctx.sy (Or.inr hyR₁))
-      (isSurreal_of_mem_option ctx.sy (Or.inr hyR₂)) with hlt | heq | hgt
+      (IsSurreal.isSurreal_option ctx.sy (Or.inr hyR₁))
+      (IsSurreal.isSurreal_option ctx.sy (Or.inr hyR₂)) with hlt | heq | hgt
   · exact Game.lt_trans ⟨
       mulOpt4_move_x_right_to_left
         ((ctx.c_x (Or.inl hxL₂) (Or.inr hxR₁) (left_lt_right_game ctx.sx hxL₂ hxR₁)).2 yR₁ hyR₁),
@@ -366,6 +356,7 @@ private lemma A_left_lt_right_RL
       mulOpt4_move_x_right_to_left
         ((ctx.c_x (Or.inl hxL₂) (Or.inr hxR₁) (left_lt_right_game ctx.sx hxL₂ hxR₁)).2 yR₂ hyR₂)⟩
 
+/-- Family `RR` versus `RL`: `(xR₁,yR₁)` versus `(xR₂,yL₂)`. -/
 private lemma A_left_lt_right_RR
     {x y : Game} (ctx : AContext x y)
     {xR₁ xR₂ yR₁ yL₂ : Game}
@@ -373,8 +364,8 @@ private lemma A_left_lt_right_RR
     (hyR₁ : yR₁ ∈ y.right) (hyL₂ : yL₂ ∈ y.left) :
     M xR₁ y x yR₁ ≺ M xR₂ y x yL₂ := by
   rcases trichotomy_game
-      (isSurreal_of_mem_option ctx.sx (Or.inr hxR₁))
-      (isSurreal_of_mem_option ctx.sx (Or.inr hxR₂)) with hlt | heq | hgt
+      (IsSurreal.isSurreal_option ctx.sx (Or.inr hxR₁))
+      (IsSurreal.isSurreal_option ctx.sx (Or.inr hxR₂)) with hlt | heq | hgt
   · exact Game.lt_trans ⟨
       mulOpt4_move_y_right_to_left
         ((ctx.c_y (Or.inl hyL₂) (Or.inr hyR₁) (left_lt_right_game ctx.sy hyL₂ hyR₁)).2 xR₁ hxR₁),
@@ -454,19 +445,22 @@ private structure BContext (a b y : Game) : Prop where
   sy : IsSurreal y
   hEq : a ∼ b
 
+private def BContext.swap {a b y : Game} (ctx : BContext a b y) :
+    BContext b a y :=
+  ⟨IHswap_of_IH ctx.ih, ctx.sb, ctx.sa, ctx.sy, Game.eq_symm ctx.hEq⟩
+
 private lemma BContext.b_option
     {a b y y' : Game} (ctx : BContext a b y)
     (hy' : y' ∈ y.left ∨ y' ∈ y.right) :
     (a ⊗ y') ∼ (b ⊗ y') := by
-  exact (ctx.ih (.B a b y') (goal_lt_B₃ (birthday_lt_of_mem_option hy')))
-    ctx.sa ctx.sb (isSurreal_of_mem_option ctx.sy hy') ctx.hEq
+  exact (ctx.ih (.B a b y') (goal_lt_B₃ (Game.birthday_lt_of_isOption hy')))
+    ctx.sa ctx.sb (IsSurreal.isSurreal_option ctx.sy hy') ctx.hEq
 
 private lemma BContext.b_option_swap
     {a b y y' : Game} (ctx : BContext a b y)
     (hy' : y' ∈ y.left ∨ y' ∈ y.right) :
     (b ⊗ y') ∼ (a ⊗ y') := by
-  exact (IHswap_of_IH ctx.ih (.B b a y') (goal_lt_B₃ (birthday_lt_of_mem_option hy')))
-    ctx.sb ctx.sa (isSurreal_of_mem_option ctx.sy hy') (Game.eq_symm ctx.hEq)
+  exact Game.eq_symm (ctx.b_option hy')
 
 private lemma BContext.c_left_left
     {a b y aL : Game} (ctx : BContext a b y) (haL : aL ∈ a.left) :
@@ -516,7 +510,8 @@ private lemma B_product_le
     · exact
         (product_lt_mulOpt4_LR (ctx.b_option_swap (Or.inr hyR)) ((ctx.c_right_left hbL).2 yR hyR)).2
     · exact
-        (product_lt_mulOpt4_RL (ctx.b_option_swap (Or.inl hyL)) ((ctx.c_right_right hbR).1 yL hyL)).2
+        (product_lt_mulOpt4_RL
+          (ctx.b_option_swap (Or.inl hyL)) ((ctx.c_right_right hbR).1 yL hyL)).2
 
 /-! #### Final B theorem -/
 
@@ -526,9 +521,8 @@ private lemma B_product_eq
     (sx1 : IsSurreal x1) (sx2 : IsSurreal x2) (sy : IsSurreal y)
     (hEq : x1 ∼ x2) :
     (x1 ⊗ y) ∼ (x2 ⊗ y) := by
-  exact ⟨
-    B_product_le ⟨IH, sx1, sx2, sy, hEq⟩,
-    B_product_le ⟨IHswap_of_IH IH, sx2, sx1, sy, Game.eq_symm hEq⟩⟩
+  let ctx : BContext x1 x2 y := ⟨IH, sx1, sx2, sy, hEq⟩
+  exact ⟨B_product_le ctx, B_product_le ctx.swap⟩
 
 
 
@@ -684,10 +678,7 @@ theorem conway_A {x y : Game}
     IsSurreal (x ⊗ y) := by
   exact (ABC_main (.A x y)) sx sy
 
-/-
-  This is Conway's B in the `Game.eq` / surreal-equivalence sense.
-  If you really want a literal `=` version as well, it is a trivial corollary.
--/
+/-- Conway B: multiplication respects surreal equivalence in either factor. -/
 theorem conway_B {x1 x2 y : Game}
     (sx1 : IsSurreal x1) (sx2 : IsSurreal x2) (sy : IsSurreal y)
     (hEq : x1 ∼ x2) :

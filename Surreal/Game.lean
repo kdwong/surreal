@@ -22,6 +22,9 @@ def left : Game → List Game
 def right : Game → List Game
   | mk _ R => R
 
+/-- An option of a game is either a left option or a right option. -/
+def IsOption (x' x : Game) : Prop := x' ∈ x.left ∨ x' ∈ x.right
+
 theorem ext {x y : Game} (hL : x.left = y.left) (hR : x.right = y.right) :
     x = y := by
   cases x with
@@ -47,22 +50,11 @@ def birthday : Game → Nat
       let bR := R.map birthday
       (bL ++ bR).maximum.getD 0 + 1
 
-lemma maximum_eq_none_iff_eq_nil (a : List ℕ) (non : a.maximum = none) : a = [] := by
-  cases a with
-  | nil => rfl
-  | cons hd tl =>
-    have ne_none : (hd :: tl).maximum ≠ none := by
-      apply List.maximum_ne_bot_of_ne_nil
-      simp
-    contradiction
-
 lemma le_maximum_getD_of_mem (a : List ℕ) (s : ℕ) (h : s ∈ a) : s ≤ a.maximum.getD 0 := by
     match max : a.maximum with
     | none =>
-      have a_empty : a = [] := by
-        apply maximum_eq_none_iff_eq_nil a max
-      rw [a_empty] at h
-      contradiction
+      exact False.elim
+        ((List.maximum_ne_bot_of_ne_nil (List.ne_nil_of_mem h)) max)
     | some m =>
       simp [Option.getD_some]
       exact List.le_of_mem_argmax h max
@@ -74,10 +66,8 @@ lemma birthday_lt_of_mem_options {L R : List Game} {x : Game}
   let b := List.map birthday L ++ List.map birthday R
   change birthday x < b.maximum.getD 0 + 1
   have h_mem_b : birthday x ∈ b := by
-    dsimp [b]
-    rcases List.mem_append.mp h with hL | hR
-    · exact List.mem_append_left _ (List.mem_map.mpr ⟨x, hL, rfl⟩)
-    · exact List.mem_append_right _ (List.mem_map.mpr ⟨x, hR, rfl⟩)
+    simpa only [b, List.map_append] using
+      (List.mem_map_of_mem (f := birthday) h)
   exact Nat.lt_succ_of_le (le_maximum_getD_of_mem b (birthday x) h_mem_b)
 
 theorem birthday_lt_left {g l : Game} (h : l ∈ g.left) :
@@ -95,6 +85,10 @@ theorem birthday_lt_right {g r : Game} (h : r ∈ g.right) :
       have hR : r ∈ R := by simpa [right] using h
       exact birthday_lt_of_mem_options
         (L := L) (R := R) (List.mem_append_right _ hR)
+
+lemma birthday_lt_of_isOption {x x' : Game} (h : IsOption x' x) :
+    birthday x' < birthday x := by
+  exact h.elim birthday_lt_left birthday_lt_right
 
 
 /-! ## Order relations -/
@@ -168,6 +162,24 @@ lemma B_of_right_left {a b aR bL : Game} (haR : aR ∈ a.right) (hbL : bL ∈ b.
 lemma B_of_right_right {a b aR bR : Game} (haR : aR ∈ a.right) (hbR : bR ∈ b.right) :
     Game.B ⟨aR, bR⟩ ⟨a, b⟩ := by
   simpa [Game.B] using add_lt_add (Game.birthday_lt_right haR) (Game.birthday_lt_right hbR)
+
+lemma B_of_mem_option_fst {x y x' : Game}
+    (hx' : IsOption x' x) :
+    B ⟨x', y⟩ ⟨x, y⟩ := by
+  exact hx'.elim B_of_left_mem_fst B_of_right_mem_fst
+
+lemma B_of_mem_option_snd {x y y' : Game}
+    (hy' : IsOption y' y) :
+    B ⟨x, y'⟩ ⟨x, y⟩ := by
+  exact hy'.elim B_of_left_mem_snd B_of_right_mem_snd
+
+lemma B_of_mem_options {x y x' y' : Game}
+    (hx' : IsOption x' x)
+    (hy' : IsOption y' y) :
+    B ⟨x', y'⟩ ⟨x, y⟩ := by
+  exact hx'.elim
+    (fun hx' => hy'.elim (B_of_left_left hx') (B_of_left_right hx'))
+    (fun hx' => hy'.elim (B_of_right_left hx') (B_of_right_right hx'))
 
 
 structure TriGame where
@@ -329,18 +341,13 @@ theorem le_congr {x : Game} : x ≼ x := by
   apply wf_R.induction x
   intro x IH
   unfold le
-  unfold R at IH
   constructor
-  · intro l xl h_contra
-    unfold le at h_contra
-    have h_neg_le := h_contra.1 l (by simp[left]; exact xl)
-    have h_le: le l l := IH l (birthday_lt_left xl)
-    contradiction
-  · intro r hr h_contra
-    unfold le at h_contra
-    have h_neg_le := h_contra.2 r (by simp[right]; exact hr)
-    have h_le: le r r := IH r (birthday_lt_right hr)
-    contradiction
+  · intro l hl hxl
+    unfold le at hxl
+    exact hxl.1 l hl (IH l (birthday_lt_left hl))
+  · intro r hr hrx
+    unfold le at hrx
+    exact hrx.2 r hr (IH r (birthday_lt_right hr))
 
 theorem eq_congr {x : Game} : x ∼ x := by
   unfold eq
@@ -414,18 +421,10 @@ theorem lt_of_le_of_lt {x y z : Game} (hxy : x ≼ y) (hyz : y ≺ z) : x ≺ z 
     exact hyz.2 h_z_le_y
 
 lemma not_le_left {x : Game} (xL : Game) (h : xL ∈ x.left) : ¬(x.le xL) := by
-  intro h_le
-  rw [le] at h_le
-  have h_not_refl := h_le.1 xL h
-  have h_refl : xL.le xL := le_congr
-  contradiction
+  exact not_ge_left_of_le le_congr h
 
 lemma not_le_right {x : Game} (xR : Game) (h : xR ∈ x.right) : ¬(xR.le x) := by
-  intro h_le
-  rw [le] at h_le
-  have h_not_refl := h_le.2 xR h
-  have h_refl : xR.le xR := le_congr
-  contradiction
+  exact not_le_right_of_le le_congr h
 
 /-! ## Equality of games -/
 

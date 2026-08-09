@@ -103,6 +103,11 @@ instance : AddCommGroup GameQ where
     change (q (a.add b) : GameQ) = q (b.add a)
     exact q_sound (Game.add_comm (a := a) (b := b))
 
+@[simp] theorem q_mulOpt4 (xOpt Y X yOpt : Game) :
+    (q (Game.mulOpt4 xOpt Y X yOpt) : GameQ) =
+      q (xOpt.mul Y) + q (X.mul yOpt) - q (xOpt.mul yOpt) := by
+  simp [Game.mulOpt4, sub_eq_add_neg]
+
 instance : LE GameQ where
   le := Quotient.lift₂ Game.le
     (by
@@ -113,6 +118,10 @@ instance : LE GameQ where
         exact Game.le_trans ⟨ha.2, Game.le_trans ⟨hab, hb.1⟩⟩
       · intro ha'b'
         exact Game.le_trans ⟨ha.1, Game.le_trans ⟨ha'b', hb.2⟩⟩)
+
+@[simp] theorem q_le {a b : Game} :
+    ((q a : GameQ) ≤ q b) ↔ a ≼ b :=
+  Iff.rfl
 
 instance : PartialOrder GameQ where
   le := (· ≤ ·)
@@ -146,6 +155,10 @@ instance : PartialOrder GameQ where
       exact hxy
     · change Game.le b a at hyx
       exact hyx
+
+@[simp] theorem q_lt {a b : Game} :
+    ((q a : GameQ) < q b) ↔ a ≺ b :=
+  Iff.rfl
 
 noncomputable instance : IsOrderedAddMonoid GameQ where
   add_le_add_left := by
@@ -227,6 +240,12 @@ theorem add_congr (a₁ a₂ : Surreal) (h₁ : a₁ ≈ a₂) (b₁ b₂ : Surr
 
 def SurrealNumber := Quotient Surreal.setoid
 
+/-- Equivalent underlying games determine the same surreal number. -/
+theorem SurrealNumber.sound_val {a b : Surreal} (h : Game.eq a.val b.val) :
+    (⟦a⟧ : SurrealNumber) = ⟦b⟧ := by
+  apply Quotient.sound
+  exact h
+
 def SurrealNumber.add : SurrealNumber → SurrealNumber → SurrealNumber :=
   Quotient.map₂ Surreal.add Surreal.add_congr
 
@@ -288,47 +307,31 @@ noncomputable instance : AddCommGroup SurrealNumber where
     intro qa qb qc
     refine Quotient.inductionOn₃ qa qb qc ?_
     intro a b c
-    apply Quotient.sound
-    have h_eq : Surreal.add (Surreal.add a b) c = Surreal.add a (Surreal.add b c) := by
-      apply Subtype.ext
-      dsimp [Surreal.add]
-      rw [Game.add_assoc]
-    rw [h_eq]
-    exact Setoid.refl _
+    apply SurrealNumber.sound_val
+    change Game.eq ((a.val.add b.val).add c.val) (a.val.add (b.val.add c.val))
+    exact Game.eq_of_eq Game.add_assoc
 
   add_zero := by
     intro qa
     refine Quotient.inductionOn qa ?_
     intro a
-    apply Quotient.sound
-    change (Surreal.add a sr_zero) ≈ a
-    have h_eq : Surreal.add a sr_zero = a := by
-      apply Subtype.ext
-      dsimp [Surreal.add]
-      simp [sr_zero]
-      rw [Game.add_zero']
-    rw [h_eq]
-    exact Setoid.refl _
+    apply SurrealNumber.sound_val
+    change Game.eq (a.val.add Game.zero) a.val
+    exact Game.eq_of_eq Game.add_zero'
 
   zero_add := by
     intro qa
     refine Quotient.inductionOn qa ?_
     intro a
-    apply Quotient.sound
-    change (Surreal.add sr_zero a) ≈ a
-    have h_eq : Surreal.add sr_zero a = a := by
-      apply Subtype.ext
-      dsimp [Surreal.add]
-      simp [sr_zero]
-      rw [Game.zero_add']
-    rw [h_eq]
-    exact Setoid.refl _
+    apply SurrealNumber.sound_val
+    change Game.eq (Game.zero.add a.val) a.val
+    exact Game.eq_of_eq Game.zero_add'
 
   add_comm := by
     intro qa qb
     refine Quotient.inductionOn₂ qa qb ?_
     intro a b
-    apply Quotient.sound
+    apply SurrealNumber.sound_val
     change Game.eq (Game.add a.val b.val) (Game.add b.val a.val)
     exact Game.add_comm
 
@@ -336,7 +339,7 @@ noncomputable instance : AddCommGroup SurrealNumber where
     intro qa
     refine Quotient.inductionOn qa ?_
     intro a
-    apply Quotient.sound
+    apply SurrealNumber.sound_val
     change Game.eq (Game.add (Game.neg a.val) a.val) Game.zero
     exact Surreal.neg_add a
 
