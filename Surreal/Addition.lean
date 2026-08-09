@@ -47,31 +47,13 @@ lemma add_right (a b : Game) :
 
 lemma mem_add_left_iff {x y l : Game} :
 l ∈ (x ⊕ y).left ↔ (∃ xl ∈ x.left, (xl ⊕ y) = l) ∨ (∃ yl ∈ y.left, (x ⊕ yl) = l) := by
-  cases x with
-  | mk XL XR =>
-    cases y with
-    | mk YL YR =>
-        constructor
-        · intro hl
-          rw [Game.add] at hl
-          simpa [Game.left, List.mem_append, List.mem_map] using hl
-        · intro hl
-          rw [Game.add]
-          simpa [Game.left, List.mem_append, List.mem_map] using hl
+  rw [add_left]
+  simp [eq_comm]
 
 lemma mem_add_right_iff {x y r : Game} :
 r ∈ (x ⊕ y).right ↔ (∃ xr ∈ x.right, (xr ⊕ y) = r) ∨ (∃ yr ∈ y.right, (x ⊕ yr) = r) := by
-  cases x with
-  | mk XL XR =>
-    cases y with
-    | mk YL YR =>
-      constructor
-      · intro hr
-        rw [Game.add] at hr
-        simpa [Game.right, List.mem_append, List.mem_map] using hr
-      · intro hr
-        rw [Game.add]
-        simpa [Game.right, List.mem_append, List.mem_map] using hr
+  rw [add_right]
+  simp [eq_comm]
 
 lemma mem_add_left₁ {x y xl : Game} (hxl : xl ∈ x.left) :
     (xl ⊕ y) ∈ (x ⊕ y).left := by
@@ -96,15 +78,6 @@ lemma mem_add_right₂ {x y yr : Game} (hyr : yr ∈ y.right) :
 
 /-! ## Addition by zero -/
 
-private lemma map_id_iff {α : Type} (f : α → α) (l : List α) :
-  l.map f = l ↔ ∀ x ∈ l, f x = x := by
-  induction l with
-  | nil => simp
-  | cons h t ih => simp [ih]
-
-private lemma map_eq_self_of_pointwise {f : Game → Game} {l : List Game}
-    (h : ∀ x ∈ l, f x = x) : l.map f = l := (map_id_iff f l).2 h
-
 theorem Game.add_zero' {a : Game} : (a ⊕ zero) = a := by
   induction a using wf_R.induction with
   | h x IH =>
@@ -112,11 +85,15 @@ theorem Game.add_zero' {a : Game} : (a ⊕ zero) = a := by
       | mk XL XR =>
           unfold Game.add
           simp [zero]
-          constructor <;> refine map_eq_self_of_pointwise ?_
-          · intro xl hxl
-            exact IH xl (Game.birthday_lt_left hxl)
-          · intro xr hxr
-            exact IH xr (Game.birthday_lt_right hxr)
+          constructor
+          · simpa only [Game.zero, List.map_id] using
+              (List.map_congr_left (l := XL)
+                (f := fun xl => xl ⊕ Game.zero) (g := id)
+                (fun xl hxl => IH xl (Game.birthday_lt_left hxl)))
+          · simpa only [Game.zero, List.map_id] using
+              (List.map_congr_left (l := XR)
+                (f := fun xr => xr ⊕ Game.zero) (g := id)
+                (fun xr hxr => IH xr (Game.birthday_lt_right hxr)))
 
 theorem Game.zero_add' {a : Game} : (zero ⊕ a) = a := by
   induction a using wf_R.induction with
@@ -125,11 +102,15 @@ theorem Game.zero_add' {a : Game} : (zero ⊕ a) = a := by
       | mk XL XR =>
           unfold Game.add
           simp [zero]
-          constructor <;> refine map_eq_self_of_pointwise ?_
-          · intro xl hxl
-            exact IH xl (Game.birthday_lt_left hxl)
-          · intro xr hxr
-            exact IH xr (Game.birthday_lt_right hxr)
+          constructor
+          · simpa only [Game.zero, List.map_id] using
+              (List.map_congr_left (l := XL)
+                (f := fun xl => Game.zero ⊕ xl) (g := id)
+                (fun xl hxl => IH xl (Game.birthday_lt_left hxl)))
+          · simpa only [Game.zero, List.map_id] using
+              (List.map_congr_left (l := XR)
+                (f := fun xr => Game.zero ⊕ xr) (g := id)
+                (fun xr hxr => IH xr (Game.birthday_lt_right hxr)))
 
 theorem Game.add_zero {a : Game} : (a ⊕ zero) ∼ a := by
   exact Game.eq_of_eq Game.add_zero'
@@ -296,17 +277,11 @@ theorem Game.add_lt_le {a b c d : Game} : (a ≺ c) ∧ (b ≼ d) → (a ⊕ b) 
     exact h.1.2 h_bad
 
 theorem Game.add_le_lt {a b c d : Game} : (a ≼ c) ∧ (b ≺ d) → (a ⊕ b) ≺ (c ⊕ d) := by
-  intro h
-  unfold lt at h
-  constructor
-  · exact Game.add_le_add ⟨h.1, h.2.1⟩
-  · intro h_contra
-    have h_contra1 : (d ⊕ c) ≼ (a ⊕ b) := by
-      apply le_trans ⟨(Game.add_comm).1, h_contra⟩
-    have h_contra2 : (d ⊕ c) ≼ (b ⊕ a) := by
-      apply le_trans ⟨h_contra1, (Game.add_comm).1⟩
-    have h_bad : d ≼ b := Game.add_reduce ⟨h_contra2, h.1⟩
-    exact h.2.2 h_bad
+  rintro ⟨hac, hbd⟩
+  exact Game.lt_of_le_of_lt (Game.add_comm (a := a) (b := b)).1
+    (Game.lt_of_lt_of_le
+      (Game.add_lt_le ⟨hbd, hac⟩)
+      (Game.add_comm (a := d) (b := c)).1)
 
 
 theorem Game.add_le_right_right {u v : Game} (t : Game) : u ≼ v → (u ⊕ t) ≼ (v ⊕ t) := by
@@ -351,16 +326,6 @@ theorem Game.add_lt_right_left {u v : Game} (t : Game) : u ≺ v → (u ⊕ t) �
 
 /-! ##  Associativity of ⊕ -/
 
-private lemma list_map_congr {α β : Type} (l : List α) (f g : α → β) (h : ∀ x ∈ l, f x = g x) :
-  l.map f = l.map g := by
-  induction l with
-  | nil => rfl
-  | cons x xs ih =>
-    simp
-    constructor
-    · apply h; simp
-    · intro y hy; apply h; simp [hy]
-
 private lemma append_map3_congr {α β} {l1 l2 l3 : List α} {f1 g1 f2 g2 f3 g3 : α → β}
     (h1 : l1.map f1 = l1.map g1) (h2 : l2.map f2 = l2.map g2) (h3 : l3.map f3 = l3.map g3) :
     l1.map f1 ++ (l2.map f2 ++ l3.map f3) = l1.map g1 ++ (l2.map g2 ++ l3.map g3) := by
@@ -377,29 +342,29 @@ theorem Game.add_assoc {a b c : Game} : ((a ⊕ b) ⊕ c) = a ⊕ (b ⊕ c) := b
         · simpa [add_left, List.map_append, List.map_map, List.append_assoc, Function.comp] using
             (append_map3_congr
               (by
-                apply list_map_congr
+                apply List.map_congr_left
                 intro al hal
                 simpa using IHa al (birthday_lt_left hal) (b := b) (c := c))
               (by
-                apply list_map_congr
+                apply List.map_congr_left
                 intro bl hbl
                 simpa using IHb bl (birthday_lt_left hbl) (c := c))
               (by
-                apply list_map_congr
+                apply List.map_congr_left
                 intro cl hcl
                 simpa using IHc cl (birthday_lt_left hcl)))
         · simpa [add_right, List.map_append, List.map_map, List.append_assoc, Function.comp] using
             (append_map3_congr
               (by
-                apply list_map_congr
+                apply List.map_congr_left
                 intro ar har
                 simpa using IHa ar (birthday_lt_right har) (b := b) (c := c))
               (by
-                apply list_map_congr
+                apply List.map_congr_left
                 intro br hbr
                 simpa using IHb br (birthday_lt_right hbr) (c := c))
               (by
-                apply list_map_congr
+                apply List.map_congr_left
                 intro cr hcr
                 simpa using IHc cr (birthday_lt_right hcr)))
 
@@ -418,15 +383,15 @@ def Game.neg : Game → Game
 
 /-! ## Description of negative elements -/
 
-lemma neg_left_def (g : Game) : (Game.neg g).left =
-  g.right.attach.map (fun ⟨r, _⟩ => Game.neg r) := by
-  conv_lhs => rw [Game.neg]
-  rfl
+lemma neg_left_def (g : Game) :
+    (Game.neg g).left = g.right.map Game.neg := by
+  rw [Game.neg]
+  exact List.attach_map_val
 
-lemma neg_right_def (g : Game) : (Game.neg g).right =
-  g.left.attach.map (fun ⟨l, _⟩ => Game.neg l) := by
-  conv_lhs => rw [Game.neg]
-  rfl
+lemma neg_right_def (g : Game) :
+    (Game.neg g).right = g.left.map Game.neg := by
+  rw [Game.neg]
+  exact List.attach_map_val
 
 /-! ## -0 = 0 -/
 
@@ -438,23 +403,23 @@ theorem Game.neg_zero : zero.neg = zero := by
 
 /-! ##  a ≤ b ↔  -b ≤ -a -/
 
-private lemma mem_neg_left_iff {x l : Game} :
+lemma mem_neg_left_iff {x l : Game} :
     l ∈ (Game.neg x).left ↔ ∃ r ∈ x.right, l = Game.neg r := by
-  rw [neg_left_def, List.mem_map]
-  constructor
-  · rintro ⟨⟨r, hr⟩, -, rfl⟩
-    exact ⟨r, hr, rfl⟩
-  · rintro ⟨r, hr, rfl⟩
-    exact ⟨⟨r, hr⟩, by simp, rfl⟩
+  rw [neg_left_def]
+  simp [eq_comm]
 
-private lemma mem_neg_right_iff {x r : Game} :
+lemma mem_neg_right_iff {x r : Game} :
     r ∈ (Game.neg x).right ↔ ∃ l ∈ x.left, r = Game.neg l := by
-  rw [neg_right_def, List.mem_map]
-  constructor
-  · rintro ⟨⟨l, hl⟩, -, rfl⟩
-    exact ⟨l, hl, rfl⟩
-  · rintro ⟨l, hl, rfl⟩
-    exact ⟨⟨l, hl⟩, by simp, rfl⟩
+  rw [neg_right_def]
+  simp [eq_comm]
+
+lemma mem_neg_left_of_right {x r : Game} (hr : r ∈ x.right) :
+    Game.neg r ∈ (Game.neg x).left := by
+  exact mem_neg_left_iff.mpr ⟨r, hr, rfl⟩
+
+lemma mem_neg_right_of_left {x l : Game} (hl : l ∈ x.left) :
+    Game.neg l ∈ (Game.neg x).right := by
+  exact mem_neg_right_iff.mpr ⟨l, hl, rfl⟩
 
 theorem bigame_neg_le_neg (x : Game.BiGame) :
     x.a ≼ x.b ↔ (Game.neg x.b) ≼ (Game.neg x.a) := by
@@ -619,50 +584,31 @@ def Surreal.add (a b : Surreal) : Surreal := ⟨a.val ⊕ b.val, add_isSurreal�
 
 /-! ##  a is surreal ↔ -a is surreal -/
 
-private lemma surreal_left_lt_right {x xl xr : Game} (sx : IsSurreal x)
-    (hxl : xl ∈ x.left) (hxr : xr ∈ x.right) :
-    xl ≺ xr := by
-  have hsx := sx
-  unfold IsSurreal at hsx
-  rcases hsx with ⟨_, hL, hR⟩
-  let sl : Surreal := ⟨xl, hL xl hxl⟩
-  let sr : Surreal := ⟨xr, hR xr hxr⟩
-  let sx' : Surreal := ⟨x, sx⟩
-  have hsl : (sl : Game) ∈ sx'.left := by
-    simpa [sx', Surreal.left] using hxl
-  have hsr : (sr : Game) ∈ sx'.right := by
-    simpa [sx', Surreal.right] using hxr
-  exact Surreal.lt_trans ⟨(xL_x_xR (x := sx')).1 sl hsl, (xL_x_xR (x := sx')).2 sr hsr⟩
-
 private lemma not_neg_le_neg {x xl xr : Game} (sx : IsSurreal x)
     (hxl : xl ∈ x.left) (hxr : xr ∈ x.right) :
     ¬ (Game.neg xl) ≼ (Game.neg xr) := by
-  have hlt : xl ≺ xr := surreal_left_lt_right sx hxl hxr
-  rw [Game.lt] at hlt
+  unfold IsSurreal at sx
   intro h
-  exact hlt.2 ((bigame_neg_le_neg ⟨xr, xl⟩).2 h)
+  exact sx.1 xl hxl xr hxr ((Game.neg_le_neg (a := xr) (b := xl)).2 h)
 
 theorem Surreal.neg_isSurreal (a : Surreal) : IsSurreal (Game.neg a.val) := by
-  refine WellFounded.induction
-    (C := fun a : Surreal => IsSurreal (Game.neg a.val))
-    (InvImage.wf (fun s : Surreal => s.val.birthday) wellFounded_lt) a ?_
-  rintro ⟨x, sx⟩ IH
-  have hsx := sx
-  unfold IsSurreal at hsx
-  rcases hsx with ⟨_, hL, hR⟩
+  refine (Game.wf_R.induction
+    (C := fun x => IsSurreal x → IsSurreal (Game.neg x)) a.val ?_) a.property
+  intro x IH sx
   unfold IsSurreal
-  refine ⟨?_, ?_⟩
+  refine ⟨?_, ?_, ?_⟩
   · intro l hl r hr
     rcases mem_neg_left_iff.mp hl with ⟨xr, hxr, rfl⟩
     rcases mem_neg_right_iff.mp hr with ⟨xl, hxl, rfl⟩
     exact not_neg_le_neg sx hxl hxr
-  · refine ⟨?_, ?_⟩
-    · intro l hl
-      rcases mem_neg_left_iff.mp hl with ⟨xr, hxr, rfl⟩
-      exact IH ⟨xr, hR xr hxr⟩ (by simpa [InvImage] using Game.birthday_lt_right hxr)
-    · intro r hr
-      rcases mem_neg_right_iff.mp hr with ⟨xl, hxl, rfl⟩
-      exact IH ⟨xl, hL xl hxl⟩ (by simpa [InvImage] using Game.birthday_lt_left hxl)
+  · intro l hl
+    rcases mem_neg_left_iff.mp hl with ⟨xr, hxr, rfl⟩
+    exact IH xr (Game.birthday_lt_of_isOption (Or.inr hxr))
+      (IsSurreal.isSurreal_option sx (Or.inr hxr))
+  · intro r hr
+    rcases mem_neg_right_iff.mp hr with ⟨xl, hxl, rfl⟩
+    exact IH xl (Game.birthday_lt_of_isOption (Or.inl hxl))
+      (IsSurreal.isSurreal_option sx (Or.inl hxl))
 
 theorem Surreal.add_neg (a : Surreal) : (a.val ⊕ (Game.neg a.val)).eq Game.zero := by
   exact Game.add_neg a.val

@@ -1,0 +1,12 @@
+/web/
+/print/
+/lean_decls
+/.venv/
+/src/*.aux
+/src/*.fdb_latexmk
+/src/*.fls
+/src/*.log
+/src/*.out
+/src/*.paux
+/src/*.synctex.gz
+/src/*.toc

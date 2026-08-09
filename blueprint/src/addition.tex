@@ -1,0 +1,436 @@
+\chapter{Addition, negation, and the additive quotient}
+
+\section{Operations on games}
+
+\begin{definition}[Recursive sum]
+  \label{def:game-add}
+  \lean{Game.add,add_left,add_right,mem_add_left_iff,mem_add_right_iff}
+  \leanok
+  \uses{def:game,def:birthday,lem:birthday-options}
+  For games \(x=\{X^L\mid X^R\}\) and \(y=\{Y^L\mid Y^R\}\), define
+  \[
+    x+y=
+    \bigl\{\,x^L+y,\ x+y^L\ \bigm|\ x^R+y,\ x+y^R\,\bigr\},
+  \]
+  with one option for every member of the indicated finite lists.
+\end{definition}
+
+\begin{theorem}[Basic addition laws]
+  \label{thm:game-add-laws}
+  \lean{Game.add_zero',Game.zero_add',Game.add_zero,Game.zero_add,Game.add_comm,Game.add_assoc}
+  \leanok
+  For all games \(a,b,c\),
+  \[
+    a+0=a,\qquad 0+a=a,\qquad a+b\GameEq b+a,
+    \qquad (a+b)+c=a+(b+c).
+  \]
+  The zero and associativity identities hold as literal equalities of game trees; commutativity
+  is asserted up to game equivalence.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:game,def:game-order,lem:birthday-options,def:game-inductions,thm:game-order-calculus,thm:option-extensionality,def:game-add}
+  For \(a+0=a\), use the one-game induction scheme of
+  Definition~\ref{def:game-inductions}.  Write \(a=\{A^L\mid A^R\}\).  By
+  Definition~\ref{def:game-add}, the left and right option lists of \(a+0\)
+  are respectively
+  \[
+    [\,u+0:u\in A^L\,],
+    \qquad
+    [\,v+0:v\in A^R\,].
+  \]
+  Every option has smaller birthday by Lemma~\ref{lem:birthday-options}, so
+  the induction hypothesis identifies these entries literally with \(u\) and
+  \(v\).  Thus the two option lists agree with those of \(a\), and hence
+  \(a+0=a\) as game trees.  The proof of \(0+a=a\) is the same, with the
+  summands interchanged.
+
+  For commutativity, use the two-game induction scheme of
+  Definition~\ref{def:game-inductions}.  By Definition~\ref{def:game-add}, a
+  left option of \(a+b\) is either \(a^L+b\) or \(a+b^L\).  In the first
+  case Lemma~\ref{lem:birthday-options} makes \((a^L,b)\) a smaller pair, and
+  the induction hypothesis gives
+  \[
+    a^L+b\GameEq b+a^L;
+  \]
+  the right-hand side is a left option of \(b+a\).  In the second case the
+  smaller pair \((a,b^L)\) gives
+  \[
+    a+b^L\GameEq b^L+a.
+  \]
+  The two right-option cases are identical, and interchanging \(a,b\) gives
+  the converse matching.  Theorem~\ref{thm:option-extensionality} now yields
+  \(a+b\GameEq b+a\).
+
+  Associativity is stronger: it is literal equality of game trees.  Apply the
+  one-game induction scheme of Definition~\ref{def:game-inductions}
+  successively to \(a\), \(b\), and \(c\), generalizing the later variables at
+  each stage.  The resulting induction hypotheses are
+  \[
+    \begin{array}{ll}
+      ((a^L+b)+c)=a^L+(b+c) & (a^L\in A^L),\\
+      ((a+b^L)+c)=a+(b^L+c) & (b^L\in B^L),\\
+      ((a+b)+c^L)=a+(b+c^L) & (c^L\in C^L),
+    \end{array}
+  \]
+  and the analogous three identities for right options.  Each recursive call
+  is legitimate by Lemma~\ref{lem:birthday-options}; generalizing the later
+  coordinates permits the other two games to remain unchanged.
+
+  Expanding Definition~\ref{def:game-add} twice, the left option lists are
+  \[
+    \begin{aligned}
+      ((a+b)+c)^L
+       ={}&[\,(a^L+b)+c:a^L\in A^L\,]\\
+          &{}\mathbin{++}[\,(a+b^L)+c:b^L\in B^L\,]\\
+          &{}\mathbin{++}[\,(a+b)+c^L:c^L\in C^L\,],\\[2mm]
+      (a+(b+c))^L
+       ={}&[\,a^L+(b+c):a^L\in A^L\,]\\
+          &{}\mathbin{++}[\,a+(b^L+c):b^L\in B^L\,]\\
+          &{}\mathbin{++}[\,a+(b+c^L):c^L\in C^L\,].
+    \end{aligned}
+  \]
+  On the left the three sublists are parenthesized as
+  \((A^L\mathbin{++}B^L)\mathbin{++}C^L\), whereas on the right they are
+  parenthesized as \(A^L\mathbin{++}(B^L\mathbin{++}C^L)\).  Associativity of
+  finite-list concatenation first identifies these two parenthesizations.
+  The lists then contain the same three families in the same order; only their
+  entries differ.  The first, second, and third induction
+  hypotheses above give pointwise equality on \(A^L,B^L,C^L\), respectively.
+  Consequently the three corresponding sublists are equal, and therefore the
+  complete left lists are equal.  Replacing \(A^L,B^L,C^L\) by
+  \(A^R,B^R,C^R\) proves equality of the right lists in the same way.  The two
+  games have identical left and right option lists, so
+  \(((a+b)+c)=a+(b+c)\) literally.
+\end{proof}
+\begin{theorem}[Translation and monotonicity]
+  \label{thm:game-add-order}
+  \lean{Game.add_le_add_right,Game.add_right_cancel,Game.add_le_add,Game.add_equal,Game.add_lt_le,Game.add_le_lt,Game.add_lt_left_left,Game.add_lt_right_right}
+  \leanok
+  Addition preserves and reflects weak order in either variable.  In particular,
+  \[
+    a\GameLe b\quad\Longleftrightarrow\quad a+c\GameLe b+c,
+  \]
+  and
+  \[
+    a\GameLe c,\ b\GameLe d\Longrightarrow a+b\GameLe c+d.
+  \]
+  If either input comparison is strict and the other weak, the resulting comparison is strict.
+  Addition also respects \(\GameEq\).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:birthday-options,def:game-order,def:game-inductions,thm:game-order-calculus,def:game-add,thm:game-add-laws}
+  We first prove simultaneously, in both directions, the equivalence
+  \[
+    a+c\GameLe b+c\quad\Longleftrightarrow\quad a\GameLe b.
+  \]
+  Use the three-game induction scheme of Definition~\ref{def:game-inductions}, with measure
+  \(\bd(a)+\bd(b)+\bd(c)\), and use the comparison of
+  Definition~\ref{def:game-order} throughout.
+
+  Suppose first that \(a+c\GameLe b+c\).  If \(a^L\) is a left option of
+  \(a\) and \(b\GameLe a^L\), the induction hypothesis for
+  \((b,a^L,c)\) gives \(b+c\GameLe a^L+c\).  Transitivity from
+  Theorem~\ref{thm:game-order-calculus}, together with the assumed comparison,
+  gives \(a+c\GameLe a^L+c\).  This is impossible because
+  Definition~\ref{def:game-add} makes \(a^L+c\) a left option of \(a+c\),
+  while the left-option clause of the reflexive comparison
+  \(a+c\GameLe a+c\) forbids such an inequality.  If \(b^R\) is a right
+  option of \(b\) and \(b^R\GameLe a\), the induction hypothesis gives
+  \(b^R+c\GameLe a+c\); composing with the assumed comparison contradicts the
+  right-option clause of the reflexive comparison \(b+c\GameLe b+c\).  Thus
+  \(a\GameLe b\).
+
+  Conversely, assume \(a\GameLe b\).  By Definition~\ref{def:game-add}, the
+  left options of \(a+c\) are \(a^L+c\) and \(a+c^L\), while the right
+  options of \(b+c\) are \(b^R+c\) and \(b+c^R\).  If
+  \(b+c\GameLe a^L+c\), the induction hypothesis for \((b,a^L,c)\) gives
+  \(b\GameLe a^L\), contrary to the left-option clause of \(a\GameLe b\).
+  If \(b+c\GameLe a+c^L\), the induction hypothesis for \((a,b,c^L)\)
+  gives \(a+c^L\GameLe b+c^L\).  Transitivity would then give
+  \(b+c\GameLe b+c^L\), contradicting the left-option clause of the reflexive
+  comparison \(b+c\GameLe b+c\).  The right-option cases are dual.  A
+  comparison \(b^R+c\GameLe a+c\) reflects to \(b^R\GameLe a\), which is
+  forbidden by \(a\GameLe b\).  Finally, if
+  \(b+c^R\GameLe a+c\), the induction hypothesis for \((a,b,c^R)\) gives
+  \(a+c^R\GameLe b+c^R\); transitivity would imply
+  \(a+c^R\GameLe a+c\), contrary to the right-option clause of the reflexive
+  comparison \(a+c\GameLe a+c\).  This proves the reverse implication in the
+  displayed equivalence.
+  Every recursive call decreases because the coordinate replaced in it is an
+  option, hence has smaller birthday by Lemma~\ref{lem:birthday-options}.
+
+  Commutativity from Theorem~\ref{thm:game-add-laws} turns the displayed
+  equivalence into the
+  corresponding equivalence for addition on the left.  If
+  \(a\GameLe c\) and \(b\GameLe d\), change first one summand and then the
+  other, and compose the two inequalities using
+  Theorem~\ref{thm:game-order-calculus}; this proves two-variable
+  monotonicity.  Suppose, for example, that \(a\GameLt c\) and
+  \(b\GameLe d\).  Weak monotonicity gives \(a+b\GameLe c+d\).  If the reverse
+  comparison held, then
+  \[
+    c+b\GameLe c+d\GameLe a+b.
+  \]
+  Cancelling the common summand \(b\) by the displayed translation equivalence
+  would give \(c\GameLe a\), contradicting \(a\GameLt c\).  Thus
+  \(a+b\GameLt c+d\).  Strictness in the second variable is proved
+  symmetrically.  Applying the weak result in both directions proves
+  compatibility with \(\GameEq\).
+\end{proof}
+
+\begin{definition}[Negation]
+  \label{def:game-neg}
+  \lean{Game.neg,neg_left_def,neg_right_def,Game.neg_zero}
+  \leanok
+  \uses{def:game,def:birthday,lem:birthday-options}
+  Negation interchanges the two option lists and recursively negates every option:
+  \[
+    -\{X^L\mid X^R\}=\{-X^R\mid -X^L\}.
+  \]
+  In particular, \(-0=0\) as a literal equality of game trees.
+\end{definition}
+
+\begin{theorem}[Negation reverses order]
+  \label{thm:game-neg-order}
+  \lean{Game.neg_le_neg,Game.neg_congr,Game.neg_lt_neg}
+  \leanok
+  For all games \(a,b\),
+  \[
+    a\GameLe b\Longleftrightarrow -b\GameLe-a,
+    \qquad
+    a\GameLt b\Longleftrightarrow -b\GameLt-a,
+    \qquad
+    a\GameEq b\Longleftrightarrow -b\GameEq-a.
+  \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:birthday-options,def:game-order,def:game-inductions,def:game-neg}
+  Use the two-game induction scheme of Definition~\ref{def:game-inductions} to
+  prove
+  \[
+    a\GameLe b\quad\Longleftrightarrow\quad -b\GameLe-a.
+  \]
+  Assume first \(a\GameLe b\).  By Definition~\ref{def:game-neg}, a left
+  option of \(-b\) has the form \(-b^R\), and a right option of \(-a\) has
+  the form \(-a^L\).  If \(-a\GameLe-b^R\), the induction hypothesis for
+  \((b^R,a)\) gives \(b^R\GameLe a\), contradicting the right-option clause
+  of \(a\GameLe b\) in Definition~\ref{def:game-order}.  Likewise, if
+  \(-a^L\GameLe-b\), the induction hypothesis for \((b,a^L)\) gives
+  \(b\GameLe a^L\), contradicting the left-option clause.  These are exactly
+  the two clauses required for \(-b\GameLe-a\).
+
+  Conversely, assume \(-b\GameLe-a\).  To verify \(a\GameLe b\), let
+  \(a^L\) be a left option of \(a\).  A comparison \(b\GameLe a^L\) would,
+  by the induction hypothesis for \((b,a^L)\), imply
+  \(-a^L\GameLe-b\), contradicting the right-option clause of
+  \(-b\GameLe-a\).  The argument for a right option \(b^R\) is the same:
+  \(b^R\GameLe a\) would imply \(-a\GameLe-b^R\), contradicting the
+  left-option clause.  Each induction step is valid by
+  Lemma~\ref{lem:birthday-options}.
+
+  Applying the displayed equivalence to both weak inequalities in the
+  definition of \(\GameEq\) proves the stated biconditional for equivalence.
+  Applying it to the forward weak
+  inequality and to the excluded reverse inequality proves the strict-order
+  equivalence.  Both conclusions use the definitions in
+  Definition~\ref{def:game-order}.
+\end{proof}
+
+\begin{theorem}[Additive inverses]
+  \label{thm:game-add-inverse}
+  \lean{Game.add_neg,Game.neg_add}
+  \leanok
+  Every game satisfies
+  \[
+    x+(-x)\GameEq0,
+    \qquad
+    (-x)+x\GameEq0.
+  \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:game,def:game-order,def:game-inductions,lem:birthday-options,thm:game-order-calculus,def:game-add,thm:game-add-laws,def:game-neg}
+  We argue by induction on \(\bd(x)\), using the one-game scheme of
+  Definition~\ref{def:game-inductions}.  Put \(s=x+(-x)\).  We prove the two
+  inequalities in the definition of \(s\GameEq0\) from
+  Definition~\ref{def:game-order}.  Since \(0=\{\,\mid\,\}\) by
+  Definition~\ref{def:game}, the clauses involving options of \(0\) are
+  vacuous.
+
+  By Definitions~\ref{def:game-add} and~\ref{def:game-neg}, a left option of
+  \(s\) is either
+  \[
+    \ell=x^L+(-x)
+    \qquad\text{or}\qquad
+    \ell=x+(-x^R).
+  \]
+  In the first case \(x^L+(-x^L)\) is a right option of \(\ell\); in the
+  second case \(x^R+(-x^R)\) is a right option of \(\ell\).  By
+  Lemma~\ref{lem:birthday-options} and the induction hypothesis, the indicated
+  self-cancelling game is equivalent to \(0\), and in particular is weakly
+  below \(0\).  Therefore \(0\GameLe\ell\) would violate the right-option
+  clause of that comparison.  This verifies the left-option clause of
+  \(s\GameLe0\).
+
+  Similarly, a right option of \(s\) is either
+  \[
+    r=x^R+(-x)
+    \qquad\text{or}\qquad
+    r=x+(-x^L).
+  \]
+  The first has \(x^R+(-x^R)\) as a left option, and the second has
+  \(x^L+(-x^L)\) as a left option.  The induction hypothesis makes that left
+  option weakly above \(0\).  Thus \(r\GameLe0\) would violate its
+  left-option clause.  This proves \(0\GameLe s\), and hence
+  \(x+(-x)\GameEq0\).  Commutativity from
+  Theorem~\ref{thm:game-add-laws} gives \((-x)+x\GameEq0\).
+\end{proof}
+
+\section{Closure and quotients}
+
+\begin{theorem}[Surreal games are closed under addition and negation]
+  \label{thm:surreal-add-closure}
+  \lean{Surreal.add_isSurreal,Surreal.neg_isSurreal,Surreal.add,Surreal.neg}
+  \leanok
+  If \(a,b\) are surreal representatives, then the games \(a+b\) and \(-a\) are surreal.
+  Hence addition and negation define operations on surreal representatives.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:birthday,def:surreal-pair-induction,lem:birthday-options,def:game-order,def:is-surreal,thm:game-order-calculus,thm:between-options,def:surreal-representative,def:game-add,thm:game-add-order,def:game-neg,thm:game-neg-order}
+  For addition, use the well-founded induction on pairs of surreal
+  representatives from Definition~\ref{def:surreal-pair-induction}.  By
+  Definition~\ref{def:game-add}, every option of \(a+b\) replaces exactly one
+  of \(a,b\) by one of its options.  Lemma~\ref{lem:birthday-options} makes
+  the resulting pair smaller, so the induction hypothesis proves that every
+  option of \(a+b\) is surreal, as required by
+  Definition~\ref{def:is-surreal}.
+
+  It remains to separate a left option from a right option.  There are four
+  cases:
+  \[
+    \begin{array}{c|c}
+      \text{left option}&\text{right option}\\ \hline
+      a^L+b&a^R+b\\
+      a+b^L&a+b^R\\
+      a^L+b&a+b^R\\
+      a+b^L&a^R+b.
+    \end{array}
+  \]
+  In the first case Theorem~\ref{thm:between-options} and strict transitivity
+  from Theorem~\ref{thm:game-order-calculus} give
+  \(a^L\GameLt a^R\), and strict translation invariance from
+  Theorem~\ref{thm:game-add-order} gives
+  \(a^L+b\GameLt a^R+b\).  The second case is identical with \(a,b\)
+  interchanged.  In the third case,
+  \(a^L\GameLt a\) and \(b\GameLe b^R\); in the fourth,
+  \(a\GameLt a^R\) and \(b^L\GameLe b\).  The two mixed monotonicity
+  statements of Theorem~\ref{thm:game-add-order} again put the chosen left
+  option strictly below the chosen right option.  By
+  Definition~\ref{def:game-order}, this strict inequality excludes the reverse
+  weak comparison, which is exactly the separation condition in
+  Definition~\ref{def:is-surreal}.
+
+  For negation, induct on the birthday of the underlying game of the surreal
+  representative \(a\).  Definition~\ref{def:game-neg} says that
+  a left option of \(-a\) is \(-a^R\), while a right option is \(-a^L\).
+  Theorem~\ref{thm:between-options} and strict transitivity from
+  Theorem~\ref{thm:game-order-calculus} give
+  \(a^L\GameLt a\GameLt a^R\), hence \(a^L\GameLt a^R\).  If
+  \(-a^L\GameLe-a^R\), order reversal in
+  Theorem~\ref{thm:game-neg-order} would give \(a^R\GameLe a^L\), contradicting
+  that strict comparison.  Thus the left and right options of \(-a\) satisfy
+  the separation condition of Definition~\ref{def:is-surreal}.
+  Each negated option is surreal by the induction hypothesis and
+  Lemma~\ref{lem:birthday-options}.  Thus \(-a\) satisfies
+  Definition~\ref{def:is-surreal}.  Finally, Definition~\ref{def:surreal-representative}
+  turns each game, together with the surrealness just proved, into the
+  corresponding operation on representatives.
+\end{proof}
+
+\begin{definition}[Auxiliary quotient of all games]
+  \label{def:game-quotient}
+  \lean{Game.GameQ,Game.q,Game.instAddCommGroupGameQ,Game.instPartialOrderGameQ,Game.instIsOrderedAddMonoidGameQ}
+  \leanok
+  \uses{def:game-order,def:game-add,def:game-neg}
+  Let \(\mathcal G/{\GameEq}\) be the quotient of all finite games by game equivalence.  With
+  the operations described below, this quotient is a partially ordered additive commutative
+  group.  It will be used for algebraic rearrangement in later product proofs; totality is not
+  asserted for arbitrary games.
+\end{definition}
+\begin{proof}
+  \leanok
+  \uses{def:game-order,thm:game-order-calculus,thm:game-add-laws,thm:game-add-order,thm:game-neg-order,thm:game-add-inverse}
+  Write \([a]\) for the equivalence class of a game \(a\).  Theorem~\ref{thm:game-order-calculus}
+  shows that \(\GameEq\) is an equivalence relation.  Define
+  \[
+    [a]+[b]=[a+b],\qquad -[a]=[-a],\qquad [a]\leq[b]
+      \Longleftrightarrow a\GameLe b.
+  \]
+  The first two definitions are independent of the representatives by the
+  congruence assertions in Theorems~\ref{thm:game-add-order}
+  and~\ref{thm:game-neg-order}.
+
+  The order is also independent of representatives.  Indeed, suppose
+  \(a\GameEq a'\), \(b\GameEq b'\), and \(a\GameLe b\).  The two appropriate
+  components of the equivalences give \(a'\GameLe a\) and
+  \(b\GameLe b'\); transitivity from
+  Theorem~\ref{thm:game-order-calculus} yields \(a'\GameLe b'\).  The converse
+  follows symmetrically.  Reflexivity and transitivity therefore pass to
+  classes.  If \([a]\leq[b]\) and \([b]\leq[a]\), then
+  \(a\GameEq b\) by Definition~\ref{def:game-order}, so \([a]=[b]\) by the
+  definition of an equivalence class.  Thus the quotient order is a partial
+  order.
+
+  The zero, associativity, and commutativity laws descend from
+  Theorem~\ref{thm:game-add-laws}, and the inverse law descends from
+  Theorem~\ref{thm:game-add-inverse}; an equivalence of representatives is
+  precisely equality of their classes.  Finally, translation monotonicity is
+  the class-level form of Theorem~\ref{thm:game-add-order}.  Commutativity from
+  Theorem~\ref{thm:game-add-laws} permits the common summand to be placed on
+  either side.
+\end{proof}
+
+\begin{definition}[Short surreal numbers]
+  \label{def:surreal-number}
+  \lean{Surreal.SurrealNumber,Surreal.SurrealNumber.add,Surreal.SurrealNumber.neg}
+  \leanok
+  \uses{def:surreal-representative,thm:surreal-add-closure,thm:game-order-calculus,thm:game-add-order,thm:game-neg-order}
+  The type \(\NoShort\) is the quotient of surreal representatives by \(a\GameEq b\).
+  Addition, zero, one, and negation descend to this quotient.
+\end{definition}
+
+\begin{theorem}[Linear ordered additive commutative group]
+  \label{thm:ordered-add-group}
+  \lean{Surreal.instLinearOrderSurrealNumber,Surreal.instAddCommGroupSurrealNumber,Surreal.instIsOrderedAddMonoidSurrealNumber}
+  \leanok
+  The quotient \(\NoShort\) is a linearly ordered additive commutative group, and addition is
+  compatible with its order.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:surreal-totality,thm:game-order-calculus,thm:game-add-laws,thm:game-add-order,thm:game-add-inverse,def:surreal-number}
+  By Definition~\ref{def:surreal-number}, an element of \(\NoShort\) is an
+  equivalence class \([a]\) of surreal representatives.  Set
+  \([a]\leq[b]\) when \(a\GameLe b\).  If either representative is replaced
+  by an equivalent one, the two relevant weak inequalities and transitivity
+  from Theorem~\ref{thm:game-order-calculus} show that this condition is
+  unchanged.  Reflexivity and transitivity descend for the same reason.  Two
+  opposite inequalities say \(a\GameEq b\), so the classes are equal by the
+  definition of the quotient.  Finally, Theorem~\ref{thm:surreal-totality}
+  applies to the surreal representatives and makes this order total.  Hence it
+  is a linear order.
+
+  Addition and negation of classes are well defined by
+  Definition~\ref{def:surreal-number}.  The zero, associativity, and
+  commutativity laws follow from Theorem~\ref{thm:game-add-laws}, while the
+  inverse law follows from Theorem~\ref{thm:game-add-inverse}; literal equality
+  or game equivalence of representatives gives equality of their classes.
+  If \(a\GameLe b\), two-variable monotonicity from
+  Theorem~\ref{thm:game-add-order}, applied together with reflexivity of the
+  common summand from Theorem~\ref{thm:game-order-calculus}, gives
+  \(c+a\GameLe c+b\).  Thus addition is compatible with the quotient order.
+\end{proof}

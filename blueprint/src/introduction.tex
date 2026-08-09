@@ -1,0 +1,36 @@
+\chapter{Overview}
+
+This blueprint records the mathematical dependency structure of the
+\href{https://github.com/kdwong/surreal}{surreal Lean repository}.  It follows the declarations
+and proofs in that development rather than presenting a separate textbook construction.
+
+Every game considered here has finitely many options at each node and finite birthday.
+Accordingly, the quotient constructed here is the ring of
+\emph{short} surreal numbers, denoted in this document by \(\NoShort\).  This is the dyadic
+part of Conway's full class of surreal numbers.  No claim about proper-class-sized or
+transfinite birthdays is made.
+
+The principal dependency path is
+\[
+\begin{aligned}
+  &\text{finite games and birthdays}
+  \longrightarrow \text{recursive game order}
+  \longrightarrow \text{surreal totality} \\
+  &\quad\longrightarrow \text{ordered additive quotient},\\[2mm]
+  &\text{recursive product}
+  \longrightarrow \text{Conway A/B/C induction}
+  \longrightarrow \text{product closure and congruence}\\
+  &\quad\longrightarrow \text{commutative ring}
+  \longrightarrow \text{positive-product theorem}
+  \longrightarrow \text{linear ordered commutative ring}.
+\end{aligned}
+\]
+
+On the web version, each formalized item links to its Lean declaration.  The dependency
+graph uses dashed edges for dependencies occurring in a statement or construction and solid
+edges for proof dependencies.  The graph retains every declared edge, including transitively
+redundant ones, so the complete audited dependency path remains visible.
+
+All nodes marked as formalized were checked against the current local formal development.  A
+green node means that the corresponding theorem has been verified; the prose proof explains
+its mathematical argument and its place in the dependency path.

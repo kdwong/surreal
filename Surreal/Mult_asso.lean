@@ -1,4 +1,3 @@
-import Mathlib.Tactic.Linarith
 import Mathlib.Data.List.MinMax
 import Mathlib.Order.Basic
 import Mathlib.Tactic.Abel
@@ -43,13 +42,8 @@ private lemma mul_congr_left
     (sx : IsSurreal x) (sy₁ : IsSurreal y₁) (sy₂ : IsSurreal y₂)
     (h : y₁ ∼ y₂) :
     (x ⊗ y₁) ∼ (x ⊗ y₂) := by
-  refine Game.eq_trans (y := y₁ ⊗ x) ?_
-  constructor
-  · exact Game.mul_comm (a := x) (b := y₁)
-  · refine Game.eq_trans (y := y₂ ⊗ x) ?_
-    constructor
-    · exact Conway.conway_B sy₁ sy₂ sx h
-    · exact Game.mul_comm (a := y₂) (b := x)
+  exact Game.eq_trans ⟨Game.mul_comm,
+    Game.eq_trans ⟨Conway.conway_B sy₁ sy₂ sx h, Game.mul_comm⟩⟩
 
 lemma mul_congr
     {x₁ x₂ y₁ y₂ : Game}
@@ -57,40 +51,8 @@ lemma mul_congr
     (sy₁ : IsSurreal y₁) (sy₂ : IsSurreal y₂)
     (hx : x₁ ∼ x₂) (hy : y₁ ∼ y₂) :
     (x₁ ⊗ y₁) ∼ (x₂ ⊗ y₂) := by
-  refine Game.eq_trans (y := x₂ ⊗ y₁) ?_
-  constructor
-  · exact mul_congr_right sx₁ sx₂ sy₁ hx
-  · exact mul_congr_left sx₂ sy₁ sy₂ hy
-
-private lemma mul_neg_mem_neg_left_iff {x l : Game} :
-    l ∈ (Game.neg x).left ↔ ∃ r ∈ x.right, l = Game.neg r := by
-  rw [neg_left_def, List.mem_map]
-  constructor
-  · rintro ⟨⟨r, hr⟩, -, rfl⟩
-    exact ⟨r, hr, rfl⟩
-  · rintro ⟨r, hr, rfl⟩
-    exact ⟨⟨r, hr⟩, by simp, rfl⟩
-
-private lemma mul_neg_mem_neg_right_iff {x r : Game} :
-    r ∈ (Game.neg x).right ↔ ∃ l ∈ x.left, r = Game.neg l := by
-  rw [neg_right_def, List.mem_map]
-  constructor
-  · rintro ⟨⟨l, hl⟩, -, rfl⟩
-    exact ⟨l, hl, rfl⟩
-  · rintro ⟨l, hl, rfl⟩
-    exact ⟨⟨l, hl⟩, by simp, rfl⟩
-
-private lemma mul_neg_mem_neg_left_of_right {x r : Game}
-    (hr : r ∈ x.right) :
-    Game.neg r ∈ (Game.neg x).left := by
-  rw [mul_neg_mem_neg_left_iff]
-  exact ⟨r, hr, rfl⟩
-
-private lemma mul_neg_mem_neg_right_of_left {x l : Game}
-    (hl : l ∈ x.left) :
-    Game.neg l ∈ (Game.neg x).right := by
-  rw [mul_neg_mem_neg_right_iff]
-  exact ⟨l, hl, rfl⟩
+  exact Game.eq_trans ⟨mul_congr_right sx₁ sx₂ sy₁ hx,
+    mul_congr_left sx₂ sy₁ sy₂ hy⟩
 
 private lemma mulOpt4_neg_right_aux
     {xOpt Y X yOpt : Game}
@@ -100,8 +62,26 @@ private lemma mulOpt4_neg_right_aux
     Game.mulOpt4 xOpt Y.neg X yOpt.neg ∼
       (Game.mulOpt4 xOpt Y X yOpt).neg := by
   refine Game.eq_of_q_eq ?_
-  simp [Game.mulOpt4, Game.q_sound h₁, Game.q_sound h₂, Game.q_sound h₃]
+  simp only [Game.q_mulOpt4, Game.q_neg]
+  rw [Game.q_sound h₁, Game.q_sound h₂, Game.q_sound h₃]
+  simp only [Game.q_neg]
   abel
+
+private abbrev MulNegIH (x y : Game) : Prop :=
+  ∀ z : Game.BiGame, Game.B z ⟨x, y⟩ →
+    (z.a ⊗ z.b.neg) ∼ (z.a ⊗ z.b).neg
+
+private lemma mulOpt4_neg_right_of_IH
+    {x y xOpt yOpt : Game}
+    (IH : MulNegIH x y)
+    (hxOpt : xOpt ∈ x.left ∨ xOpt ∈ x.right)
+    (hyOpt : yOpt ∈ y.left ∨ yOpt ∈ y.right) :
+    Game.mulOpt4 xOpt y.neg x yOpt.neg ∼
+      (Game.mulOpt4 xOpt y x yOpt).neg := by
+  exact mulOpt4_neg_right_aux
+    (IH ⟨xOpt, y⟩ (Game.B_of_mem_option_fst hxOpt))
+    (IH ⟨x, yOpt⟩ (Game.B_of_mem_option_snd hyOpt))
+    (IH ⟨xOpt, yOpt⟩ (Game.B_of_mem_options hxOpt hyOpt))
 
 private lemma Game.mul_neg {x y : Game} :
     (x ⊗ y.neg) ∼ (x ⊗ y).neg := by
@@ -112,87 +92,64 @@ private lemma Game.mul_neg {x y : Game} :
     refine Game.wf_B.induction (C := P) z ?_
     rintro ⟨x, y⟩ IH
     dsimp [P]
+    change MulNegIH x y at IH
     refine Game.eq_of_equiv_options ?_ ?_ ?_ ?_
     · intro L hL
       rw [mem_mul_left] at hL
       rcases hL with
         ⟨xL, hxL, ynL, hynL, rfl⟩ | ⟨xR, hxR, ynR, hynR, rfl⟩
-      · rcases (mul_neg_mem_neg_left_iff.mp hynL) with ⟨yR, hyR, rfl⟩
+      · rcases (mem_neg_left_iff.mp hynL) with ⟨yR, hyR, rfl⟩
         refine
           ⟨(Game.mulOpt4 xL y x yR).neg,
-            mul_neg_mem_neg_left_of_right (mem_mul_right_lr hxL hyR), ?_⟩
-        exact mulOpt4_neg_right_aux
-          (IH ⟨xL, y⟩ (Game.B_of_left_mem_fst hxL))
-          (IH ⟨x, yR⟩ (Game.B_of_right_mem_snd hyR))
-          (IH ⟨xL, yR⟩ (Game.B_of_left_right hxL hyR))
-      · rcases (mul_neg_mem_neg_right_iff.mp hynR) with ⟨yL, hyL, rfl⟩
+            mem_neg_left_of_right (mem_mul_right_lr hxL hyR), ?_⟩
+        exact mulOpt4_neg_right_of_IH IH (Or.inl hxL) (Or.inr hyR)
+      · rcases (mem_neg_right_iff.mp hynR) with ⟨yL, hyL, rfl⟩
         refine
           ⟨(Game.mulOpt4 xR y x yL).neg,
-            mul_neg_mem_neg_left_of_right (mem_mul_right_rl hxR hyL), ?_⟩
-        exact mulOpt4_neg_right_aux
-          (IH ⟨xR, y⟩ (Game.B_of_right_mem_fst hxR))
-          (IH ⟨x, yL⟩ (Game.B_of_left_mem_snd hyL))
-          (IH ⟨xR, yL⟩ (Game.B_of_right_left hxR hyL))
+            mem_neg_left_of_right (mem_mul_right_rl hxR hyL), ?_⟩
+        exact mulOpt4_neg_right_of_IH IH (Or.inr hxR) (Or.inl hyL)
     · intro L hL
-      rw [mul_neg_mem_neg_left_iff] at hL
+      rw [mem_neg_left_iff] at hL
       rcases hL with ⟨R, hR, rfl⟩
       rw [mem_mul_right] at hR
       rcases hR with
         ⟨xL, hxL, yR, hyR, rfl⟩ | ⟨xR, hxR, yL, hyL, rfl⟩
       · refine
           ⟨Game.mulOpt4 xL y.neg x yR.neg,
-            mem_mul_left_ll hxL (mul_neg_mem_neg_left_of_right hyR), ?_⟩
-        exact Game.eq_symm <| mulOpt4_neg_right_aux
-          (IH ⟨xL, y⟩ (Game.B_of_left_mem_fst hxL))
-          (IH ⟨x, yR⟩ (Game.B_of_right_mem_snd hyR))
-          (IH ⟨xL, yR⟩ (Game.B_of_left_right hxL hyR))
+            mem_mul_left_ll hxL (mem_neg_left_of_right hyR), ?_⟩
+        exact Game.eq_symm <| mulOpt4_neg_right_of_IH IH (Or.inl hxL) (Or.inr hyR)
       · refine
           ⟨Game.mulOpt4 xR y.neg x yL.neg,
-            mem_mul_left_rr hxR (mul_neg_mem_neg_right_of_left hyL), ?_⟩
-        exact Game.eq_symm <| mulOpt4_neg_right_aux
-          (IH ⟨xR, y⟩ (Game.B_of_right_mem_fst hxR))
-          (IH ⟨x, yL⟩ (Game.B_of_left_mem_snd hyL))
-          (IH ⟨xR, yL⟩ (Game.B_of_right_left hxR hyL))
+            mem_mul_left_rr hxR (mem_neg_right_of_left hyL), ?_⟩
+        exact Game.eq_symm <| mulOpt4_neg_right_of_IH IH (Or.inr hxR) (Or.inl hyL)
     · intro R hR
       rw [mem_mul_right] at hR
       rcases hR with
         ⟨xL, hxL, ynR, hynR, rfl⟩ | ⟨xR, hxR, ynL, hynL, rfl⟩
-      · rcases (mul_neg_mem_neg_right_iff.mp hynR) with ⟨yL, hyL, rfl⟩
+      · rcases (mem_neg_right_iff.mp hynR) with ⟨yL, hyL, rfl⟩
         refine
           ⟨(Game.mulOpt4 xL y x yL).neg,
-            mul_neg_mem_neg_right_of_left (mem_mul_left_ll hxL hyL), ?_⟩
-        exact mulOpt4_neg_right_aux
-          (IH ⟨xL, y⟩ (Game.B_of_left_mem_fst hxL))
-          (IH ⟨x, yL⟩ (Game.B_of_left_mem_snd hyL))
-          (IH ⟨xL, yL⟩ (Game.B_of_left_left hxL hyL))
-      · rcases (mul_neg_mem_neg_left_iff.mp hynL) with ⟨yR, hyR, rfl⟩
+            mem_neg_right_of_left (mem_mul_left_ll hxL hyL), ?_⟩
+        exact mulOpt4_neg_right_of_IH IH (Or.inl hxL) (Or.inl hyL)
+      · rcases (mem_neg_left_iff.mp hynL) with ⟨yR, hyR, rfl⟩
         refine
           ⟨(Game.mulOpt4 xR y x yR).neg,
-            mul_neg_mem_neg_right_of_left (mem_mul_left_rr hxR hyR), ?_⟩
-        exact mulOpt4_neg_right_aux
-          (IH ⟨xR, y⟩ (Game.B_of_right_mem_fst hxR))
-          (IH ⟨x, yR⟩ (Game.B_of_right_mem_snd hyR))
-          (IH ⟨xR, yR⟩ (Game.B_of_right_right hxR hyR))
+            mem_neg_right_of_left (mem_mul_left_rr hxR hyR), ?_⟩
+        exact mulOpt4_neg_right_of_IH IH (Or.inr hxR) (Or.inr hyR)
     · intro R hR
-      rw [mul_neg_mem_neg_right_iff] at hR
+      rw [mem_neg_right_iff] at hR
       rcases hR with ⟨L, hL, rfl⟩
       rw [mem_mul_left] at hL
       rcases hL with
         ⟨xL, hxL, yL, hyL, rfl⟩ | ⟨xR, hxR, yR, hyR, rfl⟩
       · refine
           ⟨Game.mulOpt4 xL y.neg x yL.neg,
-            mem_mul_right_lr hxL (mul_neg_mem_neg_right_of_left hyL), ?_⟩
-        exact Game.eq_symm <| mulOpt4_neg_right_aux
-          (IH ⟨xL, y⟩ (Game.B_of_left_mem_fst hxL))
-          (IH ⟨x, yL⟩ (Game.B_of_left_mem_snd hyL))
-          (IH ⟨xL, yL⟩ (Game.B_of_left_left hxL hyL))
+            mem_mul_right_lr hxL (mem_neg_right_of_left hyL), ?_⟩
+        exact Game.eq_symm <| mulOpt4_neg_right_of_IH IH (Or.inl hxL) (Or.inl hyL)
       · refine
           ⟨Game.mulOpt4 xR y.neg x yR.neg,
-            mem_mul_right_rl hxR (mul_neg_mem_neg_left_of_right hyR), ?_⟩
-        exact Game.eq_symm <| mulOpt4_neg_right_aux
-          (IH ⟨xR, y⟩ (Game.B_of_right_mem_fst hxR))
-          (IH ⟨x, yR⟩ (Game.B_of_right_mem_snd hyR))
-          (IH ⟨xR, yR⟩ (Game.B_of_right_right hxR hyR))
+            mem_mul_right_rl hxR (mem_neg_left_of_right hyR), ?_⟩
+        exact Game.eq_symm <| mulOpt4_neg_right_of_IH IH (Or.inr hxR) (Or.inr hyR)
   exact hP ⟨x, y⟩
 
 private lemma neg_mul_from_mul_neg {x y : Game} :
@@ -248,85 +205,17 @@ private lemma mulOpt4_assoc_rewrite
     Game.mulOpt4 (Game.mulOpt4 a₀ b a b₀) c (a ⊗ b) c₀ ∼
     Game.mulOpt4 a₀ (b ⊗ c) a (Game.mulOpt4 b₀ c b c₀) := by
   refine Game.eq_of_q_eq ?_
-  change
-    (Game.q
-      (((((Game.mulOpt4 a₀ b a b₀) ⊗ c) ⊕ ((a ⊗ b) ⊗ c₀)) ⊕
-        (((Game.mulOpt4 a₀ b a b₀) ⊗ c₀).neg))) : Game.GameQ)
-      =
-    (Game.q
-      ((((a₀ ⊗ (b ⊗ c)) ⊕ (a ⊗ Game.mulOpt4 b₀ c b c₀)) ⊕
-        ((a₀ ⊗ Game.mulOpt4 b₀ c b c₀).neg))) : Game.GameQ)
-  simp only [Game.q_add, Game.q_neg]
+  simp only [Game.q_mulOpt4]
   rw [q_mulOpt4_mul_right h₁ h₂ h₃, Game.q_sound h₄,
     q_mulOpt4_mul_right h₅ h₆ h₇, q_mul_mulOpt4, q_mul_mulOpt4]
   abel
-
-/-!
-  A single packaged recursive hypothesis:
-  to prove associativity for a smaller triple `(a', b', c')`,
-  it is enough that each birthday is bounded by the ambient one,
-  and at least one coordinate is strictly smaller.
--/
-
-private def AssocIH (a b c : Game) : Prop :=
-  ∀ a' b' c',
-    Game.birthday a' ≤ Game.birthday a →
-    Game.birthday b' ≤ Game.birthday b →
-    Game.birthday c' ≤ Game.birthday c →
-    (Game.birthday a' < Game.birthday a ∨
-      Game.birthday b' < Game.birthday b ∨
-      Game.birthday c' < Game.birthday c) →
-    IsSurreal a' → IsSurreal b' → IsSurreal c' →
-    AssocPred a' b' c'
-
-/-! ### New helper lemmas removing repeated IH-instantiation boilerplate -/
-
-private lemma birthday_lt_of_mem_option {x x₀ : Game}
-    (h : x₀ ∈ x.left ∨ x₀ ∈ x.right) :
-    Game.birthday x₀ < Game.birthday x := by
-  rcases h with h | h
-  · exact Game.birthday_lt_left h
-  · exact Game.birthday_lt_right h
-
-private lemma isSurreal_of_mem_option {x x₀ : Game}
-    (sx : IsSurreal x)
-    (h : x₀ ∈ x.left ∨ x₀ ∈ x.right) :
-    IsSurreal x₀ := by
-  rcases h with h | h
-  · exact IsSurreal.isSurreal_left sx h
-  · exact IsSurreal.isSurreal_right sx h
-
-private lemma mulOpt4_assoc_of_IH
-    {a b c a₀ b₀ c₀ : Game}
-    (sa : IsSurreal a) (sb : IsSurreal b) (sc : IsSurreal c)
-    (IH : AssocIH a b c)
-    (ha₀ : Game.birthday a₀ < Game.birthday a)
-    (hb₀ : Game.birthday b₀ < Game.birthday b)
-    (hc₀ : Game.birthday c₀ < Game.birthday c)
-    (sa₀ : IsSurreal a₀) (sb₀ : IsSurreal b₀) (sc₀ : IsSurreal c₀) :
-    Game.mulOpt4 (Game.mulOpt4 a₀ b a b₀) c (a ⊗ b) c₀ ∼
-      Game.mulOpt4 a₀ (b ⊗ c) a (Game.mulOpt4 b₀ c b c₀) := by
-  exact mulOpt4_assoc_rewrite
-    (h₁ := IH a₀ b c
-      (le_of_lt ha₀) le_rfl le_rfl (Or.inl ha₀) sa₀ sb sc)
-    (h₂ := IH a b₀ c
-      le_rfl (le_of_lt hb₀) le_rfl (Or.inr (Or.inl hb₀)) sa sb₀ sc)
-    (h₃ := IH a₀ b₀ c
-      (le_of_lt ha₀) (le_of_lt hb₀) le_rfl (Or.inl ha₀) sa₀ sb₀ sc)
-    (h₄ := IH a b c₀
-      le_rfl le_rfl (le_of_lt hc₀) (Or.inr (Or.inr hc₀)) sa sb sc₀)
-    (h₅ := IH a₀ b c₀
-      (le_of_lt ha₀) le_rfl (le_of_lt hc₀) (Or.inl ha₀) sa₀ sb sc₀)
-    (h₆ := IH a b₀ c₀
-      le_rfl (le_of_lt hb₀) (le_of_lt hc₀) (Or.inr (Or.inl hb₀)) sa sb₀ sc₀)
-    (h₇ := IH a₀ b₀ c₀
-      (le_of_lt ha₀) (le_of_lt hb₀) (le_of_lt hc₀) (Or.inl ha₀) sa₀ sb₀ sc₀)
 
 private structure AssocContext (a b c : Game) : Prop where
   sa : IsSurreal a
   sb : IsSurreal b
   sc : IsSurreal c
-  ih : AssocIH a b c
+  ih : ∀ t, T t ⟨a, b, c⟩ →
+    IsSurreal t.a → IsSurreal t.b → IsSurreal t.c → AssocPred t.a t.b t.c
 
 private lemma AssocContext.mulOpt4_assoc
     {a b c a₀ b₀ c₀ : Game}
@@ -336,13 +225,20 @@ private lemma AssocContext.mulOpt4_assoc
     (hc₀ : c₀ ∈ c.left ∨ c₀ ∈ c.right) :
     Game.mulOpt4 (Game.mulOpt4 a₀ b a b₀) c (a ⊗ b) c₀ ∼
       Game.mulOpt4 a₀ (b ⊗ c) a (Game.mulOpt4 b₀ c b c₀) := by
-  exact mulOpt4_assoc_of_IH ctx.sa ctx.sb ctx.sc ctx.ih
-    (birthday_lt_of_mem_option ha₀)
-    (birthday_lt_of_mem_option hb₀)
-    (birthday_lt_of_mem_option hc₀)
-    (isSurreal_of_mem_option ctx.sa ha₀)
-    (isSurreal_of_mem_option ctx.sb hb₀)
-    (isSurreal_of_mem_option ctx.sc hc₀)
+  have ha₀' := Game.birthday_lt_of_isOption ha₀
+  have hb₀' := Game.birthday_lt_of_isOption hb₀
+  have hc₀' := Game.birthday_lt_of_isOption hc₀
+  have sa₀ := IsSurreal.isSurreal_option ctx.sa ha₀
+  have sb₀ := IsSurreal.isSurreal_option ctx.sb hb₀
+  have sc₀ := IsSurreal.isSurreal_option ctx.sc hc₀
+  exact mulOpt4_assoc_rewrite
+    (h₁ := ctx.ih ⟨a₀, b, c⟩ (Game.T_left ha₀') sa₀ ctx.sb ctx.sc)
+    (h₂ := ctx.ih ⟨a, b₀, c⟩ (Game.T_mid hb₀') ctx.sa sb₀ ctx.sc)
+    (h₃ := ctx.ih ⟨a₀, b₀, c⟩ (Game.T_left_mid ha₀' hb₀') sa₀ sb₀ ctx.sc)
+    (h₄ := ctx.ih ⟨a, b, c₀⟩ (Game.T_right hc₀') ctx.sa ctx.sb sc₀)
+    (h₅ := ctx.ih ⟨a₀, b, c₀⟩ (Game.T_left_right ha₀' hc₀') sa₀ ctx.sb sc₀)
+    (h₆ := ctx.ih ⟨a, b₀, c₀⟩ (Game.T_mid_right hb₀' hc₀') ctx.sa sb₀ sc₀)
+    (h₇ := ctx.ih ⟨a₀, b₀, c₀⟩ (Game.T_left_mid_right ha₀' hb₀' hc₀') sa₀ sb₀ sc₀)
 
 /-! ### Option-matching lemmas -/
 
@@ -472,31 +368,6 @@ private lemma right_option_mul_assoc_symm
 
 /-! ### Main theorem -/
 
-private lemma T_of_assoc_bounds
-    {a b c a' b' c' : Game}
-    (ha' : a'.birthday ≤ a.birthday)
-    (hb' : b'.birthday ≤ b.birthday)
-    (hc' : c'.birthday ≤ c.birthday)
-    (hstrict :
-      a'.birthday < a.birthday ∨
-        b'.birthday < b.birthday ∨
-          c'.birthday < c.birthday) :
-    T ⟨a', b', c'⟩ ⟨a, b, c⟩ := by
-  rcases hstrict with ha_strict | hb_strict | hc_strict
-  all_goals
-    simp [T, Nat.add_assoc]
-    linarith
-
-private lemma assocContext_of_IH
-    {a b c : Game}
-    (sa : IsSurreal a) (sb : IsSurreal b) (sc : IsSurreal c)
-    (IH : ∀ t, T t ⟨a, b, c⟩ →
-      IsSurreal t.a → IsSurreal t.b → IsSurreal t.c → AssocPred t.a t.b t.c) :
-    AssocContext a b c := by
-  refine ⟨sa, sb, sc, ?_⟩
-  intro a' b' c' ha' hb' hc' hstrict sa' sb' sc'
-  exact IH ⟨a', b', c'⟩ (T_of_assoc_bounds ha' hb' hc' hstrict) sa' sb' sc'
-
 theorem mul_assoc_of_isSurreal
     {a b c : Game}
     (sa : IsSurreal a) (sb : IsSurreal b) (sc : IsSurreal c) :
@@ -508,7 +379,7 @@ theorem mul_assoc_of_isSurreal
       IsSurreal t.a → IsSurreal t.b → IsSurreal t.c → AssocPred t.a t.b t.c) t ?_ sa sb sc
   intro t IH sa sb sc
   rcases t with ⟨a, b, c⟩
-  let ctx := assocContext_of_IH sa sb sc IH
+  let ctx : AssocContext a b c := ⟨sa, sb, sc, IH⟩
   exact Game.eq_of_equiv_options
     (fun _ h => left_option_mul_assoc ctx h)
     (fun _ h => left_option_mul_assoc_symm ctx h)
