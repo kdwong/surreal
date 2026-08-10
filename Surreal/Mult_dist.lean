@@ -184,4 +184,109 @@ theorem mul_distrib_right {a b c : Game} :
     ⟨Game.mul_comm, Game.eq_trans
       ⟨Game.mul_distrib, Game.add_equal ⟨Game.mul_comm, Game.mul_comm⟩⟩⟩
 
+/-! ### Multiplication and negation -/
+
+private lemma mulOpt4_neg_right_aux
+    {xOpt Y X yOpt : Game}
+    (h₁ : (xOpt ⊗ Y.neg) ∼ (xOpt ⊗ Y).neg)
+    (h₂ : (X ⊗ yOpt.neg) ∼ (X ⊗ yOpt).neg)
+    (h₃ : (xOpt ⊗ yOpt.neg) ∼ (xOpt ⊗ yOpt).neg) :
+    Game.mulOpt4 xOpt Y.neg X yOpt.neg ∼
+      (Game.mulOpt4 xOpt Y X yOpt).neg := by
+  refine Game.eq_of_q_eq ?_
+  simp only [Game.q_mulOpt4, Game.q_neg]
+  rw [Game.q_sound h₁, Game.q_sound h₂, Game.q_sound h₃]
+  simp only [Game.q_neg]
+  abel
+
+private abbrev MulNegIH (x y : Game) : Prop :=
+  ∀ z : Game.BiGame, Game.B z ⟨x, y⟩ →
+    (z.a ⊗ z.b.neg) ∼ (z.a ⊗ z.b).neg
+
+private lemma mulOpt4_neg_right_of_IH
+    {x y xOpt yOpt : Game}
+    (IH : MulNegIH x y)
+    (hxOpt : xOpt ∈ x.left ∨ xOpt ∈ x.right)
+    (hyOpt : yOpt ∈ y.left ∨ yOpt ∈ y.right) :
+    Game.mulOpt4 xOpt y.neg x yOpt.neg ∼
+      (Game.mulOpt4 xOpt y x yOpt).neg := by
+  exact mulOpt4_neg_right_aux
+    (IH ⟨xOpt, y⟩ (Game.B_of_mem_option_fst hxOpt))
+    (IH ⟨x, yOpt⟩ (Game.B_of_mem_option_snd hyOpt))
+    (IH ⟨xOpt, yOpt⟩ (Game.B_of_mem_options hxOpt hyOpt))
+
+theorem mul_neg {x y : Game} :
+    (x ⊗ y.neg) ∼ (x ⊗ y).neg := by
+  let P : Game.BiGame → Prop :=
+    fun z => (z.a ⊗ z.b.neg) ∼ (z.a ⊗ z.b).neg
+  have hP : ∀ z : Game.BiGame, P z := by
+    intro z
+    refine Game.wf_B.induction (C := P) z ?_
+    rintro ⟨x, y⟩ IH
+    dsimp [P]
+    change MulNegIH x y at IH
+    refine Game.eq_of_equiv_options ?_ ?_ ?_ ?_
+    · intro L hL
+      rw [mem_mul_left] at hL
+      rcases hL with
+        ⟨xL, hxL, ynL, hynL, rfl⟩ | ⟨xR, hxR, ynR, hynR, rfl⟩
+      · rcases (mem_neg_left_iff.mp hynL) with ⟨yR, hyR, rfl⟩
+        refine
+          ⟨(Game.mulOpt4 xL y x yR).neg,
+            mem_neg_left_of_right (mem_mul_right_lr hxL hyR), ?_⟩
+        exact mulOpt4_neg_right_of_IH IH (Or.inl hxL) (Or.inr hyR)
+      · rcases (mem_neg_right_iff.mp hynR) with ⟨yL, hyL, rfl⟩
+        refine
+          ⟨(Game.mulOpt4 xR y x yL).neg,
+            mem_neg_left_of_right (mem_mul_right_rl hxR hyL), ?_⟩
+        exact mulOpt4_neg_right_of_IH IH (Or.inr hxR) (Or.inl hyL)
+    · intro L hL
+      rw [mem_neg_left_iff] at hL
+      rcases hL with ⟨R, hR, rfl⟩
+      rw [mem_mul_right] at hR
+      rcases hR with
+        ⟨xL, hxL, yR, hyR, rfl⟩ | ⟨xR, hxR, yL, hyL, rfl⟩
+      · refine
+          ⟨Game.mulOpt4 xL y.neg x yR.neg,
+            mem_mul_left_ll hxL (mem_neg_left_of_right hyR), ?_⟩
+        exact Game.eq_symm <| mulOpt4_neg_right_of_IH IH (Or.inl hxL) (Or.inr hyR)
+      · refine
+          ⟨Game.mulOpt4 xR y.neg x yL.neg,
+            mem_mul_left_rr hxR (mem_neg_right_of_left hyL), ?_⟩
+        exact Game.eq_symm <| mulOpt4_neg_right_of_IH IH (Or.inr hxR) (Or.inl hyL)
+    · intro R hR
+      rw [mem_mul_right] at hR
+      rcases hR with
+        ⟨xL, hxL, ynR, hynR, rfl⟩ | ⟨xR, hxR, ynL, hynL, rfl⟩
+      · rcases (mem_neg_right_iff.mp hynR) with ⟨yL, hyL, rfl⟩
+        refine
+          ⟨(Game.mulOpt4 xL y x yL).neg,
+            mem_neg_right_of_left (mem_mul_left_ll hxL hyL), ?_⟩
+        exact mulOpt4_neg_right_of_IH IH (Or.inl hxL) (Or.inl hyL)
+      · rcases (mem_neg_left_iff.mp hynL) with ⟨yR, hyR, rfl⟩
+        refine
+          ⟨(Game.mulOpt4 xR y x yR).neg,
+            mem_neg_right_of_left (mem_mul_left_rr hxR hyR), ?_⟩
+        exact mulOpt4_neg_right_of_IH IH (Or.inr hxR) (Or.inr hyR)
+    · intro R hR
+      rw [mem_neg_right_iff] at hR
+      rcases hR with ⟨L, hL, rfl⟩
+      rw [mem_mul_left] at hL
+      rcases hL with
+        ⟨xL, hxL, yL, hyL, rfl⟩ | ⟨xR, hxR, yR, hyR, rfl⟩
+      · refine
+          ⟨Game.mulOpt4 xL y.neg x yL.neg,
+            mem_mul_right_lr hxL (mem_neg_right_of_left hyL), ?_⟩
+        exact Game.eq_symm <| mulOpt4_neg_right_of_IH IH (Or.inl hxL) (Or.inl hyL)
+      · refine
+          ⟨Game.mulOpt4 xR y.neg x yR.neg,
+            mem_mul_right_rl hxR (mem_neg_left_of_right hyR), ?_⟩
+        exact Game.eq_symm <| mulOpt4_neg_right_of_IH IH (Or.inr hxR) (Or.inr hyR)
+  exact hP ⟨x, y⟩
+
+theorem neg_mul {x y : Game} :
+    (x.neg ⊗ y) ∼ (x ⊗ y).neg := by
+  exact Game.eq_trans ⟨Game.mul_comm,
+    Game.eq_trans ⟨Game.mul_neg, Game.neg_congr_left Game.mul_comm⟩⟩
+
 end Game

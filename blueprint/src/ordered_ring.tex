@@ -13,23 +13,37 @@
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{def:surreal-representative,def:is-surreal,def:game-mul,def:game-order,thm:conway-a,thm:game-mul-congr}
+  \uses{def:surreal-representative,def:is-surreal,def:game-mul,def:game-order,def:game-equivalence,thm:conway-a,thm:game-mul-congr}
   By Definition~\ref{def:surreal-representative}, write
   \[
-    a=(a_0,h_a),\qquad b=(b_0,h_b),
+    a=(a_{\mathrm{game}},a_{\mathrm{proof}}),\qquad
+    b=(b_{\mathrm{game}},b_{\mathrm{proof}}).
   \]
-  where \(a_0,b_0\) are short games and \(h_a,h_b\) witness that they satisfy
+  Thus \(a_{\mathrm{proof}}\) and \(b_{\mathrm{proof}}\) witness that the short
+  games \(a_{\mathrm{game}}\) and \(b_{\mathrm{game}}\) satisfy
   Definition~\ref{def:is-surreal}.  Theorem~\ref{thm:conway-a} shows that the
-  product \(a_0b_0\), formed as in Definition~\ref{def:game-mul}, is again
-  surreal.  Hence \((a_0b_0,h_{ab})\) is a surreal representative, where
-  \(h_{ab}\) denotes the resulting witness.
+  product \(a_{\mathrm{game}}b_{\mathrm{game}}\), formed as in
+  Definition~\ref{def:game-mul}, is again surreal.  Hence
+  \[
+    \bigl(a_{\mathrm{game}}b_{\mathrm{game}},(ab)_{\mathrm{proof}}\bigr)
+  \]
+  is a surreal representative, where \((ab)_{\mathrm{proof}}\) denotes the
+  resulting witness.
 
   For alternative representatives
-  \(a'=(a_1,h_{a_1})\) and \(b'=(b_1,h_{b_1})\), assume the underlying
-  games satisfy \(a_0\GameEq a_1\) and \(b_0\GameEq b_1\) in the sense of
-  Definition~\ref{def:game-order}.  Theorem~\ref{thm:game-mul-congr} then gives
   \[
-    a_0b_0\GameEq a_1b_1.
+    a'=(a'_{\mathrm{game}},a'_{\mathrm{proof}}),\qquad
+    b'=(b'_{\mathrm{game}},b'_{\mathrm{proof}}),
+  \]
+  assume that their underlying games satisfy
+  \(a_{\mathrm{game}}\GameEq a'_{\mathrm{game}}\) and
+  \(b_{\mathrm{game}}\GameEq b'_{\mathrm{game}}\) in the sense of
+  Definition~\ref{def:game-equivalence}.  Theorem~\ref{thm:game-mul-congr}
+  then gives
+  \[
+    a_{\mathrm{game}}b_{\mathrm{game}}
+      \GameEq
+    a'_{\mathrm{game}}b'_{\mathrm{game}}.
   \]
   Thus the equivalence class of the product is independent of both chosen
   representatives.

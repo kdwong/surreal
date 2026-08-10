@@ -25,22 +25,22 @@ instance instSetoidGame : Setoid Game where
 /-- The additive quotient of games by equivalence. -/
 abbrev GameQ := Quotient (instSetoidGame : Setoid Game)
 
-/-- The quotient map. -/
-def q : Game → GameQ := Quotient.mk _
+/-- Compatibility alias for the quotient-class notation. -/
+abbrev q (g : Game) : GameQ := ⟦g⟧
 
 @[simp] theorem q_sound {a b : Game} (h : a ∼ b) :
-    (q a : GameQ) = q b :=
+    (⟦a⟧ : GameQ) = ⟦b⟧ :=
   Quotient.sound h
 
 @[simp] theorem q_sound_eq {a b : Game} (h : a = b) :
-    (q a : GameQ) = q b :=
+    (⟦a⟧ : GameQ) = ⟦b⟧ :=
   Quotient.sound (Game.eq_of_eq h)
 
 @[simp] theorem q_eq {a b : Game} :
-    (q a : GameQ) = q b ↔ a ∼ b :=
+    (⟦a⟧ : GameQ) = ⟦b⟧ ↔ a ∼ b :=
   Quotient.eq
 
-instance : Zero GameQ := ⟨q Game.zero⟩
+instance : Zero GameQ := ⟨⟦Game.zero⟧⟩
 
 instance : Add GameQ where
   add := Quotient.map₂ Game.add <| by
@@ -52,13 +52,13 @@ instance : Neg GameQ where
     intro a b hab
     exact Game.neg_congr_left hab
 
-@[simp] theorem q_zero : (q Game.zero : GameQ) = 0 := rfl
+@[simp] theorem q_zero : (⟦Game.zero⟧ : GameQ) = 0 := rfl
 
 @[simp] theorem q_add (a b : Game) :
-    (q (a.add b) : GameQ) = q a + q b := rfl
+    (⟦a.add b⟧ : GameQ) = ⟦a⟧ + ⟦b⟧ := rfl
 
 @[simp] theorem q_neg (a : Game) :
-    (q (Game.neg a) : GameQ) = -q a := rfl
+    (⟦Game.neg a⟧ : GameQ) = -⟦a⟧ := rfl
 
 instance : AddCommGroup GameQ where
   zero := (0 : GameQ)
@@ -69,21 +69,21 @@ instance : AddCommGroup GameQ where
     intro x y z
     refine Quotient.inductionOn₃ x y z ?_
     intro a b c
-    change (q ((a.add b).add c) : GameQ) = q (a.add (b.add c))
+    change (⟦(a.add b).add c⟧ : GameQ) = ⟦a.add (b.add c)⟧
     exact q_sound_eq (Game.add_assoc (a := a) (b := b) (c := c))
 
   zero_add := by
     intro x
     refine Quotient.inductionOn x ?_
     intro a
-    change (q (Game.zero.add a) : GameQ) = q a
+    change (⟦Game.zero.add a⟧ : GameQ) = ⟦a⟧
     exact q_sound_eq (Game.zero_add' (a := a))
 
   add_zero := by
     intro x
     refine Quotient.inductionOn x ?_
     intro a
-    change (q (a.add Game.zero) : GameQ) = q a
+    change (⟦a.add Game.zero⟧ : GameQ) = ⟦a⟧
     exact q_sound_eq (Game.add_zero' (a := a))
 
   nsmul := nsmulRec
@@ -93,19 +93,19 @@ instance : AddCommGroup GameQ where
     intro x
     refine Quotient.inductionOn x ?_
     intro a
-    change (q ((Game.neg a).add a) : GameQ) = q Game.zero
+    change (⟦(Game.neg a).add a⟧ : GameQ) = ⟦Game.zero⟧
     exact q_sound (Game.neg_add a)
 
   add_comm := by
     intro x y
     refine Quotient.inductionOn₂ x y ?_
     intro a b
-    change (q (a.add b) : GameQ) = q (b.add a)
+    change (⟦a.add b⟧ : GameQ) = ⟦b.add a⟧
     exact q_sound (Game.add_comm (a := a) (b := b))
 
 @[simp] theorem q_mulOpt4 (xOpt Y X yOpt : Game) :
-    (q (Game.mulOpt4 xOpt Y X yOpt) : GameQ) =
-      q (xOpt.mul Y) + q (X.mul yOpt) - q (xOpt.mul yOpt) := by
+    (⟦Game.mulOpt4 xOpt Y X yOpt⟧ : GameQ) =
+      ⟦xOpt.mul Y⟧ + ⟦X.mul yOpt⟧ - ⟦xOpt.mul yOpt⟧ := by
   simp [Game.mulOpt4, sub_eq_add_neg]
 
 instance : LE GameQ where
@@ -120,7 +120,7 @@ instance : LE GameQ where
         exact Game.le_trans ⟨ha.1, Game.le_trans ⟨ha'b', hb.2⟩⟩)
 
 @[simp] theorem q_le {a b : Game} :
-    ((q a : GameQ) ≤ q b) ↔ a ≼ b :=
+    ((⟦a⟧ : GameQ) ≤ ⟦b⟧) ↔ a ≼ b :=
   Iff.rfl
 
 instance : PartialOrder GameQ where
@@ -157,7 +157,7 @@ instance : PartialOrder GameQ where
       exact hyx
 
 @[simp] theorem q_lt {a b : Game} :
-    ((q a : GameQ) < q b) ↔ a ≺ b :=
+    ((⟦a⟧ : GameQ) < ⟦b⟧) ↔ a ≺ b :=
   Iff.rfl
 
 noncomputable instance : IsOrderedAddMonoid GameQ where
@@ -176,7 +176,7 @@ noncomputable instance : IsOrderedAddMonoid GameQ where
     exact Game.le_trans ⟨h1, Game.le_trans ⟨h2, h3⟩⟩
 
 
-theorem eq_of_q_eq {u v : Game} (h : (q u : GameQ) = q v) : u ∼ v :=
+theorem eq_of_q_eq {u v : Game} (h : (⟦u⟧ : GameQ) = ⟦v⟧) : u ∼ v :=
   q_eq.mp h
 
 end Game

@@ -95,12 +95,12 @@ lemma mul_eq_mul_left_of_mul_eq_mul_right {x y1 y2 : Game}
 -/
 private lemma add_neg_add_cancel (x c : Game) : ((x ⊕ c.neg) ⊕ c).eq x := by
   apply Game.eq_of_q_eq
-  change (Game.q (((x ⊕ c.neg) ⊕ c)) : Game.GameQ) = Game.q x
+  change (⟦((x ⊕ c.neg) ⊕ c)⟧ : Game.GameQ) = ⟦x⟧
   simp
 
 private lemma add_add_neg_cancel (x c : Game) : ((x ⊕ c) ⊕ c.neg).eq x := by
   apply Game.eq_of_q_eq
-  change (Game.q (((x ⊕ c) ⊕ c.neg)) : Game.GameQ) = Game.q x
+  change (⟦((x ⊕ c) ⊕ c.neg)⟧ : Game.GameQ) = ⟦x⟧
   simp
 
 lemma lt_rearrange_neg {a b c d : Game} :
