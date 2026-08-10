@@ -1,6 +1,6 @@
-\chapter{Addition, negation, and the additive quotient}
+\chapter{Addition, negation, and surreal numbers}
 
-\section{Operations on games}
+\section{Addition and Negation on games}
 
 \begin{definition}[Recursive sum]
   \label{def:game-add}
@@ -29,7 +29,7 @@
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{def:game,def:game-order,lem:birthday-options,def:game-inductions,thm:game-order-calculus,thm:option-extensionality,def:game-add}
+  \uses{def:game,def:game-equivalence,lem:birthday-options,def:game-inductions,thm:game-order-calculus,thm:option-extensionality,def:game-add}
   For \(a+0=a\), use the one-game induction scheme of
   Definition~\ref{def:game-inductions}.  Write \(a=\{A^L\mid A^R\}\).  By
   Definition~\ref{def:game-add}, the left and right option lists of \(a+0\)
@@ -82,18 +82,19 @@
     \begin{aligned}
       ((a+b)+c)^L
        ={}&[\,(a^L+b)+c:a^L\in A^L\,]\\
-          &{}\mathbin{++}[\,(a+b^L)+c:b^L\in B^L\,]\\
-          &{}\mathbin{++}[\,(a+b)+c^L:c^L\in C^L\,],\\[2mm]
+          &{}\cup[\,(a+b^L)+c:b^L\in B^L\,]\\
+          &{}\cup[\,(a+b)+c^L:c^L\in C^L\,],\\[2mm]
       (a+(b+c))^L
        ={}&[\,a^L+(b+c):a^L\in A^L\,]\\
-          &{}\mathbin{++}[\,a+(b^L+c):b^L\in B^L\,]\\
-          &{}\mathbin{++}[\,a+(b+c^L):c^L\in C^L\,].
+          &{}\cup[\,a+(b^L+c):b^L\in B^L\,]\\
+          &{}\cup[\,a+(b+c^L):c^L\in C^L\,].
     \end{aligned}
   \]
-  On the left the three sublists are parenthesized as
-  \((A^L\mathbin{++}B^L)\mathbin{++}C^L\), whereas on the right they are
-  parenthesized as \(A^L\mathbin{++}(B^L\mathbin{++}C^L)\).  Associativity of
-  finite-list concatenation first identifies these two parenthesizations.
+  We use \(\cup\) for the union of these finite option collections; formally, the underlying
+  lists retain order and multiplicity.  On the left the three sublists are parenthesized as
+  \((A^L\cup B^L)\cup C^L\), whereas on the right they are parenthesized as
+  \(A^L\cup(B^L\cup C^L)\).  Associativity of finite-list concatenation first identifies these
+  two parenthesizations.
   The lists then contain the same three families in the same order; only their
   entries differ.  The first, second, and third induction
   hypotheses above give pointwise equality on \(A^L,B^L,C^L\), respectively.
@@ -116,11 +117,14 @@
     a\GameLe c,\ b\GameLe d\Longrightarrow a+b\GameLe c+d.
   \]
   If either input comparison is strict and the other weak, the resulting comparison is strict.
-  Addition also respects \(\GameEq\).
+  Addition also respects \(\GameEq\), i.e.
+  \[
+    a\GameEq b\quad\Longleftrightarrow\quad a+c\GameEq b+c.
+  \]
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:birthday-options,def:game-order,def:game-inductions,thm:game-order-calculus,def:game-add,thm:game-add-laws}
+  \uses{lem:birthday-options,def:game-order,def:game-equivalence,def:game-inductions,thm:game-order-calculus,def:game-add,thm:game-add-laws}
   We first prove simultaneously, in both directions, the equivalence
   \[
     a+c\GameLe b+c\quad\Longleftrightarrow\quad a\GameLe b.
@@ -207,7 +211,7 @@
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:birthday-options,def:game-order,def:game-inductions,def:game-neg}
+  \uses{lem:birthday-options,def:game-order,def:game-equivalence,def:game-inductions,def:game-neg}
   Use the two-game induction scheme of Definition~\ref{def:game-inductions} to
   prove
   \[
@@ -231,12 +235,12 @@
   left-option clause.  Each induction step is valid by
   Lemma~\ref{lem:birthday-options}.
 
-  Applying the displayed equivalence to both weak inequalities in the
-  definition of \(\GameEq\) proves the stated biconditional for equivalence.
+  Applying the displayed equivalence to both weak inequalities in
+  Definition~\ref{def:game-equivalence} proves the stated biconditional for equivalence.
   Applying it to the forward weak
   inequality and to the excluded reverse inequality proves the strict-order
-  equivalence.  Both conclusions use the definitions in
-  Definition~\ref{def:game-order}.
+  equivalence.  Both conclusions use
+  Definitions~\ref{def:game-order} and~\ref{def:game-equivalence}.
 \end{proof}
 
 \begin{theorem}[Additive inverses]
@@ -252,11 +256,11 @@
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{def:game,def:game-order,def:game-inductions,lem:birthday-options,thm:game-order-calculus,def:game-add,thm:game-add-laws,def:game-neg}
+  \uses{def:game,def:game-order,def:game-equivalence,def:game-inductions,lem:birthday-options,thm:game-order-calculus,def:game-add,thm:game-add-laws,def:game-neg}
   We argue by induction on \(\bd(x)\), using the one-game scheme of
   Definition~\ref{def:game-inductions}.  Put \(s=x+(-x)\).  We prove the two
   inequalities in the definition of \(s\GameEq0\) from
-  Definition~\ref{def:game-order}.  Since \(0=\{\,\mid\,\}\) by
+  Definition~\ref{def:game-equivalence}.  Since \(0=\{\,\mid\,\}\) by
   Definition~\ref{def:game}, the clauses involving options of \(0\) are
   vacuous.
 
@@ -289,7 +293,7 @@
   Theorem~\ref{thm:game-add-laws} gives \((-x)+x\GameEq0\).
 \end{proof}
 
-\section{Closure and quotients}
+\section{Surreal Number}
 
 \begin{theorem}[Surreal games are closed under addition and negation]
   \label{thm:surreal-add-closure}
@@ -353,24 +357,37 @@
 
 \begin{definition}[Auxiliary quotient of all games]
   \label{def:game-quotient}
-  \lean{Game.GameQ,Game.q,Game.instAddCommGroupGameQ,Game.instPartialOrderGameQ,Game.instIsOrderedAddMonoidGameQ}
+  \lean{Game.instSetoidGame,Game.GameQ,Game.q_eq}
   \leanok
-  \uses{def:game-order,def:game-add,def:game-neg}
-  Let \(\mathcal G/{\GameEq}\) be the quotient of all finite games by game equivalence.  With
-  the operations described below, this quotient is a partially ordered additive commutative
-  group.  It will be used for algebraic rearrangement in later product proofs; totality is not
-  asserted for arbitrary games.
+  \uses{def:game-equivalence,thm:game-order-calculus}
+  By Theorem~\ref{thm:game-order-calculus}, game equivalence is an equivalence relation.
+  Define \(\Games/{\GameEq}\) to be the quotient of \(\Games\) by game equivalence, and
+  write \([a]\) for the equivalence class of a game \(a\).  Thus \([a]=[b]\) if and only
+  if \(a\GameEq b\).
 \end{definition}
+
+\begin{theorem}[Partially ordered additive commutative group]
+  \label{thm:game-quotient-ordered-add-group}
+  \lean{Game.q_zero,Game.q_add,Game.q_neg,Game.q_le,Game.q_lt,Game.instAddCommGroupGameQ,Game.instPartialOrderGameQ,Game.instIsOrderedAddMonoidGameQ}
+  \leanok
+  For finite games \(a,b\), define
+  \[
+    0=[0],\qquad [a]+[b]=[a+b],\qquad -[a]=[-a],
+  \]
+  and
+  \[
+    [a]\leq[b]\quad\Longleftrightarrow\quad a\GameLe b,
+    \qquad
+    [a]<[b]\quad\Longleftrightarrow\quad a\GameLt b.
+  \]
+  These formulas are independent of the chosen representatives.  With these operations and
+  this order, \(\Games/{\GameEq}\) is a partially ordered additive commutative group, and
+  addition is order preserving in each variable.
+\end{theorem}
 \begin{proof}
   \leanok
-  \uses{def:game-order,thm:game-order-calculus,thm:game-add-laws,thm:game-add-order,thm:game-neg-order,thm:game-add-inverse}
-  Write \([a]\) for the equivalence class of a game \(a\).  Theorem~\ref{thm:game-order-calculus}
-  shows that \(\GameEq\) is an equivalence relation.  Define
-  \[
-    [a]+[b]=[a+b],\qquad -[a]=[-a],\qquad [a]\leq[b]
-      \Longleftrightarrow a\GameLe b.
-  \]
-  The first two definitions are independent of the representatives by the
+  \uses{def:game-quotient,def:game-order,def:game-equivalence,def:game-add,def:game-neg,thm:game-order-calculus,thm:game-add-laws,thm:game-add-order,thm:game-neg-order,thm:game-add-inverse}
+  The addition and negation formulas are independent of the representatives by the
   congruence assertions in Theorems~\ref{thm:game-add-order}
   and~\ref{thm:game-neg-order}.
 
@@ -381,9 +398,10 @@
   Theorem~\ref{thm:game-order-calculus} yields \(a'\GameLe b'\).  The converse
   follows symmetrically.  Reflexivity and transitivity therefore pass to
   classes.  If \([a]\leq[b]\) and \([b]\leq[a]\), then
-  \(a\GameEq b\) by Definition~\ref{def:game-order}, so \([a]=[b]\) by the
+  \(a\GameEq b\) by Definition~\ref{def:game-equivalence}, so \([a]=[b]\) by the
   definition of an equivalence class.  Thus the quotient order is a partial
-  order.
+  order.  The asserted characterization of strict order now follows from the
+  definitions of \(\GameLt\) and strict order in a partial order.
 
   The zero, associativity, and commutativity laws descend from
   Theorem~\ref{thm:game-add-laws}, and the inverse law descends from
@@ -412,25 +430,18 @@
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:surreal-totality,thm:game-order-calculus,thm:game-add-laws,thm:game-add-order,thm:game-add-inverse,def:surreal-number}
-  By Definition~\ref{def:surreal-number}, an element of \(\NoShort\) is an
-  equivalence class \([a]\) of surreal representatives.  Set
-  \([a]\leq[b]\) when \(a\GameLe b\).  If either representative is replaced
-  by an equivalent one, the two relevant weak inequalities and transitivity
-  from Theorem~\ref{thm:game-order-calculus} show that this condition is
-  unchanged.  Reflexivity and transitivity descend for the same reason.  Two
-  opposite inequalities say \(a\GameEq b\), so the classes are equal by the
-  definition of the quotient.  Finally, Theorem~\ref{thm:surreal-totality}
-  applies to the surreal representatives and makes this order total.  Hence it
-  is a linear order.
-
-  Addition and negation of classes are well defined by
-  Definition~\ref{def:surreal-number}.  The zero, associativity, and
-  commutativity laws follow from Theorem~\ref{thm:game-add-laws}, while the
-  inverse law follows from Theorem~\ref{thm:game-add-inverse}; literal equality
-  or game equivalence of representatives gives equality of their classes.
-  If \(a\GameLe b\), two-variable monotonicity from
-  Theorem~\ref{thm:game-add-order}, applied together with reflexivity of the
-  common summand from Theorem~\ref{thm:game-order-calculus}, gives
-  \(c+a\GameLe c+b\).  Thus addition is compatible with the quotient order.
+  \uses{def:surreal-representative,thm:surreal-totality,thm:surreal-add-closure,def:game-quotient,thm:game-quotient-ordered-add-group,def:surreal-number}
+  There is a natural injective map
+  \[
+    \iota:\NoShort\longrightarrow\Games/{\GameEq},
+    \qquad \iota([s])=[s_{\mathrm{game}}].
+  \]
+  This is well defined and injective because both quotients identify representatives exactly
+  when their underlying games are game equivalent.  Pull back the quotient order along
+  \(\iota\), so \([s]\leq[t]\) precisely when
+  \(s_{\mathrm{game}}\GameLe t_{\mathrm{game}}\).  Definition~\ref{def:surreal-number} and
+  Theorem~\ref{thm:surreal-add-closure} show that the image contains zero and is closed under
+  addition and negation.  Hence Theorem~\ref{thm:game-quotient-ordered-add-group} supplies the
+  additive commutative group, partial order, and order compatibility on \(\NoShort\).
+  Theorem~\ref{thm:surreal-totality} upgrades this partial order to a linear order.
 \end{proof}

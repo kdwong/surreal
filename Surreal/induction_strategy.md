@@ -3,11 +3,11 @@
 
 # Three-statement induction strategy
 
-Recall the statements: If $x, x_1, x_2, y, y_1, y_2$ are surreal numbers. Then one wishes to prove these three statements simultaneously:
+Recall the statements: if $x, x_1, x_2, y, y_1, y_2$ are surreal games, then one wishes to prove these three statements simultaneously:
 
 $\bullet$ $A(x,y)$: $xy$ is surreal.
 
-$\bullet$ $B(x_1,x_2,y)$: If $x_1 = x_2$, then $x_1y = x_2y.$
+$\bullet$ $B(x_1,x_2,y)$: If $x_1 \sim x_2$, then $x_1y \sim x_2y$.
 
 $\bullet$ $C(x_1,x_2,y)$: If $x_1<x_2$, then  
 
@@ -20,11 +20,12 @@ for all left options $y^L$ of $y$ and all right options $y^R$ of $y$.
 And the original Conway's $C_4$ statement is
 
 $\bullet$ $C_4(x_1,x_2,y_1,y_2):$
-If $x_1<x_2$, then $x_1y_2+x_2y_1<x_1y_1+x_2y_2$
+If $x_1<x_2$ and $y_1<y_2$, then
+$x_1y_2+x_2y_1<x_1y_1+x_2y_2$.
 
 In other words, $C(x_1,x_2,y)$ is $C_4(x_1,x_2,y^L,y)$ and $C_4(x_1,x_2,y,y^R)$.
 
-We will only use the $A$, $B$ and $C$ statements and use the Dershowitz–Manna ordering for well-founded induction. Here are the dependency in the proof of these statements, which relies on two important facts needed for the Dershowitz–Manna order $\prec$ on multiset of $\mathbb{N}$:
+We will only use the $A$, $B$ and $C$ statements and use the Dershowitz–Manna ordering for well-founded induction. Here are the dependencies in the proof of these statements, which rely on the following facts about the Dershowitz–Manna order $\prec$ on multisets of $\mathbb{N}$:
 
 $\bullet$ If $a' < a$, then $\{a', b\} \prec \{a,b\}$.
 
@@ -33,6 +34,9 @@ $\bullet$ If $a' < a$, then $\{a', b, c\} \prec \{a,b, c\}$.
 $\bullet$ If $a_1, a_2 < a$, then $\{a_1, a_2,b\} \prec \{a,b\}$.
 
 $\bullet$ $\{a,b\} \prec \{a,b,c\}$.
+
+Mixed decreases follow by transitivity, while permuting the entries leaves a
+multiset measure unchanged.
 
 We list the dependencies for the induction argument smaller $A, B, C \to A \to B \to C$.
 
@@ -71,7 +75,7 @@ Equivalently:
 $$
 B(x_{L1},x_{L2},y),\quad
 B(x_{L1},x_{L2},y^R),\quad
-C(y^L,y^R,y).
+C(y^L,y^R,x).
 $$
 
 ---
@@ -550,5 +554,7 @@ C(x_1,x_2^L,y),\quad C(x_2^L,x_2,y) \rightsquigarrow A(x_2,y).
 $$
 
 ---
-Note that in the proof of $C$ case, the ``adjacent C
-`` cases ($C(x_1^L, x_1, y)$, $C(x_2, x_2^R, y)$ ) follows from $A(x_1, y)$, since the two inequalities of $C$ are just coming from the fact that $x_1y$ is a surreal number. 
+Note that in the proof of the $C$ case, the ``adjacent $C$'' instances
+$C(x_1,x_1^R,y)$ and $C(x_2^L,x_2,y)$ follow respectively from
+$A(x_1,y)$ and $A(x_2,y)$: their two inequalities come from the corresponding
+left- and right-option inequalities for the surreal games $x_1y$ and $x_2y$.

@@ -6,8 +6,10 @@
   \label{def:game}
   \lean{Game,Game.left,Game.right,Game.zero,Game.one}
   \leanok
-  A game is a finite rooted tree written \(x=\{X^L\mid X^R\}\), where the left- and
-  right-option collections \(X^L\) and \(X^R\) are finite lists of games.  The basic games are
+  Let \(\Games\) denote the collection of all finite (or short) combinatorial games.  An
+  element \(x\in\Games\) is a finite rooted tree written \(x=\{X^L\mid X^R\}\), where the
+  left- and right-option collections \(X^L\) and \(X^R\) are finite lists of games.  The basic
+  games are
   \[
     0=\{\,\mid\,\},\qquad 1=\{0\mid\,\}.
   \]
@@ -51,9 +53,9 @@
 
 \section{The recursive order}
 
-\begin{definition}[Game comparison and equivalence]
+\begin{definition}[Game comparison]
   \label{def:game-order}
-  \lean{Game.le,Game.lt,Game.eq}
+  \lean{Game.le,Game.lt}
   \leanok
   \uses{def:game,def:birthday,lem:birthday-options}
   The relation \(x\GameLe y\) is defined recursively by
@@ -64,12 +66,26 @@
     \ \wedge\
     \bigl(\forall y^R\in Y^R,\ \neg(y^R\GameLe x)\bigr).
   \]
-  Strict comparison and game equivalence are
+  Strict comparison is
   \[
-    x\GameLt y \Longleftrightarrow x\GameLe y\ \wedge\ \neg(y\GameLe x),
-    \qquad
-    x\GameEq y \Longleftrightarrow x\GameLe y\ \wedge\ y\GameLe x.
+    x\GameLt y \quad\Longleftrightarrow\quad
+    x\GameLe y\ \wedge\ \neg(y\GameLe x).
   \]
+\end{definition}
+
+\begin{definition}[Game equivalence]
+  \label{def:game-equivalence}
+  \lean{Game.eq}
+  \leanok
+  \uses{def:game-order}
+  Two games \(x,y\in\Games\) are \emph{equivalent}, written \(x\GameEq y\), when each is
+  weakly below the other:
+  \[
+    x\GameEq y \quad\Longleftrightarrow\quad
+    x\GameLe y\ \wedge\ y\GameLe x.
+  \]
+  This is the relation used later to identify games with the same game value.  Equivalent games
+  need not be literally equal as rooted trees or have identical option lists.
 \end{definition}
 
 \begin{definition}[Well-founded induction schemes]
@@ -77,21 +93,46 @@
   \lean{Game.R,Game.B,Game.T,Game.Q,Game.wf_R,Game.wf_B,Game.wf_T,Game.wf_Q}
   \leanok
   \uses{def:birthday}
-  The development uses well-founded relations on one, two, three, and four games.  Their
-  measures are respectively a birthday and the sums of two, three, and four birthdays.
+  The development uses the following relations on one, two, three, and four games.  For
+  \(q=(q_1,q_2,q_3,q_4)\) and \(q'=(q'_1,q'_2,q'_3,q'_4)\), set
+  \[
+    \begin{aligned}
+      y\mathrel R x
+        &\quad\Longleftrightarrow\quad \bd(y)<\bd(x),\\
+      (a',b')\mathrel B(a,b)
+        &\quad\Longleftrightarrow\quad
+          \bd(a')+\bd(b')<\bd(a)+\bd(b),\\
+      (a',b',c')\mathrel T(a,b,c)
+        &\quad\Longleftrightarrow\quad
+          \bd(a')+\bd(b')+\bd(c')<\bd(a)+\bd(b)+\bd(c),\\
+      q'\mathrel Qq
+        &\quad\Longleftrightarrow\quad
+          \sum_{i=1}^{4}\bd(q'_i)<\sum_{i=1}^{4}\bd(q_i).
+    \end{aligned}
+  \]
+  Each relation is well founded because it is the inverse image of the well-founded order
+  \(<\) on \(\mathbb N\) under the corresponding sum-of-birthdays measure.  They will be used
+  for well-founded induction on one, two, three, and four games, respectively; replacing any
+  coordinate by an option strictly decreases the relevant measure.
 \end{definition}
 
 \begin{theorem}[Order calculus for games]
   \label{thm:game-order-calculus}
   \lean{Game.le_congr,Game.eq_congr,Game.le_trans',Game.le_trans,Game.eq_symm,Game.eq_trans,Game.lt_trans,Game.lt_of_lt_of_le,Game.lt_of_le_of_lt}
   \leanok
-  The relation \(\GameLe\) is reflexive and transitive.  Consequently \(\GameEq\) is an
-  equivalence relation, \(\GameLt\) is transitive, and strict and weak inequalities compose in
-  either order.
+  For all games \(x,a,b,c\), reflexivity and transitivity are the assertions
+  \[
+    x\GameLe x,
+    \qquad
+    a\GameLe b\ \wedge\ b\GameLe c
+      \quad\Longrightarrow\quad a\GameLe c.
+  \]
+  Consequently \(\GameEq\) is an equivalence relation, \(\GameLt\) is transitive, and strict
+  and weak inequalities compose in either order.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:birthday-options,def:game-order,def:game-inductions}
+  \uses{lem:birthday-options,def:game-order,def:game-equivalence,def:game-inductions}
   For reflexivity, use the one-game induction scheme of
   Definition~\ref{def:game-inductions}.  Suppose reflexivity is known for all
   games of birthday smaller than \(\bd(x)\), and unfold the comparison in
@@ -117,8 +158,9 @@
   Lemma~\ref{lem:birthday-options} replaces one coordinate by an option of
   smaller birthday.  Hence \(a\GameLe c\).
 
-  The remaining assertions follow directly from the definitions in
-  Definition~\ref{def:game-order}.  Symmetry and transitivity of \(\GameEq\)
+  The remaining assertions follow directly from
+  Definitions~\ref{def:game-order} and~\ref{def:game-equivalence}.  Symmetry and transitivity
+  of \(\GameEq\)
   are obtained by composing the two weak inequalities in the appropriate
   directions.  For strict transitivity, compose the forward weak inequalities.
   If the reverse weak inequality held, transitivity would contradict one of
@@ -130,13 +172,20 @@
   \label{thm:option-extensionality}
   \lean{Game.eq_of_equiv_options}
   \leanok
-  Let \(a,b\) be games.  Suppose every left option of either game is equivalent to a left option
-  of the other, and likewise every right option is equivalent to a right option of the other.
+  Let \(a=\{A^L\mid A^R\}\) and \(b=\{B^L\mid B^R\}\) be games.  Suppose
+  \[
+    \begin{aligned}
+      &\forall a^L\in A^L,\ \exists b^L\in B^L,\quad a^L\GameEq b^L,\\
+      &\forall b^L\in B^L,\ \exists a^L\in A^L,\quad b^L\GameEq a^L,\\
+      &\forall a^R\in A^R,\ \exists b^R\in B^R,\quad a^R\GameEq b^R,\\
+      &\forall b^R\in B^R,\ \exists a^R\in A^R,\quad b^R\GameEq a^R.
+    \end{aligned}
+  \]
   Then \(a\GameEq b\).
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{def:game-order,thm:game-order-calculus}
+  \uses{def:game-order,def:game-equivalence,thm:game-order-calculus}
   We first verify the two clauses of Definition~\ref{def:game-order} for
   \(a\GameLe b\).  Let \(a^L\) be a left option of \(a\), and suppose that
   \(b\GameLe a^L\).  Choose a left option \(b^L\) of \(b\) such that
@@ -152,7 +201,7 @@
   equivalence and transitivity
   give \(a^R\GameLe a\), contrary to the right-option clause of the reflexive
   comparison \(a\GameLe a\).  Thus \(a\GameLe b\).  Interchanging \(a\) and
-  \(b\) proves \(b\GameLe a\), and Definition~\ref{def:game-order} then gives
+  \(b\) proves \(b\GameLe a\), and Definition~\ref{def:game-equivalence} then gives
   \(a\GameEq b\).
 \end{proof}
 
@@ -221,7 +270,7 @@
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{def:game-order,def:is-surreal,thm:game-order-calculus,thm:between-options}
+  \uses{def:game-order,def:game-equivalence,def:is-surreal,thm:game-order-calculus,thm:between-options}
   Suppose \(\neg(x\GameLe y)\).  Negating the two universal clauses in
   Definition~\ref{def:game-order} produces one of two witnesses: either there
   is a left option \(x^L\) such that \(y\GameLe x^L\), or there is a right
@@ -239,19 +288,34 @@
   whether the reverse weak comparison also holds.  If both hold, then
   \(x\GameEq y\); if exactly one holds, then the corresponding comparison is
   strict.  These are precisely the definitions in
-  Definition~\ref{def:game-order}.
+  Definitions~\ref{def:game-order} and~\ref{def:game-equivalence}.
 \end{proof}
 
 \begin{definition}[Surreal representatives]
   \label{def:surreal-representative}
-  \lean{Surreal,Surreal.sr_zero,Surreal.sr_one,Surreal.leftOption,Surreal.rightOption}
+  \lean{Surreal,Surreal.eq,Surreal.sr_zero,Surreal.sr_one,Surreal.leftOption,Surreal.rightOption}
   \leanok
-  \uses{def:game,def:is-surreal}
-  A surreal representative is a game together with a proof that it is surreal.  The surreal
-  games \(0\) and \(1\) therefore give canonical representatives.  If \(x\) is a surreal
-  representative, then each left or right option of its underlying game, equipped with the
-  inherited surrealness assertion from Definition~\ref{def:is-surreal}, is again a surreal
-  representative.  Equivalent game trees are not yet identified.
+  \uses{def:game,def:game-equivalence,def:is-surreal}
+  Let \(\SurrealReps\) denote the collection of all surreal representatives:
+  \[
+    \SurrealReps
+      =\bigl\{\,s=(s_{\mathrm{game}},s_{\mathrm{proof}})
+        \bigm|
+        s_{\mathrm{game}}\in\Games,\quad
+        s_{\mathrm{proof}}\text{ is a proof of }
+        \operatorname{IsSurreal}(s_{\mathrm{game}})\,\bigr\}.
+  \]
+  For \(s,s'\in\SurrealReps\), representative equivalence is induced by game equivalence:
+  \[
+    s\GameEq s'
+      \quad\Longleftrightarrow\quad
+    s_{\mathrm{game}}\GameEq s'_{\mathrm{game}}.
+  \]
+  The surreal games \(0\) and \(1\) give canonical elements of \(\SurrealReps\).  If
+  \(s\in\SurrealReps\), then each left or right option of \(s_{\mathrm{game}}\), equipped with
+  the inherited surrealness proof from Definition~\ref{def:is-surreal}, is again an element of
+  \(\SurrealReps\).  Equivalent representatives are related by \(\GameEq\), but are not yet
+  identified as equal elements of a quotient.
 \end{definition}
 
 \begin{definition}[Pair induction for surreal representatives]
@@ -259,13 +323,14 @@
   \lean{Surreal.BiSurreal,Surreal.U,Surreal.wf_U,Surreal.U_left₁,Surreal.U_left₂,Surreal.U_right₁,Surreal.U_right₂}
   \leanok
   \uses{def:birthday,lem:birthday-options,def:surreal-representative}
-  Order pairs \((a,b)\) of surreal representatives by
+  Let \(a,b\in\SurrealReps\), and write \(\{a,b\}\) for the formal two-coordinate object with
+  entries \(a\) and \(b\).  For \(a',b'\in\SurrealReps\), define
   \[
-    (a',b')\mathrel{\vartriangleleft}(a,b)
+    \{a',b'\}\mathrel{\vartriangleleft}\{a,b\}
       \quad\Longleftrightarrow\quad
-    \bd(a')+\bd(b')<\bd(a)+\bd(b),
+    \bd(a'_{\mathrm{game}})+\bd(b'_{\mathrm{game}})
+      <\bd(a_{\mathrm{game}})+\bd(b_{\mathrm{game}}).
   \]
-  where the birthday of a representative means the birthday of its underlying game.
   This relation is well founded.  Replacing either coordinate by any left or right option
   produces a smaller pair, by Lemma~\ref{lem:birthday-options}.
 \end{definition}
